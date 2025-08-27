@@ -119,11 +119,14 @@ class AnalizadorLegal:
             if not contenido:
                 return self._crear_resultado_error("No se pudo leer el contenido del archivo")
             
+            # Extraer nombre del archivo de la ruta
+            nombre_archivo = Path(ruta_archivo).name
+            
             # Análisis con IA si está disponible
             if self.modelo and self.vectorizador and self.clasificador:
-                resultado = self._analisis_con_ia(contenido)
+                resultado = self._analisis_con_ia(contenido, nombre_archivo)
             else:
-                resultado = self._analisis_basado_reglas(contenido)
+                resultado = self._analisis_basado_reglas(contenido, nombre_archivo)
             
             # Agregar metadatos
             resultado.update({
@@ -193,7 +196,7 @@ class AnalizadorLegal:
             logger.error(f"Error leyendo PDF {ruta}: {e}")
             return f"Error leyendo PDF: {str(e)}"
     
-    def _analisis_con_ia(self, contenido: str) -> Dict[str, Any]:
+    def _analisis_con_ia(self, contenido: str, nombre_archivo: str = None) -> Dict[str, Any]:
         """Análisis usando el modelo de IA"""
         try:
             # Vectorizar el texto
@@ -207,7 +210,7 @@ class AnalizadorLegal:
             confianza = max(probabilidades)
             
             # Análisis de frases clave
-            frases_encontradas = self._analizar_frases_clave(contenido)
+            frases_encontradas = self._analizar_frases_clave(contenido, nombre_archivo)
             
             # Extraer argumentos
             argumentos = self._extraer_argumentos_avanzados(contenido)
@@ -237,12 +240,12 @@ class AnalizadorLegal:
         except Exception as e:
             logger.error(f"Error en análisis con IA: {e}")
             # Fallback a análisis basado en reglas
-            return self._analisis_basado_reglas(contenido)
+            return self._analisis_basado_reglas(contenido, nombre_archivo)
     
-    def _analisis_basado_reglas(self, contenido: str) -> Dict[str, Any]:
+    def _analisis_basado_reglas(self, contenido: str, nombre_archivo: str = None) -> Dict[str, Any]:
         """Análisis basado en reglas y patrones"""
         # Análisis de frases clave
-        frases_encontradas = self._analizar_frases_clave(contenido)
+        frases_encontradas = self._analizar_frases_clave(contenido, nombre_archivo)
         
         # Predicción basada en reglas
         prediccion = self._prediccion_basada_reglas(contenido)
@@ -264,10 +267,13 @@ class AnalizadorLegal:
             "metodo_analisis": "Reglas y patrones"
         }
     
-    def _analizar_frases_clave(self, texto: str) -> Dict[str, Any]:
+    def _analizar_frases_clave(self, texto: str, nombre_archivo: str = None) -> Dict[str, Any]:
         """Analiza las frases clave en el texto"""
         if not texto:
             return {}
+        
+        # Usar el nombre del archivo real o un valor por defecto
+        archivo_nombre = nombre_archivo or "archivo_desconocido"
         
         resultados = {}
         for categoria, variantes in self.frases_clave.items():
@@ -297,7 +303,7 @@ class AnalizadorLegal:
                         "posicion": start_pos,
                         "contexto": contexto_marcado,
                         "linea": texto[:start_pos].count('\n') + 1,
-                        "archivo": "documento_actual"
+                        "archivo": archivo_nombre
                     })
             
             if total > 0:

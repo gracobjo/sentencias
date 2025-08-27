@@ -1,383 +1,400 @@
 # 📋 Analizador de Sentencias IPP/INSS
 
-## 🎯 Descripción
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
-Aplicación robusta de **FastAPI** para análisis inteligente de documentos legales, específicamente diseñada para casos de **Incapacidad Permanente Parcial (IPP)** e **Instituto Nacional de la Seguridad Social (INSS)**.
+Sistema inteligente de análisis automático de resoluciones administrativas y sentencias judiciales para casos de Incapacidad Permanente Parcial (IPP), Reclamación Administrativa Previa (RAP) y otros procedimientos del INSS.
 
-La aplicación asume que ya tienes un **modelo de IA pre-entrenado** y proporciona análisis basado en reglas como fallback.
+## 🚀 Características Principales
 
-## ✨ Características Principales
+- **Análisis Automático**: Procesamiento inteligente de documentos legales (.txt, .pdf, .doc, .docx)
+- **IA Pre-entrenada**: Modelo de machine learning para identificación de frases clave
+- **Dashboard Interactivo**: Interfaz web moderna con Bootstrap 5 y actualizaciones en tiempo real
+- **7 Categorías de Análisis**: IPP, RAP, INSS, LPNI, Limpieza, Lesiones de Hombro, Procedimientos Legales
+- **API REST**: Endpoints para integración con sistemas externos
+- **Docker Ready**: Despliegue simplificado con contenedores
 
-- 🚀 **FastAPI** - Framework web moderno y rápido
-- 🤖 **Análisis con IA** - Modelo pre-entrenado para documentos legales
-- 📊 **Análisis basado en reglas** - Fallback robusto cuando no hay IA disponible
-- 📁 **Manejo de archivos** - Soporte para PDF, TXT, DOC, DOCX
-- 🛡️ **Manejo de errores** - Aplicación robusta con validaciones
-- 📱 **Interfaz web** - Templates HTML responsivos con Bootstrap 5
-- 🐳 **Docker** - Despliegue fácil y reproducible
-- 📈 **Monitoreo** - Métricas y health checks integrados
-
-## 🏗️ Arquitectura
+## 🏗️ Arquitectura del Sistema
 
 ```
-📁 analizador-ipp-inss/
-├── 🐍 app.py                 # Aplicación principal FastAPI
-├── ⚙️ config.py              # Configuración centralizada
-├── 🤖 backend/
-│   └── 📊 analisis.py        # Módulo de análisis de IA
-├── 📁 templates/             # Templates HTML
-├── 🎨 static/                # Archivos estáticos (CSS, JS)
-├── 📁 sentencias/            # Documentos a analizar
-├── 📁 uploads/               # Archivos subidos temporalmente
-├── 🧠 models/                # Modelos de IA pre-entrenados
-├── 📝 requirements.txt       # Dependencias de Python
-├── 🐳 Dockerfile             # Imagen Docker
-├── 🚀 docker-compose.yml     # Orquestación de servicios
-└── 📖 README.md              # Este archivo
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   FastAPI       │    │   Análisis      │
+│   Bootstrap 5   │◄──►│   Backend       │◄──►│   IA + Básico   │
+│   JavaScript    │    │   Jinja2        │    │   Fallback      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Modales       │    │   Base de       │    │   Archivos      │
+│   Interactivos  │    │   Datos SQLite  │    │   Documentos    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## 🚀 Instalación y Uso
+## 🛠️ Tecnologías Utilizadas
 
-### 📋 Prerrequisitos
+### Backend
+- **FastAPI**: Framework web moderno y rápido
+- **Python 3.8+**: Lenguaje de programación principal
+- **Jinja2**: Motor de templates HTML
+- **SQLite**: Base de datos ligera
+- **Uvicorn**: Servidor ASGI de alto rendimiento
 
-- **Python 3.11+**
-- **Docker** (opcional, para despliegue)
-- **Git**
+### Frontend
+- **Bootstrap 5**: Framework CSS responsive
+- **Bootstrap Icons**: Iconografía moderna
+- **JavaScript ES6+**: Lógica del lado del cliente
+- **Event Delegation**: Manejo eficiente de eventos dinámicos
 
-### 🔧 Instalación Local
+### IA y Análisis
+- **Scikit-learn**: Algoritmos de machine learning
+- **NLTK**: Procesamiento de lenguaje natural
+- **PyPDF2**: Extracción de texto de PDFs
+- **python-docx**: Procesamiento de documentos Word
 
-#### 1. Clonar el repositorio
+### DevOps
+- **Docker**: Contenedores para despliegue
+- **Docker Compose**: Orquestación de servicios
+- **Nginx**: Proxy reverso y servidor web
+- **Prometheus**: Monitoreo y métricas
+
+## 📦 Instalación y Configuración
+
+### Requisitos Previos
+- Python 3.8 o superior
+- Docker y Docker Compose (opcional)
+- Git
+
+### Instalación Local
+
+1. **Clonar el repositorio**
 ```bash
-git clone <url-del-repositorio>
-cd analizador-ipp-inss
+git clone https://github.com/tu-usuario/analizador-sentencias-ipp.git
+cd analizador-sentencias-ipp
 ```
 
-#### 2. Crear entorno virtual
+2. **Crear entorno virtual**
 ```bash
 python -m venv venv
-# En Windows:
-venv\Scripts\activate
-# En Linux/Mac:
-source venv/bin/activate
+source venv/bin/activate  # En Windows: venv\Scripts\activate
 ```
 
-#### 3. Instalar dependencias
+3. **Instalar dependencias**
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 4. Crear directorios necesarios
+4. **Configurar directorios**
 ```bash
-python config.py
+mkdir -p sentencias uploads models logs
 ```
 
-#### 5. Ejecutar la aplicación
+5. **Ejecutar la aplicación**
 ```bash
 python app.py
 ```
 
-La aplicación estará disponible en: **http://localhost:8000**
+### Instalación con Docker
 
-### 🐳 Instalación con Docker
-
-#### 1. Construir y ejecutar
+1. **Clonar y navegar al directorio**
 ```bash
-# Solo la aplicación principal
-docker-compose up app
+git clone https://github.com/tu-usuario/analizador-sentencias-ipp.git
+cd analizador-sentencias-ipp
+```
 
-# Todos los servicios (incluyendo Redis, Nginx, monitoreo)
+2. **Ejecutar con Docker Compose**
+```bash
 docker-compose up -d
 ```
 
-#### 2. Verificar estado
-```bash
-docker-compose ps
+3. **Acceder a la aplicación**
+```
+http://localhost:8000
 ```
 
-#### 3. Ver logs
+## 🎯 Uso de la Aplicación
+
+### 1. Análisis Automático
+- Coloca documentos en la carpeta `sentencias/`
+- Accede a la página principal `/`
+- La aplicación analiza automáticamente todos los archivos
+- Visualiza resultados en tiempo real
+
+### 2. Subida de Documentos
+- Navega a `/subir`
+- Selecciona archivo y tipo de documento
+- Sube y procesa automáticamente
+- Visualiza resultados inmediatamente
+
+### 3. Exploración de Detalles
+- Haz clic en tarjetas de estadísticas para ver detalles
+- Usa botones "Ver detalles" para información específica
+- Navega a archivos completos con "Ver archivo completo"
+- Explora ocurrencias específicas de frases clave
+
+## 🔍 Funcionalidades de Análisis
+
+### Categorías de Frases Clave
+1. **Incapacidad Permanente Parcial (IPP)**
+   - Frases relacionadas con incapacidades permanentes
+   - Identificación de secuelas y limitaciones
+
+2. **Reclamación Administrativa Previa (RAP)**
+   - Procedimientos administrativos
+   - Recursos y reclamaciones
+
+3. **INSS / Seguridad Social**
+   - Referencias al Instituto Nacional
+   - Procedimientos de la Seguridad Social
+
+4. **Lesiones Permanentes No Incapacitantes (LPNI)**
+   - Secuelas que no impiden el trabajo
+   - Evaluación de daños permanentes
+
+5. **Personal de Limpieza**
+   - Casos específicos del sector
+   - Condiciones laborales particulares
+
+6. **Lesiones de Hombro**
+   - Manguito rotador
+   - Tendón supraespinoso
+   - Hombro derecho
+
+7. **Procedimientos Legales**
+   - Términos jurídicos clave
+   - Resoluciones y sentencias
+
+### Características del Análisis
+- **Búsqueda insensible a mayúsculas**
+- **Contexto de ocurrencias** con posiciones exactas
+- **Predicción de resultado** (favorable/desfavorable)
+- **Insights jurídicos** automáticos
+- **Argumentos identificados** en el texto
+
+## 📊 API REST
+
+### Endpoints Disponibles
+
+#### `GET /`
+- **Descripción**: Página principal con dashboard
+- **Respuesta**: HTML con estadísticas en tiempo real
+
+#### `GET /api/analizar`
+- **Descripción**: Análisis programático de documentos
+- **Respuesta**: JSON con resultados estructurados
+
+#### `GET /archivo/{archivo_id}`
+- **Descripción**: Vista completa de un archivo específico
+- **Respuesta**: HTML con contenido y frases resaltadas
+
+#### `GET /health`
+- **Descripción**: Estado del sistema
+- **Respuesta**: JSON con métricas y estado
+
+#### `POST /upload`
+- **Descripción**: Subida de nuevos documentos
+- **Parámetros**: `file`, `document_type`, `extract_entities`, `analyze_arguments`
+- **Respuesta**: JSON con resultado del procesamiento
+
+### Ejemplo de Uso de la API
+
+```python
+import requests
+
+# Analizar documentos existentes
+response = requests.get('http://localhost:8000/api/analizar')
+resultados = response.json()
+
+# Subir nuevo documento
+files = {'file': open('documento.pdf', 'rb')}
+data = {
+    'document_type': 'sentencia',
+    'extract_entities': True,
+    'analyze_arguments': True
+}
+response = requests.post('http://localhost:8000/upload', files=files, data=data)
+```
+
+## 🐳 Docker
+
+### Estructura de Contenedores
+
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./sentencias:/app/sentencias
+      - ./uploads:/app/uploads
+      - ./models:/app/models
+      - ./logs:/app/logs
+  
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app
+```
+
+### Comandos Docker Útiles
+
 ```bash
+# Construir imagen
+docker build -t analizador-sentencias .
+
+# Ejecutar contenedor
+docker run -p 8000:8000 -v $(pwd)/sentencias:/app/sentencias analizador-sentencias
+
+# Ver logs
 docker-compose logs -f app
+
+# Reiniciar servicios
+docker-compose restart
 ```
 
-## 📚 Uso de la Aplicación
+## 🔧 Configuración
 
-### 🌐 Interfaz Web
-
-1. **Página Principal** (`/`) - Vista general y análisis de sentencias existentes
-2. **Subir Documento** (`/subir`) - Formulario para subir nuevos documentos
-3. **Resultados** (`/resultado/{id}`) - Visualización detallada del análisis
-4. **API Docs** (`/docs`) - Documentación interactiva de la API
-
-### 🔌 API REST
-
-#### Endpoints principales:
-
-- `GET /` - Página principal
-- `GET /subir` - Formulario de subida
-- `POST /upload` - Subir y analizar documento
-- `GET /resultado/{id}` - Ver resultados del análisis
-- `GET /api/analizar` - API JSON para análisis
-- `GET /health` - Estado del sistema
-
-#### Ejemplo de uso de la API:
+### Variables de Entorno
 
 ```bash
-# Subir documento
-curl -X POST "http://localhost:8000/upload" \
-  -F "file=@documento.pdf" \
-  -F "document_type=sentencia"
+# Directorios de la aplicación
+SENTENCIAS_DIR=./sentencias
+UPLOADS_DIR=./uploads
+MODELS_DIR=./models
+LOGS_DIR=./logs
 
-# Obtener análisis
-curl "http://localhost:8000/api/analizar"
+# Configuración de la aplicación
+MAX_FILE_SIZE=52428800  # 50MB
+ALLOWED_EXTENSIONS=.txt,.pdf,.doc,.docx
+LOG_LEVEL=INFO
 ```
 
-### 📁 Estructura de Archivos
-
-#### Documentos de ejemplo:
-Coloca archivos `.txt`, `.pdf`, `.doc`, `.docx` en la carpeta `sentencias/`
-
-#### Formato esperado:
-- **TXT**: Texto plano con encoding UTF-8
-- **PDF**: Documentos PDF estándar
-- **DOC/DOCX**: Documentos de Word
-
-## ⚙️ Configuración
-
-### 🔧 Variables de Entorno
-
-```bash
-# Entorno de ejecución
-ENVIRONMENT=development|production|testing
-
-# Clave secreta (cambiar en producción)
-SECRET_KEY=tu_clave_secreta_aqui
-
-# Orígenes CORS permitidos
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-
-# Contraseña de Grafana (opcional)
-GRAFANA_PASSWORD=admin
-```
-
-### 📁 Configuración de Directorios
+### Configuración de Logging
 
 ```python
-# En config.py
-SENTENCIAS_DIR = "sentencias"      # Documentos a analizar
-UPLOADS_DIR = "uploads"            # Archivos subidos temporalmente
-MODELS_DIR = "models"              # Modelos de IA
-LOGS_DIR = "logs"                  # Archivos de log
-```
-
-## 🧠 Modelo de IA
-
-### 📋 Requisitos del Modelo
-
-La aplicación espera un modelo guardado en `models/modelo_legal.pkl` con la siguiente estructura:
-
-```python
-{
-    'modelo': modelo_entrenado,
-    'vectorizador': vectorizador_texto,
-    'clasificador': clasificador_binario
-}
-```
-
-### 🔄 Fallback Automático
-
-Si no hay modelo de IA disponible, la aplicación usa automáticamente:
-- **Análisis basado en reglas**
-- **Patrones de frases clave**
-- **Predicción por palabras clave**
-- **Extracción de argumentos legales**
-
-## 🧪 Testing
-
-### 🔍 Ejecutar tests
-```bash
-# Tests básicos
-pytest
-
-# Tests con cobertura
-pytest --cov=app
-
-# Tests específicos
-pytest tests/test_analisis.py
-```
-
-### 📊 Verificar calidad del código
-```bash
-# Formatear código
-black .
-
-# Verificar estilo
-flake8 .
-
-# Verificar tipos
-mypy .
-```
-
-## 🚀 Despliegue
-
-### 🌍 Producción
-
-#### 1. Configurar variables de entorno
-```bash
-export ENVIRONMENT=production
-export SECRET_KEY=clave_secreta_muy_segura
-export CORS_ORIGINS=https://tudominio.com
-```
-
-#### 2. Desplegar con Docker
-```bash
-docker-compose -f docker-compose.yml up -d
-```
-
-#### 3. Verificar despliegue
-```bash
-curl http://localhost:8000/health
-```
-
-### 📊 Monitoreo
-
-#### Servicios disponibles:
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3000 (admin/admin)
-- **Redis**: localhost:6379
-
-#### Métricas principales:
-- Tiempo de respuesta de la API
-- Número de documentos procesados
-- Uso de memoria y CPU
-- Errores y excepciones
-
-## 🛠️ Desarrollo
-
-### 🔧 Estructura del Código
-
-- **`app.py`**: Aplicación principal FastAPI
-- **`config.py`**: Configuración centralizada
-- **`backend/analisis.py`**: Lógica de análisis
-- **`templates/`**: Templates HTML con Jinja2
-- **`static/`**: Archivos CSS, JS e imágenes
-
-### 📝 Agregar Nuevas Funcionalidades
-
-#### 1. Nuevas frases clave:
-```python
-# En config.py
-FRASES_CLAVE_DEFAULT = {
-    "nueva_categoria": [
-        "frase1", "frase2", "frase3"
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('logs/app.log'),
+        logging.StreamHandler()
     ]
+)
+```
+
+## 📈 Monitoreo y Métricas
+
+### Endpoint de Salud (`/health`)
+
+```json
+{
+  "status": "ok",
+  "version": "2.0.0",
+  "timestamp": "2024-01-15T10:30:00",
+  "ia_disponible": true,
+  "directorios": {
+    "sentencias": "./sentencias",
+    "uploads": "./uploads",
+    "models": "./models"
+  }
 }
 ```
 
-#### 2. Nuevos tipos de análisis:
-```python
-# En backend/analisis.py
-def nuevo_analisis(texto: str) -> Dict[str, Any]:
-    # Implementar nueva lógica
-    pass
-```
+### Métricas Disponibles
+- Estado del sistema
+- Disponibilidad de IA
+- Espacio en disco
+- Archivos procesados
+- Tiempo de respuesta
 
-#### 3. Nuevos endpoints:
-```python
-# En app.py
-@app.get("/nuevo-endpoint")
-async def nueva_funcionalidad():
-    return {"mensaje": "Nueva funcionalidad"}
-```
+## 🚨 Solución de Problemas
 
-## 🐛 Solución de Problemas
+### Problemas Comunes
 
-### ❌ Errores Comunes
+#### 1. Botones "Ver Detalles" No Funcionan
+- **Síntoma**: Los botones no responden al clic
+- **Solución**: Verificar que JavaScript esté habilitado y revisar la consola del navegador
+- **Prevención**: Usar event delegation implementado
 
-#### 1. Puerto ya en uso
+#### 2. Errores de Parsing JSON
+- **Síntoma**: "Error parsing data" en consola
+- **Solución**: Verificar formato de datos en el backend
+- **Prevención**: Validación robusta de datos
+
+#### 3. Archivos No Se Analizan
+- **Síntoma**: Archivos no aparecen en el dashboard
+- **Solución**: Verificar permisos de carpeta y formato de archivo
+- **Prevención**: Validación de archivos al inicio
+
+### Logs y Debugging
+
 ```bash
-# Cambiar puerto en config.py
-PORT = 8001
-
-# O matar proceso existente
-lsof -ti:8000 | xargs kill -9
-```
-
-#### 2. Dependencias faltantes
-```bash
-# Reinstalar dependencias
-pip install -r requirements.txt --force-reinstall
-```
-
-#### 3. Permisos de archivos
-```bash
-# En Linux/Mac
-chmod +x app.py
-chmod -R 755 static/ templates/
-```
-
-#### 4. Modelo no encontrado
-```bash
-# Verificar que existe models/modelo_legal.pkl
-# O usar análisis basado en reglas
-```
-
-### 📊 Logs y Debugging
-
-#### 1. Ver logs en tiempo real
-```bash
-# Local
+# Ver logs de la aplicación
 tail -f logs/app.log
 
-# Docker
+# Ver logs de Docker
 docker-compose logs -f app
-```
 
-#### 2. Modo debug
-```bash
-export ENVIRONMENT=development
-python app.py
+# Verificar estado del sistema
+curl http://localhost:8000/health
 ```
 
 ## 🤝 Contribución
 
-### 📋 Guías de Contribución
+### Cómo Contribuir
 
-1. **Fork** el repositorio
-2. **Crea** una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. **Commit** tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. **Push** a la rama (`git push origin feature/nueva-funcionalidad`)
-5. **Crea** un Pull Request
+1. **Fork** el proyecto
+2. **Crea** una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. **Commit** tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. **Push** a la rama (`git push origin feature/AmazingFeature`)
+5. **Abre** un Pull Request
 
-### 🧪 Testing
+### Estándares de Código
 
-- Ejecuta todos los tests antes de hacer commit
-- Mantén cobertura de código > 80%
-- Documenta nuevas funcionalidades
+- **Python**: PEP 8
+- **JavaScript**: ESLint con configuración estándar
+- **HTML**: HTML5 válido
+- **CSS**: Bootstrap 5 con personalizaciones mínimas
 
-## 📄 Licencia
+### Estructura de Commits
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+```
+feat: agregar nueva categoría de análisis
+fix: corregir error en parsing de PDF
+docs: actualizar documentación de API
+style: mejorar diseño del dashboard
+refactor: optimizar algoritmo de búsqueda
+test: agregar tests para análisis de frases
+```
+
+## 📝 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+## 👥 Autores
+
+- **Tu Nombre** - *Desarrollo inicial* - [tu-usuario](https://github.com/tu-usuario)
+
+## 🙏 Agradecimientos
+
+- **FastAPI** por el framework web excepcional
+- **Bootstrap** por el sistema de diseño responsive
+- **Comunidad Python** por las librerías de análisis de texto
+- **Sector Legal** por la validación de casos de uso
 
 ## 📞 Soporte
 
-### 🆘 Obtener Ayuda
-
-- **Issues**: Reporta bugs en GitHub Issues
-- **Discussions**: Preguntas generales en GitHub Discussions
-- **Wiki**: Documentación adicional en GitHub Wiki
-
-### 🔗 Enlaces Útiles
-
-- **FastAPI**: https://fastapi.tiangolo.com/
-- **Docker**: https://docs.docker.com/
-- **Bootstrap 5**: https://getbootstrap.com/docs/5.0/
-
-## 🎉 Agradecimientos
-
-- Equipo de desarrollo IPP/INSS
-- Comunidad FastAPI
-- Contribuidores de código abierto
+- **Issues**: [GitHub Issues](https://github.com/tu-usuario/analizador-sentencias-ipp/issues)
+- **Discusiones**: [GitHub Discussions](https://github.com/tu-usuario/analizador-sentencias-ipp/discussions)
+- **Email**: tu-email@ejemplo.com
 
 ---
 
-**¿Necesitas ayuda?** ¡Abre un issue o únete a las discusiones del proyecto!
+⭐ **Si este proyecto te es útil, por favor dale una estrella en GitHub!**

@@ -528,7 +528,6 @@ async def ver_archivo(request: Request, archivo_id: str):
         # Analizar el archivo para obtener frases clave
         if ANALIZADOR_IA_DISPONIBLE:
             try:
-                from backend.analisis import AnalizadorLegal
                 analizador = AnalizadorLegal()
                 resultado = analizador.analizar_documento(str(archivo_path))
             except Exception as e:

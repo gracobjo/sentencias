@@ -121,7 +121,9 @@
         <div class="row mb-4">
             <div class="col-md-6 col-lg-3 mb-3">
                 <div class="card stats-card h-100 border-0 shadow-sm clickable-stats" 
-                     data-tipo="archivos" data-valor="{{ archivos_analizados }}">
+                     data-stats-type="archivos" 
+                     data-stats-value="{{ archivos_analizados }}" 
+                     data-stats-id="archivos-data">
                     <div class="card-body text-center">
                         <div class="text-primary mb-2">
                             <i class="bi bi-files display-6"></i>
@@ -135,7 +137,9 @@
             
             <div class="col-md-6 col-lg-3 mb-3">
                 <div class="card stats-card h-100 border-0 shadow-sm clickable-stats"
-                     onclick="showStatsDetails('apariciones', {{ total_apariciones }}, '{{ ranking_global|tojson|safe }}')">
+                     data-stats-type="apariciones" 
+                     data-stats-value="{{ total_apariciones }}" 
+                     data-stats-id="apariciones-data">
                     <div class="card-body text-center">
                         <div class="text-success mb-2">
                             <i class="bi bi-search-heart display-6"></i>
@@ -149,7 +153,9 @@
             
             <div class="col-md-6 col-lg-3 mb-3">
                 <div class="card stats-card h-100 border-0 shadow-sm clickable-stats"
-                     onclick="showStatsDetails('frases', {{ ranking_global|length }}, '{{ ranking_global|tojson|safe }}')">
+                     data-stats-type="frases" 
+                     data-stats-value="{{ ranking_global|length }}" 
+                     data-stats-id="frases-data">
                     <div class="card-body text-center">
                         <div class="text-info mb-2">
                             <i class="bi bi-graph-up display-6"></i>
@@ -171,6 +177,26 @@
                         <p class="card-text text-muted">En tiempo real</p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Script tags para almacenar datos de estadísticas -->
+        <script type="application/json" id="archivos-data">
+            {{ resultados_por_archivo|tojson|safe }}
+        </script>
+        <script type="application/json" id="apariciones-data">
+            {{ ranking_global|tojson|safe }}
+        </script>
+        <script type="application/json" id="frases-data">
+            {{ ranking_global|tojson|safe }}
+        </script>
+        
+        <!-- Botón de prueba temporal -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <button class="btn btn-warning" onclick="testShowFraseDetails()">
+                    <i class="bi bi-bug me-2"></i>Test: Ver Detalles
+                </button>
             </div>
         </div>
 
@@ -217,13 +243,16 @@
                                                     <i class="bi bi-tag text-muted"></i>
                                                 {% endif %}
                                             </span>
-                                            <span class="clickable-frase" onclick="showFraseDetails('{{ frase }}', '{{ datos|tojson|safe }}')">
+                                            <span class="clickable-frase" 
+                                                  data-frase="{{ frase }}" 
+                                                  data-datos="{{ datos|tojson|safe }}">
                                                 {{ frase }}
                                             </span>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge bg-primary fs-6 clickable-badge" 
-                                                  onclick="showFraseDetails('{{ frase }}', '{{ datos|tojson|safe }}')">
+                                                  data-frase="{{ frase }}" 
+                                                  data-datos="{{ datos|tojson|safe }}">
                                                 {{ ranking_global[frase].total }}
                                             </span>
                                         </td>
@@ -257,7 +286,9 @@
                                                                         Línea {{ ocurrencia.linea }} - Posición {{ ocurrencia.posicion }}
                                                                     </small>
                                                                     <button class="btn btn-sm btn-outline-primary" 
-                                                                            onclick="scrollToPosition({{ ocurrencia.posicion }}, '{{ ocurrencia.frase }}', '{{ ocurrencia.archivo }}')">
+                                                                            data-posicion="{{ ocurrencia.posicion }}" 
+                                                                            data-frase="{{ ocurrencia.frase }}" 
+                                                                            data-archivo="{{ ocurrencia.archivo }}">
                                                                         <i class="bi bi-arrow-up-circle me-1"></i>Ir al texto
                                                                     </button>
                                                                 </div>
@@ -450,6 +481,107 @@
             location.reload();
         }, 30000);
         
+        // Event listeners para las tarjetas de estadísticas
+        document.addEventListener('DOMContentLoaded', function() {
+            const statsCards = document.querySelectorAll('.clickable-stats');
+            statsCards.forEach(function(card) {
+                card.addEventListener('click', function() {
+                    const type = this.getAttribute('data-stats-type');
+                    const value = this.getAttribute('data-stats-value');
+                    const dataId = this.getAttribute('data-stats-id');
+                    
+                    console.log('Stats type:', type);
+                    console.log('Stats value:', value);
+                    console.log('Data ID:', dataId);
+                    
+                    try {
+                        // Get data from the corresponding script tag
+                        const dataScript = document.getElementById(dataId);
+                        if (!dataScript) {
+                            throw new Error(`Script tag with ID '${dataId}' not found`);
+                        }
+                        
+                        const rawData = dataScript.textContent.trim();
+                        console.log('Raw data from script tag:', rawData);
+                        
+                        const parsedData = JSON.parse(rawData);
+                        console.log('Parsed data successfully:', parsedData);
+                        showStatsDetails(type, parseInt(value), parsedData);
+                    } catch (e) {
+                        console.error('Error parsing data:', e);
+                        alert('Error al procesar los datos: ' + e.message);
+                    }
+                });
+            });
+            
+            // Event listeners para los botones de "Ir al texto"
+            const scrollButtons = document.querySelectorAll('[data-posicion]');
+            scrollButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const posicion = this.getAttribute('data-posicion');
+                    const frase = this.getAttribute('data-frase');
+                    const archivo = this.getAttribute('data-archivo');
+                    scrollToPosition(parseInt(posicion), frase, archivo);
+                });
+            });
+            
+            // Event listeners para elementos clickeables en la tabla principal
+            const clickableElements = document.querySelectorAll('.clickable-frase, .clickable-badge');
+            clickableElements.forEach(function(element) {
+                element.addEventListener('click', function() {
+                    const frase = this.getAttribute('data-frase');
+                    const datos = this.getAttribute('data-datos');
+                    
+                    if (frase && datos) {
+                        try {
+                            const parsedData = JSON.parse(datos);
+                            showFraseDetails(frase, parsedData);
+                        } catch (e) {
+                            console.error('Error parsing datos:', e);
+                            alert('Error al procesar los datos de la frase');
+                        }
+                    }
+                });
+            });
+            
+            // Event delegation para botones "Ver detalles" en modales
+            document.addEventListener('click', function(event) {
+                // Verificar si el clic fue en un botón con data-frase
+                if (event.target.closest('[data-frase]')) {
+                    console.log('Botón con data-frase clickeado!');
+                    const button = event.target.closest('[data-frase]');
+                    const frase = button.getAttribute('data-frase');
+                    const info = button.getAttribute('data-info');
+                    const datos = button.getAttribute('data-datos');
+                    
+                    console.log('Frase:', frase);
+                    console.log('Info:', info);
+                    console.log('Datos:', datos);
+                    
+                    try {
+                        let parsedData;
+                        if (info) {
+                            // Para botones en tarjetas de estadísticas
+                            console.log('Parsing info...');
+                            parsedData = JSON.parse(info);
+                        } else if (datos) {
+                            // Para elementos en la tabla principal
+                            console.log('Parsing datos...');
+                            parsedData = JSON.parse(datos);
+                        } else {
+                            throw new Error('No se encontraron datos para procesar');
+                        }
+                        
+                        console.log('Datos parseados exitosamente:', parsedData);
+                        showFraseDetails(frase, parsedData);
+                    } catch (e) {
+                        console.error('Error parsing data:', e);
+                        alert('Error al procesar los datos de la frase');
+                    }
+                }
+            });
+        });
+        
         // Tooltip para archivos con nombres largos
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -510,27 +642,22 @@
                 
                 let contenido = '';
                 
-                try {
-                    const datosObj = JSON.parse(datos);
-                    console.log('Datos parseados:', datosObj);
-                    
-                    switch(tipo) {
-                        case 'archivos':
-                            modalTitle.innerHTML = '<i class="bi bi-files me-2"></i>Detalles de Archivos Analizados';
-                            contenido = generarContenidoArchivos(datosObj, valor);
-                            break;
-                        case 'apariciones':
-                            modalTitle.innerHTML = '<i class="bi bi-search-heart me-2"></i>Detalles de Total Apariciones';
-                            contenido = generarContenidoApariciones(datosObj, valor);
-                            break;
-                        case 'frases':
-                            modalTitle.innerHTML = '<i class="bi bi-graph-up me-2"></i>Detalles de Frases Encontradas';
-                            contenido = generarContenidoFrases(datosObj, valor);
-                            break;
-                    }
-                } catch (e) {
-                    console.error('Error procesando datos:', e);
-                    contenido = '<div class="alert alert-danger">Error al procesar los datos: ' + e.message + '</div>';
+                // Los datos ya están parseados desde el event listener
+                console.log('Datos recibidos (ya parseados):', datos);
+                
+                switch(tipo) {
+                    case 'archivos':
+                        modalTitle.innerHTML = '<i class="bi bi-files me-2"></i>Detalles de Archivos Analizados';
+                        contenido = generarContenidoArchivos(datos, valor);
+                        break;
+                    case 'apariciones':
+                        modalTitle.innerHTML = '<i class="bi bi-search-heart me-2"></i>Detalles de Total Apariciones';
+                        contenido = generarContenidoApariciones(datos, valor);
+                        break;
+                    case 'frases':
+                        modalTitle.innerHTML = '<i class="bi bi-graph-up me-2"></i>Detalles de Frases Encontradas';
+                        contenido = generarContenidoFrases(datos, valor);
+                        break;
                 }
                 
                 modalBody.innerHTML = contenido;
@@ -547,16 +674,40 @@
 
         // Función para mostrar detalles de frases
         function showFraseDetails(frase, datos) {
+            console.log('=== showFraseDetails INICIADO ===');
+            console.log('Frase:', frase);
+            console.log('Datos recibidos:', datos);
+            console.log('Tipo de datos:', typeof datos);
+            console.log('Elemento fraseModal:', document.getElementById('fraseModal'));
+            console.log('Elemento fraseModalBody:', document.getElementById('fraseModalBody'));
+            console.log('Elemento fraseModalLabel:', document.getElementById('fraseModalLabel'));
+            console.log('Bootstrap disponible:', typeof bootstrap !== 'undefined');
+            
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap no está disponible');
+                alert('Error: Bootstrap no está disponible');
+                return;
+            }
+            
             const modal = new bootstrap.Modal(document.getElementById('fraseModal'));
             const modalBody = document.getElementById('fraseModalBody');
             const modalTitle = document.getElementById('fraseModalLabel');
             
             try {
-                const datosObj = JSON.parse(datos);
+                let datosObj;
+                if (typeof datos === 'string') {
+                    datosObj = JSON.parse(datos);
+                } else {
+                    datosObj = datos;
+                }
+                
+                console.log('Datos parseados:', datosObj);
+                
                 modalTitle.innerHTML = `<i class="bi bi-search me-2"></i>Detalles de: "${frase}"`;
                 modalBody.innerHTML = generarContenidoFrase(frase, datosObj);
             } catch (e) {
-                modalBody.innerHTML = '<div class="alert alert-danger">Error al procesar los datos</div>';
+                console.error('Error en showFraseDetails:', e);
+                modalBody.innerHTML = `<div class="alert alert-danger">Error al procesar los datos: ${e.message}</div>`;
             }
             
             modal.show();
@@ -632,7 +783,9 @@
                             <div class="card-body">
                                 <p><strong>Apariciones:</strong> ${info.total}</p>
                                 <p><strong>Porcentaje:</strong> ${((info.total / total) * 100).toFixed(1)}%</p>
-                                <button class="btn btn-sm btn-outline-success" onclick="showFraseDetails('${frase}', '${JSON.stringify(info)}')">
+                                <button class="btn btn-sm btn-outline-success" 
+                                        data-frase="${frase}" 
+                                        data-info='${JSON.stringify(info).replace(/'/g, "&#39;")}'>
                                     <i class="bi bi-search me-1"></i>Ver detalles
                                 </button>
                             </div>
@@ -670,7 +823,9 @@
                             </div>
                             <div class="card-body">
                                 <p><strong>Apariciones:</strong> ${info.total}</p>
-                                <button class="btn btn-sm btn-outline-info" onclick="showFraseDetails('${frase}', '${JSON.stringify(info)}')">
+                                <button class="btn btn-sm btn-outline-info" 
+                                        data-frase="${frase}" 
+                                        data-info='${JSON.stringify(info).replace(/'/g, "&#39;")}'>
                                     <i class="bi bi-search me-1"></i>Ver detalles
                                 </button>
                             </div>
@@ -740,7 +895,32 @@
 
         // Función para ver archivo completo
         function verArchivoCompleto(nombre) {
-            alert(`Función para ver el archivo completo: ${nombre}\n\nEsta funcionalidad te permitirá ver todo el contenido del archivo con las frases clave resaltadas.`);
+            try {
+                // Navegar a la página del archivo completo
+                window.open(`/archivo/${encodeURIComponent(nombre)}`, '_blank');
+            } catch (e) {
+                console.error('Error al abrir archivo:', e);
+                alert(`Error al abrir el archivo: ${e.message}`);
+            }
+        }
+        
+        // Función de prueba para verificar showFraseDetails
+        function testShowFraseDetails() {
+            console.log('=== TEST: testShowFraseDetails INICIADO ===');
+            const datosPrueba = {
+                total: 30,
+                ocurrencias: [
+                    {
+                        archivo: "STS_2384_2025.pdf",
+                        linea: 15,
+                        posicion: 250,
+                        contexto: "El paciente presenta lesiones en el hombro derecho que requieren tratamiento especializado."
+                    }
+                ]
+            };
+            
+            console.log('Llamando a showFraseDetails con datos de prueba...');
+            showFraseDetails("lesiones_hombro", datosPrueba);
         }
 
         // Función para copiar contexto
