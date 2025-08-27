@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Documento Legal - Analizador IPP/INSS</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/static/style.css" rel="stylesheet">
+    
+    <style>
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #0d6efd;
+            background: #e7f3ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #198754;
+            background: #d1e7dd;
+        }
+        
+        .file-preview {
+            max-width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .file-info {
+            background: #e9ecef;
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-upload {
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .document-type-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .document-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .document-type-card.selected {
+            border-color: #0d6efd;
+            background: #e7f3ff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check me-2"></i>
+                Analizador IPP/INSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house me-1"></i>Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/subir">
+                            <i class="bi bi-upload me-1"></i>Subir Documento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/analizar">
+                            <i class="bi bi-graph-up me-1"></i>Análisis
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold text-primary mb-3">
+                        <i class="bi bi-upload-circle me-3"></i>
+                        Subir Documento Legal
+                    </h1>
+                    <p class="lead text-muted">
+                        Sube tu documento (PDF o TXT) para obtener un análisis inteligente con IA
+                    </p>
+                </div>
+
+                <!-- Upload Form -->
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <!-- Document Type Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-file-earmark-text me-2"></i>
+                                    Tipo de Documento
+                                </label>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="card document-type-card h-100" data-type="sentencia">
+                                            <div class="card-body text-center p-3">
+                                                <i class="bi bi-gavel text-primary" style="font-size: 2rem;"></i>
+                                                <h6 class="card-title mt-2 mb-1">Sentencia</h6>
+                                                <small class="text-muted">Resoluciones judiciales</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card document-type-card h-100" data-type="demanda">
+                                            <div class="card-body text-center p-3">
+                                                <i class="bi bi-file-earmark-text text-success" style="font-size: 2rem;"></i>
+                                                <h6 class="card-title mt-2 mb-1">Demanda</h6>
+                                                <small class="text-muted">Escritos de demanda</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card document-type-card h-100" data-type="informe">
+                                            <div class="card-body text-center p-3">
+                                                <i class="bi bi-clipboard2-pulse text-warning" style="font-size: 2rem;"></i>
+                                                <h6 class="card-title mt-2 mb-1">Informe Médico</h6>
+                                                <small class="text-muted">Informes médicos</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="documentType" name="document_type" value="sentencia">
+                            </div>
+
+                            <!-- File Upload Area -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-file-earmark me-2"></i>
+                                    Seleccionar Archivo
+                                </label>
+                                <div class="upload-area" id="uploadArea">
+                                    <i class="bi bi-cloud-upload text-primary" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3 mb-2">Arrastra y suelta tu archivo aquí</h5>
+                                    <p class="text-muted mb-3">o haz clic para seleccionar</p>
+                                    <button type="button" class="btn btn-outline-primary" id="selectFileBtn">
+                                        <i class="bi bi-folder2-open me-2"></i>
+                                        Seleccionar Archivo
+                                    </button>
+                                    <input type="file" id="fileInput" name="file" accept=".pdf,.txt" class="d-none" title="Seleccionar archivo PDF o TXT">
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            Formatos soportados: PDF, TXT (máx. 10MB)
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <!-- File Preview -->
+                                <div id="filePreview" class="d-none">
+                                    <div class="file-info">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                                            <div class="flex-grow-1">
+                                                <strong id="fileName"></strong>
+                                                <br>
+                                                <small class="text-muted" id="fileSize"></small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeFileBtn" title="Eliminar archivo">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Options -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-gear me-2"></i>
+                                    Opciones de Análisis
+                                </label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="extractEntities" name="extract_entities" checked>
+                                            <label class="form-check-label" for="extractEntities">
+                                                Extraer entidades legales
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="analyzeArguments" name="analyze_arguments" checked>
+                                            <label class="form-check-label" for="analyzeArguments">
+                                                Analizar argumentos clave
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                                    <i class="bi bi-search me-2"></i>
+                                    Analizar Documento
+                                </button>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="mt-3 d-none" id="progressContainer">
+                                <div class="progress progress-upload">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%" 
+                                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-1 d-block text-center" id="progressText">
+                                    Preparando análisis...
+                                </small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Information Cards -->
+                <div class="row mt-5 g-4">
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-robot text-primary" style="font-size: 2.5rem;"></i>
+                                <h5 class="card-title mt-3">Análisis con IA</h5>
+                                <p class="card-text text-muted">
+                                    Utilizamos inteligencia artificial para analizar documentos legales y extraer insights relevantes.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-shield-check text-success" style="font-size: 2.5rem;"></i>
+                                <h5 class="card-title mt-3">Seguridad Total</h5>
+                                <p class="card-text text-muted">
+                                    Tus documentos se procesan de forma segura y no se almacenan permanentemente en nuestros servidores.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-lightning text-warning" style="font-size: 2.5rem;"></i>
+                                <h5 class="card-title mt-3">Resultados Rápidos</h5>
+                                <p class="card-text text-muted">
+                                    Obtén análisis detallados en segundos con nuestra tecnología optimizada.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">
+                <i class="bi bi-c-circle me-1"></i>
+                2024 Analizador IPP/INSS - Desarrollado para el sector legal
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Document type selection
+        document.querySelectorAll('.document-type-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove previous selection
+                document.querySelectorAll('.document-type-card').forEach(c => c.classList.remove('selected'));
+                // Add selection to current card
+                this.classList.add('selected');
+                // Update hidden input
+                document.getElementById('documentType').value = this.dataset.type;
+            });
+        });
+
+        // Set default selection
+        document.querySelector('[data-type="sentencia"]').classList.add('selected');
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const filePreview = document.getElementById('filePreview');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Click to select file
+        selectFileBtn.addEventListener('click', () => fileInput.click());
+
+        // File input change
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+
+        // Click on upload area
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                displayFileInfo(file);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (isValidFile(file)) {
+                    fileInput.files = files;
+                    displayFileInfo(file);
+                } else {
+                    showAlert('Por favor, selecciona un archivo PDF o TXT válido.', 'warning');
+                }
+            }
+        }
+
+        function isValidFile(file) {
+            const validTypes = ['application/pdf', 'text/plain'];
+            const validExtensions = ['.pdf', '.txt'];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            
+            return validTypes.includes(file.type) || 
+                   validExtensions.some(ext => file.name.toLowerCase().endsWith(ext)) &&
+                   file.size <= maxSize;
+        }
+
+        function displayFileInfo(file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            filePreview.classList.remove('d-none');
+            submitBtn.disabled = false;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Remove file
+        removeFileBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            filePreview.classList.add('d-none');
+            submitBtn.disabled = true;
+        });
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const file = fileInput.files[0];
+            const documentType = document.getElementById('documentType').value;
+            
+            if (!file) {
+                showAlert('Por favor, selecciona un archivo.', 'warning');
+                return;
+            }
+
+            formData.append('file', file);
+            formData.append('document_type', documentType);
+            formData.append('extract_entities', document.getElementById('extractEntities').checked);
+            formData.append('analyze_arguments', document.getElementById('analyzeArguments').checked);
+
+            // Show progress
+            showProgress();
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    // Redirect to results page
+                    window.location.href = `/resultado/${result.archivo_id}`;
+                } else {
+                    const error = await response.json();
+                    showAlert(error.detail || 'Error al procesar el archivo.', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error de conexión. Por favor, intenta de nuevo.', 'danger');
+            } finally {
+                hideProgress();
+            }
+        });
+
+        function showProgress() {
+            document.getElementById('progressContainer').classList.remove('d-none');
+            submitBtn.disabled = true;
+            
+            // Simulate progress
+            let progress = 0;
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.getElementById('progressText');
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 90) {
+                    progress = 90;
+                    clearInterval(interval);
+                }
+                progressBar.style.width = progress + '%';
+                progressBar.setAttribute('aria-valuenow', progress);
+                progressText.textContent = `Analizando documento... ${Math.round(progress)}%`;
+            }, 200);
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').classList.add('d-none');
+            submitBtn.disabled = false;
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

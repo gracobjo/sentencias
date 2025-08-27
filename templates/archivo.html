@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ archivo.nombre }} - Analizador IPP/INSS</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelir.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/static/style.css" rel="stylesheet">
+    
+    <style>
+        .frase-resaltada {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 3px;
+            padding: 2px 4px;
+            margin: 1px;
+            display: inline-block;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .frase-resaltada:hover {
+            background-color: #ffeaa7;
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .frase-ipp { background-color: #ffebee; border-color: #ef5350; }
+        .frase-rap { background-color: #fff3e0; border-color: #ff9800; }
+        .frase-inss { background-color: #e3f2fd; border-color: #2196f3; }
+        .frase-lpni { background-color: #e8f5e8; border-color: #4caf50; }
+        .frase-limpieza { background-color: #f3e5f5; border-color: #9c27b0; }
+        .frase-lesiones { background-color: #fce4ec; border-color: #e91e63; }
+        
+        .contenido-archivo {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .stats-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .navegacion-frases {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 1000;
+            border-bottom: 2px solid #dee2e6;
+            padding: 15px 0;
+        }
+        
+        .frase-navegacion {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .frase-navegacion:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check me-2"></i>
+                Analizador IPP/INSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house me-1"></i>Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/subir">
+                            <i class="bi bi-upload me-1"></i>Subir Documento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/analizar">
+                            <i class="bi bi-graph-up me-1"></i>Análisis
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <!-- Header del archivo -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 text-primary">
+                            <i class="bi bi-file-text me-3"></i>
+                            {{ archivo.nombre }}
+                        </h1>
+                        <p class="lead text-muted">
+                            Contenido completo del archivo con frases clave resaltadas
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas del archivo -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">{{ archivo.longitud }}</h5>
+                        <p class="card-text">Caracteres</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">{{ archivo.total_frases }}</h5>
+                        <p class="card-text">Frases Clave</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">{{ archivo.argumentos|length }}</h5>
+                        <p class="card-text">Argumentos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title {% if archivo.prediccion.es_favorable %}text-success{% else %}text-danger{% endif %}">
+                            {% if archivo.prediccion.es_favorable %}Favorable{% else %}Desfavorable{% endif %}
+                        </h5>
+                        <p class="card-text">Predicción</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navegación de frases clave -->
+        {% if archivo.frases_clave %}
+        <div class="navegacion-frases mb-4">
+            <h5 class="text-primary mb-3">
+                <i class="bi bi-tags me-2"></i>Frases Clave Encontradas
+            </h5>
+            <div class="row">
+                {% for categoria, datos in archivo.frases_clave.items() %}
+                <div class="col-md-4 mb-2">
+                    <div class="card frase-navegacion" onclick="navegarAFrase('{{ categoria }}')">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">{{ datos.total }}</span>
+                                <small class="text-muted">{{ categoria|title }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Contenido del archivo -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-text me-2"></i>Contenido del Archivo
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="contenido-archivo" id="contenidoArchivo">
+                            {{ archivo.contenido }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights y argumentos -->
+        {% if archivo.insights or archivo.argumentos %}
+        <div class="row mt-4">
+            {% if archivo.insights %}
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-lightbulb me-2"></i>Insights Jurídicos
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            {% for insight in archivo.insights %}
+                            <li class="mb-2">
+                                <i class="bi bi-arrow-right text-info me-2"></i>
+                                {{ insight }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if archivo.argumentos %}
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="bi bi-chat-quote me-2"></i>Argumentos Identificados
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            {% for argumento in archivo.argumentos %}
+                            <li class="mb-2">
+                                <i class="bi bi-arrow-right text-warning me-2"></i>
+                                {{ argumento.texto[:100] }}...
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">
+                <i class="bi bi-c-circle me-1"></i>
+                2024 Analizador IPP/INSS - Desarrollado para el sector legal
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Función para navegar a una frase específica
+        function navegarAFrase(categoria) {
+            const contenido = document.getElementById('contenidoArchivo');
+            const texto = contenido.textContent;
+            
+            // Buscar la primera ocurrencia de la categoría
+            const frases = {{ archivo.frases_clave|tojson|safe }};
+            if (frases[categoria] && frases[categoria].ocurrencias.length > 0) {
+                const primeraOcurrencia = frases[categoria].ocurrencias[0];
+                const frase = primeraOcurrencia.frase;
+                
+                // Buscar en el contenido
+                const index = texto.indexOf(frase);
+                if (index !== -1) {
+                    // Hacer scroll a la posición
+                    contenido.scrollTop = (index / texto.length) * contenido.scrollHeight;
+                    
+                    // Resaltar temporalmente
+                    const textoResaltado = texto.substring(0, index) + 
+                                        `<span style="background-color: yellow; font-weight: bold;">${frase}</span>` + 
+                                        texto.substring(index + frase.length);
+                    contenido.innerHTML = textoResaltado;
+                    
+                    // Restaurar después de 3 segundos
+                    setTimeout(() => {
+                        contenido.textContent = texto;
+                    }, 3000);
+                }
+            }
+        }
+
+        // Función para buscar texto
+        function buscarTexto() {
+            const busqueda = prompt('Introduce el texto a buscar:');
+            if (busqueda) {
+                const contenido = document.getElementById('contenidoArchivo');
+                const texto = contenido.textContent;
+                const index = texto.toLowerCase().indexOf(busqueda.toLowerCase());
+                
+                if (index !== -1) {
+                    contenido.scrollTop = (index / texto.length) * contenido.scrollHeight;
+                    
+                    // Resaltar
+                    const textoResaltado = texto.substring(0, index) + 
+                                        `<span style="background-color: yellow; font-weight: bold;">${busqueda}</span>` + 
+                                        texto.substring(index + busqueda.length);
+                    contenido.innerHTML = textoResaltado;
+                    
+                    setTimeout(() => {
+                        contenido.textContent = texto;
+                    }, 3000);
+                } else {
+                    alert('Texto no encontrado');
+                }
+            }
+        }
+
+        // Atajos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'f':
+                        e.preventDefault();
+                        buscarTexto();
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        window.location.href = '/';
+                        break;
+                }
+            }
+        });
+
+        // Botón de búsqueda flotante
+        const botonBusqueda = document.createElement('button');
+        botonBusqueda.innerHTML = '<i class="bi bi-search"></i>';
+        botonBusqueda.className = 'btn btn-primary position-fixed';
+        botonBusqueda.style.cssText = 'bottom: 20px; right: 20px; z-index: 1000; border-radius: 50%; width: 60px; height: 60px;';
+        botonBusqueda.onclick = buscarTexto;
+        botonBusqueda.title = 'Buscar texto (Ctrl+F)';
+        document.body.appendChild(botonBusqueda);
+    </script>
+</body>
+</html>

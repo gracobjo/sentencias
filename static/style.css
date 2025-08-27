@@ -1,0 +1,310 @@
+/* Estilos personalizados para el Analizador de Resoluciones IPP/INSS */
+
+/* Variables CSS personalizadas */
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --confidence-width: 0%;
+}
+
+/* Estilos generales */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* Animaciones para las tarjetas */
+.stats-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.stats-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* Estilos para la tabla de ranking */
+.ranking-table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.ranking-table tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Estilos para las tarjetas de archivos */
+.file-card, .error-card, .success-card {
+    transition: all 0.2s ease;
+}
+
+.file-card:hover, .error-card:hover, .success-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+/* Badges personalizados */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+}
+
+/* Progress bars personalizados */
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Progress bar height for ranking table */
+.progress-ranking {
+    height: 20px;
+}
+
+/* Progress bar height for general use */
+.progress-standard {
+    height: 20px;
+}
+
+/* Navbar personalizado */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+/* Botones personalizados */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Alertas personalizadas */
+.alert {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Cards personalizadas */
+.card {
+    border-radius: 12px;
+    border: none;
+    overflow: hidden;
+}
+
+.card-header {
+    border-bottom: none;
+    font-weight: 600;
+}
+
+/* Footer personalizado */
+footer {
+    margin-top: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .display-5 {
+        font-size: 2rem;
+    }
+    
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+
+/* Estilos para iconos */
+.bi {
+    vertical-align: middle;
+}
+
+/* Estilos para tooltips */
+.tooltip {
+    font-size: 0.875rem;
+}
+
+/* Estilos para filas clickeables */
+.clickable-row {
+    transition: all 0.2s ease;
+}
+
+.clickable-row:hover {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    transform: scale(1.01);
+}
+
+.clickable-row.table-active {
+    background-color: rgba(13, 110, 253, 0.15) !important;
+    border-left: 4px solid var(--primary-color);
+}
+
+/* Estilos para filas de detalle */
+.detail-row {
+    background-color: #f8f9fa;
+    display: none;
+}
+
+.detail-row.show {
+    display: table-row;
+}
+
+.detail-row .card {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.context-content {
+    font-family: 'Courier New', monospace;
+    background-color: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Estilos para el indicador de confianza */
+.confidence-indicator {
+    height: 100%;
+    background: rgba(255,255,255,0.8);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    position: relative;
+    width: var(--confidence-width);
+}
+
+.confidence-indicator::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: -2px;
+    width: 16px;
+    height: 24px;
+    background: #fff;
+    border: 2px solid #0d6efd;
+    border-radius: 50%;
+}
+
+/* Estilos para el medidor de confianza */
+.confidence-meter {
+    height: 20px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #198754 100%);
+}
+
+/* Estilos para las tarjetas de resultados */
+.result-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Estilos para badges de predicción */
+.prediction-badge {
+    font-size: 1.2rem;
+    padding: 0.75rem 1.5rem;
+}
+
+/* Estilos para tarjetas de argumentos */
+.argument-card {
+    border-left: 4px solid #0d6efd;
+    background: #f8f9fa;
+}
+
+/* Estilos para badges de entidades */
+.entity-badge {
+    font-size: 0.9rem;
+    margin: 0.2rem;
+}
+
+/* Estilos para elementos de insights */
+.insight-item {
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid #0d6efd;
+}
+
+.insight-item.favorable {
+    background: #d1e7dd;
+    border-left-color: #198754;
+}
+
+.insight-item.unfavorable {
+    background: #f8d7da;
+    border-left-color: #dc3545;
+}
+
+.insight-item.neutral {
+    background: #e2e3e5;
+    border-left-color: #6c757d;
+}
+
+/* Estilos para ocurrencias de frases */
+.phrase-occurrence {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+/* Estilos para texto de contexto */
+.context-text {
+    font-family: 'Courier New', monospace;
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border-left: 3px solid #0d6efd;
+}
+
+/* Estilos para tarjetas de estadísticas */
+.stats-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+.stats-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Estilos para texto pre-wrap */
+.pre-wrap-text {
+    white-space: pre-wrap;
+}

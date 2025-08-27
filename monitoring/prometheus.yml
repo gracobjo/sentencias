@@ -1,0 +1,109 @@
+# Configuración de Prometheus para el Analizador de Sentencias IPP/INSS
+# Monitoreo de métricas de la aplicación
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Configuración de reglas de alerta
+rule_files:
+  - "rules/*.yml"
+
+# Configuración de alertas
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Configuración de scraping
+scrape_configs:
+  # Prometheus se monitorea a sí mismo
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Aplicación principal FastAPI
+  - job_name: 'analizador-ipp-inss'
+    static_configs:
+      - targets: ['app:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    
+    # Configuración de relabeling
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+    
+    # Configuración de métricas personalizadas
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'http_(requests_total|request_duration_seconds)'
+        action: keep
+
+  # Redis (si está disponible)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Nginx (si está disponible)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: '/nginx_status'
+
+  # Node Exporter (métricas del sistema)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Métricas del sistema Docker
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['docker:9323']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+# Configuración de almacenamiento
+storage:
+  tsdb:
+    path: /prometheus
+    retention:
+      time: 15d
+      size: 10GB
+
+# Configuración de compresión
+compaction:
+  enabled: true
+  interval: 1h
+
+# Configuración de WAL
+wal:
+  dir: /prometheus/wal
+  retention: 1h
+
+# Configuración de límites
+limits:
+  max_samples_per_query: 1000000
+  max_concurrent_selects: 1000
+  max_concurrent_inserts: 1000
+
+# Configuración de logging
+log:
+  level: info
+  format: json
+
+# Configuración de métricas personalizadas para la aplicación
+# Estas métricas se generan automáticamente por FastAPI
+# con el middleware de Prometheus
+
+
