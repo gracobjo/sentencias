@@ -191,9 +191,16 @@
             {{ ranking_global|tojson|safe }}
         </script>
         
-        <!-- Botón de prueba temporal -->
+        <!-- Indicador de auto-refresh -->
         <div class="row mb-4">
             <div class="col-12 text-center">
+                <div class="alert alert-info d-flex align-items-center justify-content-center" role="alert">
+                    <i class="bi bi-clock me-2"></i>
+                    <span id="refreshStatus">Dashboard se actualizará automáticamente cuando no haya actividad</span>
+                    <button class="btn btn-sm btn-outline-primary ms-3" onclick="manualRefresh()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Actualizar Ahora
+                    </button>
+                </div>
                 <button class="btn btn-warning" onclick="testShowFraseDetails()">
                     <i class="bi bi-bug me-2"></i>Test: Ver Detalles
                 </button>
@@ -476,10 +483,35 @@
     
     <!-- Script personalizado -->
     <script>
-        // Auto-refresh cada 30 segundos
+        // Refresh inteligente: solo cuando no hay actividad del usuario
+        let lastUserActivity = Date.now();
+        let refreshInterval = 120000; // 2 minutos
+        
+        // Detectar actividad del usuario
+        function updateUserActivity() {
+            lastUserActivity = Date.now();
+        }
+        
+        // Eventos que indican actividad del usuario
+        document.addEventListener('mousemove', updateUserActivity);
+        document.addEventListener('click', updateUserActivity);
+        document.addEventListener('keypress', updateUserActivity);
+        document.addEventListener('scroll', updateUserActivity);
+        
+        // Refresh inteligente
         setInterval(function() {
-            location.reload();
-        }, 30000);
+            const timeSinceActivity = Date.now() - lastUserActivity;
+            const timeSinceLastRefresh = Date.now() - (window.lastRefreshTime || 0);
+            
+            // Solo recargar si:
+            // 1. No hay actividad del usuario en los últimos 30 segundos
+            // 2. Han pasado al menos 2 minutos desde el último refresh
+            if (timeSinceActivity > 30000 && timeSinceLastRefresh > refreshInterval) {
+                console.log('🔄 Actualizando dashboard automáticamente...');
+                window.lastRefreshTime = Date.now();
+                location.reload();
+            }
+        }, 30000); // Verificar cada 30 segundos
         
         // Event listeners para las tarjetas de estadísticas
         document.addEventListener('DOMContentLoaded', function() {
@@ -922,6 +954,35 @@
             console.log('Llamando a showFraseDetails con datos de prueba...');
             showFraseDetails("lesiones_hombro", datosPrueba);
         }
+        
+        // Función para refresh manual
+        function manualRefresh() {
+            console.log('🔄 Actualización manual iniciada...');
+            location.reload();
+        }
+        
+        // Actualizar indicador de refresh
+        function updateRefreshStatus() {
+            const statusElement = document.getElementById('refreshStatus');
+            if (!statusElement) return;
+            
+            const timeSinceActivity = Date.now() - lastUserActivity;
+            const timeSinceLastRefresh = Date.now() - (window.lastRefreshTime || 0);
+            const timeUntilRefresh = Math.max(0, refreshInterval - timeSinceLastRefresh);
+            
+            if (timeSinceActivity < 30000) {
+                statusElement.textContent = 'Dashboard se actualizará automáticamente cuando no haya actividad';
+            } else if (timeUntilRefresh > 0) {
+                const minutes = Math.floor(timeUntilRefresh / 60000);
+                const seconds = Math.floor((timeUntilRefresh % 60000) / 1000);
+                statusElement.textContent = `Dashboard se actualizará en ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                statusElement.textContent = 'Dashboard se actualizará en cualquier momento...';
+            }
+        }
+        
+        // Actualizar indicador cada segundo
+        setInterval(updateRefreshStatus, 1000);
 
         // Función para copiar contexto
         function copiarContexto(contexto) {
