@@ -13,59 +13,6 @@
     
     <!-- Estilos personalizados -->
     <link href="/static/style.css" rel="stylesheet">
-    
-    <style>
-        .stats-card {
-            transition: transform 0.2s;
-        }
-        .stats-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .clickable-stats {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .clickable-stats:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-        
-        .clickable-frase {
-            cursor: pointer;
-            color: #007bff;
-            text-decoration: underline;
-            transition: color 0.2s ease;
-        }
-        
-        .clickable-frase:hover {
-            color: #0056b3;
-        }
-        
-        .clickable-badge {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .clickable-badge:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .ranking-table th {
-            background-color: #f8f9fa;
-            border-top: none;
-        }
-        .file-card {
-            border-left: 4px solid #007bff;
-        }
-        .error-card {
-            border-left: 4px solid #dc3545;
-        }
-        .success-card {
-            border-left: 4px solid #28a745;
-        }
-    </style>
 </head>
 <body class="bg-light">
     <!-- Header -->
@@ -75,147 +22,37 @@
                 <i class="bi bi-file-text me-2"></i>
                 Analizador de Resoluciones IPP/INSS
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation menu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/subir">
-                            <i class="bi bi-upload me-1"></i>Subir Documento
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/api/analizar" target="_blank">
-                            <i class="bi bi-code-slash me-1"></i>API
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/health" target="_blank">
-                            <i class="bi bi-heart-pulse me-1"></i>Estado
-                        </a>
-                    </li>
-                </ul>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/subir">
+                    <i class="bi bi-upload me-1"></i>Subir Documento
+                </a>
             </div>
         </div>
     </nav>
 
     <div class="container mt-4">
-        <!-- Título y descripción -->
+        <!-- Título -->
         <div class="row mb-4">
             <div class="col-12">
                 <h1 class="display-5 text-center text-primary mb-3">
                     <i class="bi bi-search me-3"></i>Análisis de Resoluciones Administrativas
                 </h1>
                 <p class="lead text-center text-muted">
-                    Sistema de análisis automático de resoluciones en busca de frases clave relacionadas con IPP, RAP, INSS y otras categorías
+                    Sistema de análisis automático de resoluciones en busca de frases clave
                 </p>
                 
-                <!-- Botón prominente para subir archivos -->
+                <!-- Botón para subir archivos -->
                 <div class="text-center mt-4">
                     <a href="/subir" class="btn btn-success btn-lg">
                         <i class="bi bi-upload me-2"></i>Subir Nuevo Documento
                     </a>
-                    <p class="text-muted mt-2">
-                        <small>Sube tus propios archivos PDF o TXT para analizarlos</small>
-                    </p>
                 </div>
             </div>
         </div>
 
-        {% if error %}
-        <!-- Mensaje de error -->
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Error:</strong> {{ error }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close alert"></button>
-        </div>
-        {% endif %}
-
-        <!-- Tarjetas de estadísticas -->
-        <div class="row mb-4">
-            <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card stats-card h-100 border-0 shadow-sm clickable-stats" 
-                     data-stats-type="archivos" 
-                     data-stats-value="{{ archivos_analizados }}" 
-                     data-stats-id="archivos-data">
-                    <div class="card-body text-center">
-                        <div class="text-primary mb-2">
-                            <i class="bi bi-files display-6"></i>
-                        </div>
-                        <h3 class="card-title text-primary">{{ archivos_analizados }}</h3>
-                        <p class="card-text text-muted">Archivos Analizados</p>
-                        <small class="text-muted">Click para ver detalles</small>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card stats-card h-100 border-0 shadow-sm clickable-stats"
-                     data-stats-type="apariciones" 
-                     data-stats-value="{{ total_apariciones }}" 
-                     data-stats-id="apariciones-data">
-                    <div class="card-body text-center">
-                        <div class="text-success mb-2">
-                            <i class="bi bi-search-heart display-6"></i>
-                        </div>
-                        <h3 class="card-title text-success">{{ total_apariciones }}</h3>
-                        <p class="card-text text-muted">Total Apariciones</p>
-                        <small class="text-muted">Click para ver detalles</small>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card stats-card h-100 border-0 shadow-sm clickable-stats"
-                     data-stats-type="frases" 
-                     data-stats-value="{{ ranking_global|length }}" 
-                     data-stats-id="frases-data">
-                    <div class="card-body text-center">
-                        <div class="text-info mb-2">
-                            <i class="bi bi-graph-up display-6"></i>
-                        </div>
-                        <h3 class="card-title text-info">{{ ranking_global|length }}</h3>
-                        <p class="card-text text-muted">Frases Encontradas</p>
-                        <small class="text-muted">Click para ver detalles</small>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card stats-card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="text-warning mb-2">
-                            <i class="bi bi-clock-history display-6"></i>
-                        </div>
-                        <h3 class="card-title text-warning">Actualizado</h3>
-                        <p class="card-text text-muted">En tiempo real</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Script tags para almacenar datos de estadísticas -->
-        <script type="application/json" id="archivos-data">
-            {{ resultados_por_archivo|tojson|safe }}
-        </script>
-        <script type="application/json" id="apariciones-data">
-            {{ ranking_global|tojson|safe }}
-        </script>
-        <script type="application/json" id="frases-data">
-            {{ ranking_global|tojson|safe }}
-        </script>
-        
-        <!-- Indicador de auto-refresh -->
+        <!-- Botones de debug -->
         <div class="row mb-4">
             <div class="col-12 text-center">
-                <div class="alert alert-info d-flex align-items-center justify-content-center" role="alert">
-                    <i class="bi bi-clock me-2"></i>
-                    <span id="refreshStatus">Dashboard se actualizará automáticamente cuando no haya actividad</span>
-                    <button class="btn btn-sm btn-outline-primary ms-3" onclick="manualRefresh()">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Actualizar Ahora
-                    </button>
-                </div>
                 <button class="btn btn-warning" onclick="testShowFraseDetails()">
                     <i class="bi bi-bug me-2"></i>Test: Ver Detalles
                 </button>
@@ -228,12 +65,12 @@
                 <button class="btn btn-dark" onclick="verificarDatosBackend()">
                     <i class="bi bi-server me-2"></i>Verificar Backend
                 </button>
-                 <button class="btn btn-primary" onclick="mostrarAnalisisInteligente()">
-                     <i class="bi bi-brain me-2"></i>Análisis Inteligente
-                 </button>
-                 <button class="btn btn-danger" onclick="debugAvanzado()">
-                     <i class="bi bi-exclamation-triangle me-2"></i>Debug Avanzado
-                 </button>
+                <button class="btn btn-primary" onclick="mostrarAnalisisInteligente()">
+                    <i class="bi bi-brain me-2"></i>Análisis Inteligente
+                </button>
+                <button class="btn btn-danger" onclick="debugAvanzado()">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Debug Avanzado
+                </button>
             </div>
         </div>
 
@@ -249,7 +86,7 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0 ranking-table">
+                            <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
                                         <th class="px-4">#</th>
@@ -260,87 +97,20 @@
                                 </thead>
                                 <tbody>
                                     {% for frase, datos in ranking_global.items() %}
-                                    <tr class="clickable-row" onclick="toggleDetails(this, '{{ frase }}')">
-                                         <td class="px-4 fw-bold text-primary">{{ loop.index }}</td>
-                                         <td>
-                                             <span class="badge bg-light text-dark me-2">
-                                                 {% if "incapacidad permanente parcial" in frase.lower() %}
-                                                     <i class="bi bi-person-x text-danger"></i> IPP
-                                                 {% elif "reclamación administrativa previa" in frase.lower() %}
-                                                     <i class="bi bi-file-earmark-text text-warning"></i> RAP
-                                                 {% elif "inss" in frase.lower() %}
-                                                     <i class="bi bi-building text-primary"></i> INSS
-                                                 {% elif "lesiones permanentes no incapacitantes" in frase.lower() %}
-                                                     <i class="bi bi-heart-pulse text-info"></i> LPNI
-                                                 {% elif "limpiadora" in frase.lower() %}
-                                                     <i class="bi bi-brush text-success"></i> LIMPIEZA
-                                                 {% elif "manguito rotador" in frase.lower() or "supraespinoso" in frase.lower() or "hombro derecho" in frase.lower() %}
-                                                     <i class="bi bi-bandaid text-secondary"></i> LESIONES
-                                                 {% else %}
-                                                     <i class="bi bi-tag text-muted"></i>
-                                                 {% endif %}
-                                             </span>
-                                             <span class="clickable-frase" 
-                                                   data-frase="{{ frase }}" 
-                                                   data-datos="{{ datos|tojson|safe }}">
-                                                 {{ frase }}
-                                             </span>
-                                         </td>
-                                         <td class="text-center">
-                                             <span class="badge bg-primary fs-6 clickable-badge" 
-                                                   data-frase="{{ frase }}" 
-                                                   data-datos="{{ datos|tojson|safe }}">
-                                                 {{ datos.total }}
-                                             </span>
-                                         </td>
-                                         <td class="text-center">
-                                             <div class="progress progress-ranking" data-width="{{ (datos.total / total_apariciones * 100) | round(1) }}">
-                                                 <div class="progress-bar bg-success" 
-                                                      role="progressbar" 
-                                                      aria-label="Progreso de {{ frase }}"
-                                                      aria-valuemin="0" 
-                                                      aria-valuemax="100">
-                                                     {{ (datos.total / total_apariciones * 100) | round(1) }}%
-                                                 </div>
-                                             </div>
-                                         </td>
-                                    </tr>
-                                    <!-- Detalle expandible de ocurrencias -->
-                                    <tr class="detail-row">
-                                        <td colspan="4" class="p-0">
-                                            <div class="bg-light p-3">
-                                                <h6 class="text-primary mb-3">
-                                                    <i class="bi bi-search me-2"></i>Ocurrencias de "{{ frase }}"
-                                                </h6>
-                                                <div class="row">
-                                                    {% for ocurrencia in datos.ocurrencias %}
-                                                    <div class="col-12 mb-3">
-                                                        <div class="card border-0 shadow-sm">
-                                                            <div class="card-header bg-white py-2">
-                                                                <div class="d-flex justify-content-between align-items-center">
-                                                                    <small class="text-muted">
-                                                                        <i class="bi bi-file-text me-1"></i>
-                                                                        Línea {{ ocurrencia.linea }} - Posición {{ ocurrencia.posicion }}
-                                                                    </small>
-                                                                    <button class="btn btn-sm btn-outline-primary" 
-                                                                            data-posicion="{{ ocurrencia.posicion }}" 
-                                                                            data-frase="{{ ocurrencia.frase }}" 
-                                                                            data-archivo="{{ ocurrencia.archivo }}">
-                                                                        <i class="bi bi-arrow-up-circle me-1"></i>Ir al texto
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                            <div class="card-body py-2">
-                                                                <div class="context-text">
-                                                                    <small class="text-muted">Contexto:</small><br>
-                                                                    <span class="context-content">{{ ocurrencia.contexto }}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
+                                    <tr>
+                                        <td class="px-4 fw-bold text-primary">{{ loop.index }}</td>
+                                        <td>
+                                            <span class="clickable-frase" 
+                                                  data-frase="{{ frase }}" 
+                                                  data-datos="{{ datos|tojson|safe }}">
+                                                {{ frase }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary fs-6">{{ datos.total }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            {{ (datos.total / total_apariciones * 100) | round(1) }}%
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -352,1215 +122,13 @@
             </div>
         </div>
         {% endif %}
-
-        <!-- Detalle por Archivo -->
-        {% if resultados_por_archivo %}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-file-earmark-text me-2"></i>Documentos Analizados
-                        </h5>
-                        <span class="badge bg-light text-dark">{{ resultados_por_archivo|length }} archivo(s)</span>
-                    </div>
-                    <div class="card-body">
-                        {% if resultados_por_archivo|length == 0 %}
-                            <div class="text-center py-5">
-                                <i class="bi bi-inbox display-1 text-muted"></i>
-                                <h5 class="text-muted mt-3">No hay documentos analizados</h5>
-                                <p class="text-muted">Sube tu primer documento para comenzar el análisis</p>
-                                <a href="/subir" class="btn btn-primary">
-                                    <i class="bi bi-upload me-2"></i>Subir Documento
-                                </a>
-                            </div>
-                        {% else %}
-                            <div class="row">
-                                {% for nombre_archivo, resultado in resultados_por_archivo.items() %}
-                                <div class="col-md-6 col-lg-4 mb-3">
-                                    <div class="card h-100 {% if 'error' in resultado %}error-card{% elif resultado.frases_clave %}success-card{% else %}file-card{% endif %}">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <h6 class="card-title mb-0 text-truncate" title="{{ nombre_archivo }}">
-                                                <i class="bi bi-file-text me-2"></i>{{ nombre_archivo }}
-                                            </h6>
-                                            <span class="badge {% if 'error' in resultado %}bg-danger{% elif resultado.frases_clave %}bg-success{% else %}bg-secondary{% endif %}">
-                                                {% if 'error' in resultado %}
-                                                    <i class="bi bi-exclamation-circle"></i> Error
-                                                {% elif resultado.frases_clave %}
-                                                    <i class="bi bi-check-circle"></i> Analizado
-                                                {% else %}
-                                                    <i class="bi bi-question-circle"></i> Pendiente
-                                                {% endif %}
-                                            </span>
-                                        </div>
-                                        <div class="card-body">
-                                            {% if 'error' in resultado %}
-                                                <div class="text-danger">
-                                                    <i class="bi bi-exclamation-triangle me-2"></i>
-                                                    {{ resultado.error }}
-                                                </div>
-                                            {% elif resultado.frases_clave %}
-                                                <div class="mb-3">
-                                                    <small class="text-muted">
-                                                        <i class="bi bi-calendar me-1"></i>
-                                                        {% if resultado.timestamp %}
-                                                            {{ resultado.timestamp }}
-                                                        {% else %}
-                                                            Recién analizado
-                                                        {% endif %}
-                                                    </small>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <strong>Frases encontradas:</strong>
-                                                    <div class="mt-2">
-                                                        {% for categoria, datos in resultado.frases_clave.items() %}
-                                                        <span class="badge bg-primary me-1 mb-1">{{ categoria|title }}: {{ datos.total }}</span>
-                                                        {% endfor %}
-                                                    </div>
-                                                </div>
-                                                <div class="d-grid">
-                                                    <a href="/archivo/{{ nombre_archivo }}" class="btn btn-sm btn-outline-primary">
-                                                        <i class="bi bi-eye me-1"></i>Ver Detalles
-                                                    </a>
-                                                </div>
-                                            {% else %}
-                                                <div class="text-muted text-center">
-                                                    <i class="bi bi-clock me-2"></i>Pendiente de análisis
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Información del Sistema -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-info-circle me-2"></i>Información del Sistema
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6><i class="bi bi-search me-2"></i>Frases Clave Analizadas:</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Incapacidad Permanente Parcial (IPP)</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Reclamación Administrativa Previa (RAP)</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>INSS / Instituto Nacional de la Seguridad Social</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Lesiones Permanentes No Incapacitantes (LPNI)</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Limpiadora / Personal de Limpieza</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Rotura del Manguito Rotador / Supraespinoso / Hombro Derecho</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h6><i class="bi bi-gear me-2"></i>Características Técnicas:</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Análisis automático de archivos .txt</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Búsqueda insensible a mayúsculas</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Manejo de errores robusto</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Interfaz responsive con Bootstrap 5</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>API REST para integración</li>
-                                    <li><i class="bi bi-check-circle text-success me-2"></i>Actualización en tiempo real</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
-
-    <!-- Modal para detalles de estadísticas -->
-    <div class="modal fade" id="statsModal" tabindex="-1" aria-labelledby="statsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="statsModalLabel">
-                        <i class="bi bi-bar-chart me-2"></i>Detalles de Estadísticas
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="statsModalBody">
-                    <!-- El contenido se llena dinámicamente -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para detalles de frases -->
-    <div class="modal fade" id="fraseModal" tabindex="-1" aria-labelledby="fraseModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="fraseModalLabel">
-                        <i class="bi bi-search me-2"></i>Detalles de Frase Clave
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="fraseModalBody">
-                    <!-- El contenido se llena dinámicamente -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal inteligente de análisis y recomendaciones -->
-    <div class="modal fade" id="analisisModal" tabindex="-1" aria-labelledby="analisisModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="analisisModalLabel">
-                        <i class="bi bi-brain me-2"></i>Análisis Inteligente y Recomendaciones
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="analisisModalBody">
-                    <!-- El contenido se llena dinámicamente -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success" onclick="reconstruirDemanda()">
-                        <i class="bi bi-magic me-2"></i>Reconstruir Demanda
-                    </button>
-                    <button type="button" class="btn btn-info" onclick="exportarAnalisis()">
-                        <i class="bi bi-download me-2"></i>Exportar Análisis
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal de reconstrucción de demanda -->
-    <div class="modal fade" id="reconstruccionModal" tabindex="-1" aria-labelledby="reconstruccionModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="reconstruccionModalLabel">
-                        <i class="bi bi-magic me-2"></i>Demanda Reconstruida Inteligentemente
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="reconstruccionModalBody">
-                    <!-- El contenido se llena dinámicamente -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="copiarDemandaReconstruida()">
-                        <i class="bi bi-clipboard me-2"></i>Copiar al Portapapeles
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="descargarDemandaReconstruida()">
-                        <i class="bi bi-download me-2"></i>Descargar
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-dark text-light py-4 mt-5">
-        <div class="container text-center">
-            <p class="mb-0">
-                <i class="bi bi-code-slash me-2"></i>
-                Analizador de Resoluciones IPP/INSS - Desarrollado con FastAPI y Bootstrap 5
-            </p>
-            <small class="text-muted">
-                Sistema de análisis automático para resoluciones administrativas
-            </small>
-        </div>
-    </footer>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Script personalizado -->
     <script>
-        // Refresh inteligente: solo cuando no hay actividad del usuario
-        let lastUserActivity = Date.now();
-        let refreshInterval = 120000; // 2 minutos
-        
-        // Detectar actividad del usuario
-        function updateUserActivity() {
-            lastUserActivity = Date.now();
-        }
-        
-        // Eventos que indican actividad del usuario
-        document.addEventListener('mousemove', updateUserActivity);
-        document.addEventListener('click', updateUserActivity);
-        document.addEventListener('keypress', updateUserActivity);
-        document.addEventListener('scroll', updateUserActivity);
-        
-        // Refresh inteligente
-        setInterval(function() {
-            const timeSinceActivity = Date.now() - lastUserActivity;
-            const timeSinceLastRefresh = Date.now() - (window.lastRefreshTime || 0);
-            
-            // Solo recargar si:
-            // 1. No hay actividad del usuario en los últimos 30 segundos
-            // 2. Han pasado al menos 2 minutos desde el último refresh
-            if (timeSinceActivity > 30000 && timeSinceLastRefresh > refreshInterval) {
-                console.log('🔄 Actualizando dashboard automáticamente...');
-                window.lastRefreshTime = Date.now();
-                location.reload();
-            }
-        }, 30000); // Verificar cada 30 segundos
-        
-        // Event listeners para las tarjetas de estadísticas
-        document.addEventListener('DOMContentLoaded', function() {
-            const statsCards = document.querySelectorAll('.clickable-stats');
-            statsCards.forEach(function(card) {
-                card.addEventListener('click', function() {
-                    const type = this.getAttribute('data-stats-type');
-                    const value = this.getAttribute('data-stats-value');
-                    const dataId = this.getAttribute('data-stats-id');
-                    
-                    console.log('Stats type:', type);
-                    console.log('Stats value:', value);
-                    console.log('Data ID:', dataId);
-                    
-                    try {
-                        // Get data from the corresponding script tag
-                        const dataScript = document.getElementById(dataId);
-                        if (!dataScript) {
-                            throw new Error(`Script tag with ID '${dataId}' not found`);
-                        }
-                        
-                        const rawData = dataScript.textContent.trim();
-                        console.log('Raw data from script tag:', rawData);
-                        
-                        const parsedData = parseJsonSafely(rawData);
-                        console.log('Parsed data successfully:', parsedData);
-                        showStatsDetails(type, parseInt(value), parsedData);
-                    } catch (e) {
-                        console.error('Error parsing data:', e);
-                        alert('Error al procesar los datos: ' + e.message);
-                    }
-                });
-            });
-            
-            // Event listeners para los botones de "Ir al texto"
-            const scrollButtons = document.querySelectorAll('[data-posicion]');
-            scrollButtons.forEach(function(button) {
-                button.addEventListener('click', function() {
-                    const posicion = this.getAttribute('data-posicion');
-                    const frase = this.getAttribute('data-frase');
-                    const archivo = this.getAttribute('data-archivo');
-                    scrollToPosition(parseInt(posicion), frase, archivo);
-                });
-            });
-            
-            // Event listeners para elementos clickeables en la tabla principal
-            const clickableElements = document.querySelectorAll('.clickable-frase, .clickable-badge');
-            clickableElements.forEach(function(element) {
-                element.addEventListener('click', function() {
-                    const frase = this.getAttribute('data-frase');
-                    const datos = this.getAttribute('data-datos');
-                    
-                    if (frase && datos) {
-                        try {
-                            const parsedData = parseJsonSafely(datos);
-                            showFraseDetails(frase, parsedData);
-                        } catch (e) {
-                            console.error('Error parsing datos:', e);
-                            alert('Error al procesar los datos de la frase');
-                        }
-                    }
-                });
-            });
-            
-            // Event delegation para botones "Ver detalles" en modales
-            document.addEventListener('click', function(event) {
-                // Verificar si el clic fue en un botón con data-frase
-                if (event.target.closest('[data-frase]')) {
-                    console.log('Botón con data-frase clickeado!');
-                    const button = event.target.closest('[data-frase]');
-                    const frase = button.getAttribute('data-frase');
-                    const info = button.getAttribute('data-info');
-                    const datos = button.getAttribute('data-datos');
-                    
-                    console.log('Frase:', frase);
-                    console.log('Info:', info);
-                    console.log('Datos:', datos);
-                    
-                    try {
-                        let parsedData;
-                        
-                        // Intentar parsear datos primero usando la función robusta
-                        if (datos && datos.trim()) {
-                            try {
-                                console.log('Parsing datos...');
-                                parsedData = parseJsonSafely(datos);
-                                console.log('Datos parseados exitosamente:', parsedData);
-                            } catch (parseError) {
-                                console.warn('Error parsing datos, intentando con info:', parseError);
-                                console.error('Datos originales:', datos);
-                                console.error('Datos decodificados:', decodeHtmlEntities(datos));
-                                
-                                // Si falla datos, intentar con info
-                                if (info && info.trim()) {
-                                    try {
-                                        parsedData = parseJsonSafely(info);
-                                    } catch (infoError) {
-                                        throw new Error(`No se pudieron parsear los datos: ${parseError.message}, ni la info: ${infoError.message}`);
-                                    }
-                                } else {
-                                    throw new Error('No se pudieron parsear los datos');
-                                }
-                            }
-                        } else if (info && info.trim()) {
-                            // Para botones en tarjetas de estadísticas
-                            console.log('Parsing info...');
-                            parsedData = parseJsonSafely(info);
-                        } else {
-                            throw new Error('No se encontraron datos para procesar');
-                        }
-                        
-                        showFraseDetails(frase, parsedData);
-                    } catch (e) {
-                        console.error('Error parsing data:', e);
-                        console.error('Datos originales:', datos);
-                        console.error('Info original:', info);
-                        console.error('Datos decodificados:', datos ? decodeHtmlEntities(datos) : 'N/A');
-                        console.error('Info decodificada:', info ? decodeHtmlEntities(info) : 'N/A');
-                        
-                        // Mostrar error más informativo
-                        const errorMsg = `Error al procesar los datos de la frase "${frase}": ${e.message}`;
-                        console.error(errorMsg);
-                        alert(errorMsg);
-                    }
-                }
-            });
-        });
-        
-        // Tooltip para archivos con nombres largos
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-        
-        // Set progress bar widths from data attributes
-        document.addEventListener('DOMContentLoaded', function() {
-            const progressBars = document.querySelectorAll('.progress-ranking .progress-bar');
-            progressBars.forEach(function(progressBar) {
-                const progressContainer = progressBar.closest('.progress-ranking');
-                const width = progressContainer.getAttribute('data-width');
-                if (width && !isNaN(width)) {
-                    progressBar.style.width = width + '%';
-                    progressBar.setAttribute('aria-valuenow', width);
-                }
-            });
-        });
-        
-        // Función para expandir/contraer detalles de frases
-        function toggleDetails(row, frase) {
-            const detailRow = row.nextElementSibling;
-            if (detailRow && detailRow.classList.contains('detail-row')) {
-                if (detailRow.classList.contains('show')) {
-                    detailRow.classList.remove('show');
-                    row.classList.remove('table-active');
-                } else {
-                    detailRow.classList.add('show');
-                    row.classList.add('table-active');
-                }
-            }
-        }
-        
-        // Función para ir a la posición específica del texto
-        function scrollToPosition(position, frase, archivo) {
-            if (archivo) {
-                // Navegar a la página del archivo con parámetros para resaltar la frase
-                const url = `/archivo/${encodeURIComponent(archivo)}?highlight=${encodeURIComponent(frase)}&position=${position}`;
-                window.open(url, '_blank');
-                mostrarNotificacion(`Navegando a "${archivo}" para mostrar la frase "${frase}"`, 'info');
-            } else {
-                mostrarNotificacion(`Navegando a la posición ${position} de la frase "${frase}"`, 'info');
-            }
-        }
-
-        // Función para mostrar detalles de estadísticas
-        function showStatsDetails(tipo, valor, datos) {
-            console.log('showStatsDetails llamado con:', tipo, valor, datos);
-            
-            try {
-                const modal = document.getElementById('statsModal');
-                const modalBody = document.getElementById('statsModalBody');
-                const modalTitle = document.getElementById('statsModalLabel');
-                
-                if (!modal || !modalBody || !modalTitle) {
-                    console.error('Elementos del modal no encontrados');
-                    alert('Error: Elementos del modal no encontrados');
-                    return;
-                }
-                
-                let contenido = '';
-                
-                // Los datos ya están parseados desde el event listener
-                console.log('Datos recibidos (ya parseados):', datos);
-                
-                switch(tipo) {
-                    case 'archivos':
-                        modalTitle.innerHTML = '<i class="bi bi-files me-2"></i>Detalles de Archivos Analizados';
-                        contenido = generarContenidoArchivos(datos, valor);
-                        break;
-                    case 'apariciones':
-                        modalTitle.innerHTML = '<i class="bi bi-search-heart me-2"></i>Detalles de Total Apariciones';
-                        contenido = generarContenidoApariciones(datos, valor);
-                        break;
-                    case 'frases':
-                        modalTitle.innerHTML = '<i class="bi bi-graph-up me-2"></i>Detalles de Frases Encontradas';
-                        contenido = generarContenidoFrases(datos, valor);
-                        break;
-                }
-                
-                modalBody.innerHTML = contenido;
-                
-                // Usar Bootstrap 5 para mostrar el modal
-                const bootstrapModal = new bootstrap.Modal(modal);
-                bootstrapModal.show();
-                
-            } catch (e) {
-                console.error('Error en showStatsDetails:', e);
-                alert('Error al mostrar detalles: ' + e.message);
-            }
-        }
-
-        // Función para mostrar detalles de frases
-        function showFraseDetails(frase, datos) {
-            console.log('=== showFraseDetails INICIADO ===');
-            console.log('Frase:', frase);
-            console.log('Datos recibidos:', datos);
-            console.log('Tipo de datos:', typeof datos);
-            console.log('Elemento fraseModal:', document.getElementById('fraseModal'));
-            console.log('Elemento fraseModalBody:', document.getElementById('fraseModalBody'));
-            console.log('Elemento fraseModalLabel:', document.getElementById('fraseModalLabel'));
-            console.log('Bootstrap disponible:', typeof bootstrap !== 'undefined');
-            
-            if (typeof bootstrap === 'undefined') {
-                console.error('Bootstrap no está disponible');
-                alert('Error: Bootstrap no está disponible');
-                return;
-            }
-            
-            const modal = new bootstrap.Modal(document.getElementById('fraseModal'));
-            const modalBody = document.getElementById('fraseModalBody');
-            const modalTitle = document.getElementById('fraseModalLabel');
-            
-            try {
-                let datosObj;
-                if (typeof datos === 'string') {
-                    datosObj = parseJsonSafely(datos);
-                } else {
-                    datosObj = datos;
-                }
-                
-                console.log('Datos parseados:', datosObj);
-                
-                modalTitle.innerHTML = `<i class="bi bi-search me-2"></i>Detalles de: "${frase}"`;
-                modalBody.innerHTML = generarContenidoFrase(frase, datosObj);
-            } catch (e) {
-                console.error('Error en showFraseDetails:', e);
-                modalBody.innerHTML = `<div class="alert alert-danger">Error al procesar los datos: ${e.message}</div>`;
-            }
-            
-            modal.show();
-        }
-
-        // Función para generar contenido de archivos
-        function generarContenidoArchivos(datos, total) {
-            let contenido = `
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>Total de archivos analizados:</strong> ${total}
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-            `;
-            
-            for (const [nombre, info] of Object.entries(datos)) {
-                if (info.procesado) {
-                    contenido += `
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-primary">
-                                <div class="card-header bg-primary text-white">
-                                    <h6 class="mb-0"><i class="bi bi-file-text me-2"></i>${nombre}</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong>Caracteres:</strong> ${info.longitud_texto}</p>
-                                    <p><strong>Frases clave:</strong> ${info.total_frases_clave}</p>
-                                    <p><strong>Predicción:</strong> 
-                                        <span class="badge ${info.prediccion?.es_favorable ? 'bg-success' : 'bg-danger'}">
-                                            ${info.prediccion?.es_favorable ? 'Favorable' : 'Desfavorable'}
-                                        </span>
-                                    </p>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="verArchivoCompleto('${nombre}')">
-                                        <i class="bi bi-eye me-1"></i>Ver archivo completo
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-            
-            contenido += '</div>';
-            return contenido;
-        }
-
-        // Función para generar contenido de apariciones
-        function generarContenidoApariciones(datos, total) {
-            let contenido = `
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="alert alert-success">
-                            <i class="bi bi-search-heart me-2"></i>
-                            <strong>Total de apariciones encontradas:</strong> ${total}
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-            `;
-            
-            const rankingOrdenado = Object.entries(datos).sort((a, b) => b[1].total - a[1].total);
-            
-            for (const [frase, info] of rankingOrdenado) {
-                contenido += `
-                    <div class="col-md-6 mb-3">
-                        <div class="card border-success">
-                            <div class="card-header bg-success text-white">
-                                <h6 class="mb-0"><i class="bi bi-tag me-2"></i>${frase}</h6>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Apariciones:</strong> ${info.total}</p>
-                                <p><strong>Porcentaje:</strong> ${((info.total / total) * 100).toFixed(1)}%</p>
-                                <button class="btn btn-sm btn-outline-success" 
-                                        data-frase="${frase}" 
-                                        data-info='${JSON.stringify(info).replace(/'/g, "&#39;")}'>
-                                    <i class="bi bi-search me-1"></i>Ver detalles
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            contenido += '</div>';
-            return contenido;
-        }
-
-        // Función para generar contenido de frases
-        function generarContenidoFrases(datos, total) {
-            let contenido = `
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            <i class="bi bi-graph-up me-2"></i>
-                            <strong>Total de categorías de frases:</strong> ${total}
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-            `;
-            
-            const rankingOrdenado = Object.entries(datos).sort((a, b) => b[1].total - a[1].total);
-            
-            for (const [frase, info] of rankingOrdenado) {
-                contenido += `
-                    <div class="col-md-6 mb-3">
-                        <div class="card border-info">
-                            <div class="card-header bg-info text-white">
-                                <h6 class="mb-0"><i class="bi bi-tag me-2"></i>${frase}</h6>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Apariciones:</strong> ${info.total}</p>
-                                <button class="btn btn-sm btn-outline-info" 
-                                        data-frase="${frase}" 
-                                        data-info='${JSON.stringify(info).replace(/'/g, "&#39;")}'>
-                                    <i class="bi bi-search me-1"></i>Ver detalles
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            contenido += '</div>';
-            return contenido;
-        }
-
-        // Función para generar contenido de frase específica
-        function generarContenidoFrase(frase, datos) {
-            let contenido = `
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="alert alert-primary">
-                            <i class="bi bi-search me-2"></i>
-                            <strong>Frase:</strong> "${frase}"
-                        </div>
-                        <div class="alert alert-success">
-                            <i class="bi bi-check-circle me-2"></i>
-                            <strong>Total de apariciones:</strong> ${datos.total}
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-            `;
-            
-            for (const ocurrencia of datos.ocurrencias) {
-                contenido += `
-                    <div class="col-12 mb-3">
-                        <div class="card border-primary">
-                            <div class="card-header bg-primary text-white">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">
-                                        <i class="bi bi-file-text me-2"></i>${ocurrencia.archivo}
-                                    </h6>
-                                    <span class="badge bg-light text-dark">
-                                        Línea ${ocurrencia.linea} - Posición ${ocurrencia.posicion}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="context-text">
-                                    <strong>Contexto:</strong><br>
-                                    <span class="context-content">${ocurrencia.contexto}</span>
-                                </div>
-                                                                 <div class="mt-3">
-                                     <button class="btn btn-sm btn-outline-primary" onclick="scrollToPosition(${ocurrencia.posicion}, '${frase}', '${ocurrencia.archivo}')">
-                                         <i class="bi bi-arrow-up-circle me-1"></i>Ir al texto
-                                     </button>
-                                     <button class="btn btn-sm btn-outline-secondary" onclick="copiarContexto('${ocurrencia.contexto.replace(/'/g, "\\'")}')">
-                                         <i class="bi bi-clipboard me-1"></i>Copiar contexto
-                                     </button>
-                                     <button class="btn btn-sm btn-outline-info" onclick="verArchivoCompleto('${ocurrencia.archivo}')">
-                                         <i class="bi bi-eye me-1"></i>Ver archivo completo
-                                     </button>
-                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            contenido += '</div>';
-            return contenido;
-        }
-
-        // Función para ver archivo completo
-        function verArchivoCompleto(nombre) {
-            try {
-                // Navegar a la página del archivo completo
-                window.open(`/archivo/${encodeURIComponent(nombre)}`, '_blank');
-            } catch (e) {
-                console.error('Error al abrir archivo:', e);
-                alert(`Error al abrir el archivo: ${e.message}`);
-            }
-        }
-        
-        // Función de prueba para verificar showFraseDetails
-        function testShowFraseDetails() {
-            console.log('=== TEST: testShowFraseDetails INICIADO ===');
-            const datosPrueba = {
-                total: 30,
-                ocurrencias: [
-                    {
-                        archivo: "STS_2384_2025.pdf",
-                        linea: 15,
-                        posicion: 250,
-                        contexto: "El paciente presenta lesiones en el hombro derecho que requieren tratamiento especializado."
-                    }
-                ]
-            };
-            
-            console.log('Llamando a showFraseDetails con datos de prueba...');
-            showFraseDetails("lesiones_hombro", datosPrueba);
-        }
-        
-        // Función utilitaria para decodificar entidades HTML de forma segura
-        function decodeHtmlEntities(text) {
-            if (!text || typeof text !== 'string') return text;
-            
-            // Crear un elemento temporal para usar el parser del navegador
-            const textarea = document.createElement('textarea');
-            textarea.innerHTML = text;
-            return textarea.value;
-        }
-        
-                 // Función para parsear JSON de forma robusta con diagnóstico completo
-         function parseJsonSafely(jsonString) {
-             // DIAGNÓSTICO INICIAL
-             console.log('🔍 === DIAGNÓSTICO JSON ===');
-             console.log('Tipo de input:', typeof jsonString);
-             console.log('Valor del input:', jsonString);
-             console.log('Longitud del input:', jsonString ? jsonString.length : 'N/A');
-             
-             // VALIDACIÓN DE TIPO
-             if (jsonString === null || jsonString === undefined) {
-                 throw new Error('Input es null o undefined');
-             }
-             
-             if (typeof jsonString !== 'string') {
-                 throw new Error(`Input debe ser string, recibido: ${typeof jsonString}`);
-             }
-             
-             if (jsonString.trim() === '') {
-                 throw new Error('Input es un string vacío');
-             }
-             
-             // VALIDACIÓN DE JSON INCOMPLETO
-             const trimmed = jsonString.trim();
-             if (trimmed === '{' || trimmed === '[' || trimmed === '"' || trimmed === 'null') {
-                 throw new Error(`JSON incompleto detectado: "${trimmed}" - Falta contenido válido`);
-             }
-             
-             // DETECCIÓN DE PROBLEMAS COMUNES
-             const problemas = [];
-             
-             if (trimmed.includes('&quot;') || trimmed.includes('&amp;') || 
-                 trimmed.includes('&lt;') || trimmed.includes('&gt;')) {
-                 problemas.push('Contiene entidades HTML');
-             }
-             
-             if (trimmed.includes('undefined') || trimmed.includes('null')) {
-                 problemas.push('Contiene valores undefined/null como texto');
-             }
-             
-             if (trimmed.includes('\n') || trimmed.includes('\t') || trimmed.includes('\r')) {
-                 problemas.push('Contiene caracteres de control');
-             }
-             
-             if (trimmed.match(/[\u200B-\u200D\uFEFF]/)) {
-                 problemas.push('Contiene espacios de ancho cero Unicode');
-             }
-             
-             // Detectar JSON incompleto
-             if (trimmed.startsWith('{') && !trimmed.includes(':')) {
-                 problemas.push('JSON objeto incompleto - falta propiedades');
-             }
-             
-             if (trimmed.startsWith('[') && !trimmed.includes(',')) {
-                 problemas.push('JSON array incompleto - falta elementos');
-             }
-             
-             if (problemas.length > 0) {
-                 console.log('⚠️ Problemas detectados:', problemas);
-             }
-             
-             // INTENTO 1: Parse directo
-             try {
-                 console.log('🔄 Intento 1: Parse directo');
-                 const resultado = JSON.parse(trimmed);
-                 console.log('✅ Parse directo exitoso');
-                 return resultado;
-             } catch (e1) {
-                 console.log('❌ Intento 1 falló:', e1.message);
-                 
-                 // INTENTO 2: Decodificar entidades HTML
-                 try {
-                     console.log('🔄 Intento 2: Decodificar entidades HTML');
-                     const decoded = decodeHtmlEntities(trimmed);
-                     console.log('Texto decodificado:', decoded);
-                     
-                     if (decoded === trimmed) {
-                         console.log('⚠️ No se detectaron cambios en la decodificación');
-                     }
-                     
-                     const resultado = JSON.parse(decoded);
-                     console.log('✅ Parse con decodificación HTML exitoso');
-                     return resultado;
-                 } catch (e2) {
-                     console.log('❌ Intento 2 falló:', e2.message);
-                     
-                     // INTENTO 3: Limpieza agresiva de caracteres
-                     try {
-                         console.log('🔄 Intento 3: Limpieza agresiva de caracteres');
-                         const cleaned = trimmed
-                             .replace(/^\s+|\s+$/g, '') // Espacios inicio/final
-                             .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Caracteres de control
-                             .replace(/[\u200B-\u200D\uFEFF]/g, '') // Espacios Unicode
-                             .replace(/\n/g, ' ') // Saltos de línea
-                             .replace(/\t/g, ' ') // Tabulaciones
-                             .replace(/\r/g, ' ') // Retornos de carro
-                             .replace(/\s+/g, ' '); // Múltiples espacios
-                         
-                         console.log('Texto limpiado:', cleaned);
-                         
-                         if (cleaned === trimmed) {
-                             console.log('⚠️ No se detectaron cambios en la limpieza');
-                         }
-                         
-                         const resultado = JSON.parse(cleaned);
-                         console.log('✅ Parse con limpieza exitoso');
-                         return resultado;
-                     } catch (e3) {
-                         console.log('❌ Intento 3 falló:', e3.message);
-                         
-                         // INTENTO 4: Análisis de estructura JSON
-                         try {
-                             console.log('🔄 Intento 4: Análisis de estructura JSON');
-                             const analisis = analizarEstructuraJSON(trimmed);
-                             console.log('Análisis de estructura:', analisis);
-                             
-                             // Intentar reparar JSON basado en el análisis
-                             const reparado = repararJSON(trimmed, analisis);
-                             console.log('JSON reparado:', reparado);
-                             
-                             const resultado = JSON.parse(reparado);
-                             console.log('✅ Parse con reparación exitoso');
-                             return resultado;
-                         } catch (e4) {
-                             console.log('❌ Intento 4 falló:', e4.message);
-                             
-                             // ERROR FINAL CON DIAGNÓSTICO COMPLETO
-                             const errorFinal = new Error(`Error parsing JSON después de 4 intentos:\n` +
-                                 `1. Parse directo: ${e1.message}\n` +
-                                 `2. Decodificación HTML: ${e2.message}\n` +
-                                 `3. Limpieza de caracteres: ${e3.message}\n` +
-                                 `4. Reparación JSON: ${e4.message}\n\n` +
-                                 `Input original: "${jsonString}"\n` +
-                                 `Longitud: ${jsonString.length}\n` +
-                                 `Problemas detectados: ${problemas.join(', ')}`);
-                             
-                             console.error('💥 ERROR FINAL:', errorFinal);
-                             throw errorFinal;
-                         }
-                     }
-                 }
-             }
-         }
-        
-        // Función para analizar la estructura del JSON problemático
-        function analizarEstructuraJSON(jsonString) {
-            const analisis = {
-                tieneLlaves: jsonString.includes('{') && jsonString.includes('}'),
-                tieneCorchetes: jsonString.includes('[') && jsonString.includes(']'),
-                tieneComillas: jsonString.includes('"'),
-                tieneComas: jsonString.includes(','),
-                tieneDosPuntos: jsonString.includes(':'),
-                longitud: jsonString.length,
-                primerCaracter: jsonString.charAt(0),
-                ultimoCaracter: jsonString.charAt(jsonString.length - 1),
-                caracteresEspeciales: []
-            };
-            
-            // Detectar caracteres especiales problemáticos
-            const caracteresEspeciales = jsonString.match(/[^\w\s{}[\]",:.-]/g);
-            if (caracteresEspeciales) {
-                analisis.caracteresEspeciales = [...new Set(caracteresEspeciales)];
-            }
-            
-            return analisis;
-        }
-        
-                 // Función para intentar reparar JSON malformado
-         function repararJSON(jsonString, analisis) {
-             let reparado = jsonString;
-             
-             // Casos especiales de JSON incompleto
-             if (reparado === '{') {
-                 reparado = '{}';
-                 console.log('🔄 Reparando JSON objeto vacío: {}');
-                 return reparado;
-             }
-             
-             if (reparado === '[') {
-                 reparado = '[]';
-                 console.log('🔄 Reparando JSON array vacío: []');
-                 return reparado;
-             }
-             
-             if (reparado === '"') {
-                 reparado = '""';
-                 console.log('🔄 Reparando JSON string vacío: ""');
-                 return reparado;
-             }
-             
-             // Reparar comillas mal escapadas
-             reparado = reparado.replace(/&quot;/g, '"');
-             reparado = reparado.replace(/&#39;/g, "'");
-             reparado = reparado.replace(/&amp;/g, '&');
-             reparado = reparado.replace(/&lt;/g, '<');
-             reparado = reparado.replace(/&gt;/g, '>');
-             
-             // Reparar comillas simples por dobles
-             reparado = reparado.replace(/'/g, '"');
-             
-             // Reparar propiedades sin comillas
-             reparado = reparado.replace(/(\w+):/g, '"$1":');
-             
-             // Reparar valores sin comillas (solo strings)
-             reparado = reparado.replace(/:\s*([^",{}\[\]]+)(?=,|}|])/g, ':"$1"');
-             
-             // Eliminar comas extra al final
-             reparado = reparado.replace(/,(\s*[}\]])/g, '$1');
-             
-             // Si empieza con { pero no termina con }, agregar }
-             if (reparado.startsWith('{') && !reparado.endsWith('}')) {
-                 reparado += '}';
-                 console.log('🔄 Agregando llave de cierre: }');
-             }
-             
-             // Si empieza con [ pero no termina con ], agregar ]
-             if (reparado.startsWith('[') && !reparado.endsWith(']')) {
-                 reparado += ']';
-                 console.log('🔄 Agregando corchete de cierre: ]');
-             }
-             
-             return reparado;
-         }
-        
-                 // Función para depurar datos de frases
-         function debugFraseData() {
-             console.log('=== DEBUG: Datos de frases ===');
-             
-             // Verificar datos del contexto Jinja2
-             console.log('=== CONTEXTO JINJA2 ===');
-             console.log('ranking_global disponible:', typeof ranking_global !== 'undefined');
-             if (typeof ranking_global !== 'undefined') {
-                 console.log('ranking_global:', ranking_global);
-                 console.log('Tipo:', typeof ranking_global);
-                 console.log('Claves:', Object.keys(ranking_global));
-             }
-             
-             const elementos = document.querySelectorAll('[data-frase]');
-             console.log(`Encontrados ${elementos.length} elementos con data-frase`);
-             
-             let elementosConDatos = 0;
-             let elementosSinDatos = 0;
-             let erroresParsing = 0;
-             let jsonIncompletos = 0;
-             
-             elementos.forEach((elemento, index) => {
-                 const frase = elemento.getAttribute('data-frase');
-                 const datos = elemento.getAttribute('data-datos');
-                 const info = elemento.getAttribute('data-info');
-                 
-                 console.log(`Elemento ${index + 1}:`);
-                 console.log(`  Frase: ${frase}`);
-                 console.log(`  Datos: ${datos ? 'SÍ' : 'NO'}`);
-                 console.log(`  Info: ${info ? 'SÍ' : 'NO'}`);
-                 
-                 if (datos) {
-                     elementosConDatos++;
-                     
-                     // Verificar si es JSON incompleto antes de intentar parsear
-                     const trimmed = datos.trim();
-                     if (trimmed === '{' || trimmed === '[' || trimmed === '"' || trimmed === 'null') {
-                         jsonIncompletos++;
-                         console.error(`  🚨 JSON INCOMPLETO detectado: "${trimmed}"`);
-                         console.error(`  ⚠️ Este es un problema del backend - revisa la generación de datos`);
-                         continue;
-                     }
-                     
-                     try {
-                         const parsed = parseJsonSafely(datos);
-                         console.log(`  ✅ Datos parseados correctamente:`, parsed);
-                     } catch (e) {
-                         erroresParsing++;
-                         console.error(`  ❌ Error parsing datos: ${e.message}`);
-                         console.error(`  Datos crudos: "${datos}"`);
-                         console.error(`  Datos decodificados: "${decodeHtmlEntities(datos)}"`);
-                         
-                         // Si es un error de JSON incompleto, sugerir revisar el backend
-                         if (e.message.includes('JSON incompleto')) {
-                             console.error(`  🔧 SUGERENCIA: Revisa el backend - está generando JSON incompleto`);
-                         }
-                     }
-                 } else {
-                     elementosSinDatos++;
-                     console.log(`  ⚠️ No tiene datos`);
-                 }
-                 
-                 if (info) {
-                     try {
-                         const parsed = parseJsonSafely(info);
-                         console.log(`  ✅ Info parseada:`, parsed);
-                     } catch (e) {
-                         console.error(`  ❌ Error parsing info: ${e.message}`);
-                         console.error(`  Info cruda: "${info}"`);
-                         console.error(`  Info decodificada: "${decodeHtmlEntities(info)}"`);
-                     }
-                 }
-                 
-                 console.log('---');
-             });
-             
-             console.log('=== RESUMEN DEBUG ===');
-             console.log(`Total elementos: ${elementos.length}`);
-             console.log(`Con datos: ${elementosConDatos}`);
-             console.log(`Sin datos: ${elementosSinDatos}`);
-             console.log(`Errores de parsing: ${erroresParsing}`);
-             console.log(`JSON incompletos: ${jsonIncompletos}`);
-             
-             if (erroresParsing > 0) {
-                 console.warn('⚠️ Hay elementos con errores de parsing. Revisa el template.');
-             }
-             
-             if (jsonIncompletos > 0) {
-                 console.error('🚨 CRÍTICO: Hay elementos con JSON incompleto. Esto indica un problema en el backend.');
-                 console.error('🔧 ACCIÓN REQUERIDA: Revisa la función que genera los datos en el backend.');
-             }
-             
-             // Verificar si hay datos en los script tags
-             console.log('=== SCRIPT TAGS ===');
-             const scriptTags = document.querySelectorAll('script[type="application/json"]');
-             scriptTags.forEach((script, index) => {
-                 console.log(`Script ${index + 1} (${script.id}):`);
-                 try {
-                     const data = JSON.parse(script.textContent.trim());
-                     console.log(`  ✅ Datos válidos:`, data);
-                 } catch (e) {
-                     console.error(`  ❌ Error parsing: ${e.message}`);
-                     console.error(`  Contenido: "${script.textContent.trim()}"`);
-                 }
-             });
-             
-             // Verificar el backend directamente
-             console.log('=== VERIFICACIÓN BACKEND ===');
-             verificarDatosBackend().then(() => {
-                 console.log('✅ Verificación del backend completada');
-             }).catch((error) => {
-                 console.error('❌ Error verificando backend:', error);
-             });
-         }
-        
-        // Función para probar la búsqueda de argumentos
-        function testBusquedaArgumentos() {
-            console.log('=== TEST: Búsqueda de Argumentos ===');
-            
-            // Buscar elementos con data-frase
-            const elementos = document.querySelectorAll('[data-frase]');
-            console.log(`Encontrados ${elementos.length} elementos con data-frase`);
-            
-            // Encontrar el primer elemento que tenga datos válidos
-            let elementoValido = null;
-            let datosValidos = null;
-            
-            for (const elemento of elementos) {
-                const datos = elemento.getAttribute('data-datos');
-                if (datos) {
-                    try {
-                        const parsed = parseJsonSafely(datos);
-                        elementoValido = elemento;
-                        datosValidos = parsed;
-                        break;
-                    } catch (e) {
-                        continue;
-                    }
-                }
-            }
-            
-            if (elementoValido && datosValidos) {
-                const frase = elementoValido.getAttribute('data-frase');
-                console.log(`✅ Elemento válido encontrado:`, frase);
-                console.log(`✅ Datos válidos:`, datosValidos);
-                
-                // Simular click en el elemento
-                console.log('🔄 Simulando click en el elemento...');
-                elementoValido.click();
-                
-                // Mostrar notificación de éxito
-                mostrarNotificacion(`Test exitoso: Elemento "${frase}" encontrado y clickeado`, 'success');
-            } else {
-                console.error('❌ No se encontraron elementos válidos para probar');
-                mostrarNotificacion('Test fallido: No hay elementos válidos para probar', 'danger');
-            }
-        }
-        
-        // Función para verificar datos del backend
-        async function verificarDatosBackend() {
-            console.log('=== VERIFICACIÓN BACKEND ===');
-            
-            try {
-                // Verificar endpoint de salud
-                console.log('🔍 Verificando endpoint de salud...');
-                const healthResponse = await fetch('/health');
-                const healthData = await healthResponse.text();
-                console.log('✅ Health endpoint:', healthData);
-                
-                // Verificar datos del ranking global
-                console.log('🔍 Verificando datos del ranking...');
-                const rankingResponse = await fetch('/api/analizar');
-                const rankingData = await rankingResponse.json();
-                console.log('✅ Datos del ranking:', rankingData);
-                
-                if (rankingData.ranking_global) {
-                    console.log('📊 Ranking global disponible:');
-                    console.log('  - Total de frases:', Object.keys(rankingData.ranking_global).length);
-                    console.log('  - Frases encontradas:', Object.keys(rankingData.ranking_global));
-                    
-                    // Verificar estructura de datos
-                    for (const [frase, datos] of Object.entries(rankingData.ranking_global)) {
-                        console.log(`  - "${frase}":`, datos);
-                        if (datos.ocurrencias) {
-                            console.log(`    - Ocurrencias: ${datos.ocurrencias.length}`);
-                        }
-                    }
-                } else {
-                    console.warn('⚠️ No hay ranking_global en la respuesta');
-                }
-                
-                // Verificar si hay archivos analizados
-                if (rankingData.archivos_analizados) {
-                    console.log('📁 Archivos analizados:', rankingData.archivos_analizados);
-                }
-                
-                if (rankingData.total_apariciones) {
-                    console.log('🔢 Total de apariciones:', rankingData.total_apariciones);
-                }
-                
-            } catch (error) {
-                console.error('❌ Error verificando backend:', error);
-                alert(`Error verificando backend: ${error.message}`);
-            }
-        }
-        
-        // Función para refresh manual
-        function manualRefresh() {
-            console.log('🔄 Actualización manual iniciada...');
-            location.reload();
-        }
-        
-        // Actualizar indicador de refresh
-        function updateRefreshStatus() {
-            const statusElement = document.getElementById('refreshStatus');
-            if (!statusElement) return;
-            
-            const timeSinceActivity = Date.now() - lastUserActivity;
-            const timeSinceLastRefresh = Date.now() - (window.lastRefreshTime || 0);
-            const timeUntilRefresh = Math.max(0, refreshInterval - timeSinceLastRefresh);
-            
-            if (timeSinceActivity < 30000) {
-                statusElement.textContent = 'Dashboard se actualizará automáticamente cuando no haya actividad';
-            } else if (timeUntilRefresh > 0) {
-                const minutes = Math.floor(timeUntilRefresh / 60000);
-                const seconds = Math.floor((timeUntilRefresh % 60000) / 1000);
-                statusElement.textContent = `Dashboard se actualizará en ${minutes}:${seconds.toString().padStart(2, '0')}`;
-            } else {
-                statusElement.textContent = 'Dashboard se actualizará en cualquier momento...';
-            }
-        }
-        
-        // Actualizar indicador cada segundo
-        setInterval(updateRefreshStatus, 1000);
-
         // Función para mostrar notificaciones
         function mostrarNotificacion(mensaje, tipo) {
             const notificacion = document.createElement('div');
@@ -1572,7 +140,6 @@
             `;
             document.body.appendChild(notificacion);
             
-            // Auto-ocultar después de 5 segundos
             setTimeout(() => {
                 if (notificacion.parentNode) {
                     notificacion.remove();
@@ -1580,607 +147,130 @@
             }, 5000);
         }
 
-                 // Función para copiar contexto
-         function copiarContexto(contexto) {
-             navigator.clipboard.writeText(contexto).then(() => {
-                 // Mostrar feedback temporal
-                 const btn = event.target.closest('button');
-                 const originalText = btn.innerHTML;
-                 btn.innerHTML = '<i class="bi bi-check me-1"></i>Copiado!';
-                 btn.classList.remove('btn-outline-secondary');
-                 btn.classList.add('btn-success');
-                 
-                 setTimeout(() => {
-                     btn.innerHTML = originalText;
-                     btn.classList.remove('btn-success');
-                     btn.classList.add('btn-outline-secondary');
-                 }, 2000);
-             });
-         }
-         
-         // ===== FUNCIONES DE ANÁLISIS INTELIGENTE =====
-         
-         // Función para mostrar el análisis inteligente
-         async function mostrarAnalisisInteligente() {
-             try {
-                 console.log('🔍 Iniciando análisis inteligente...');
-                 
-                 // Obtener datos del backend
-                 const response = await fetch('/api/analizar');
-                 const datos = await response.json();
-                 
-                 if (!datos || !datos.ranking_global) {
-                     throw new Error('No se pudieron obtener datos del análisis');
-                 }
-                 
-                 // Generar contenido del análisis
-                 const contenido = generarContenidoAnalisisInteligente(datos);
-                 
-                 // Mostrar modal
-                 document.getElementById('analisisModalBody').innerHTML = contenido;
-                 const modal = new bootstrap.Modal(document.getElementById('analisisModal'));
-                 modal.show();
-                 
-                 // Guardar datos para reconstrucción
-                 window.datosAnalisis = datos;
-                 
-             } catch (error) {
-                 console.error('❌ Error en análisis inteligente:', error);
-                 mostrarNotificacion(`Error en análisis inteligente: ${error.message}`, 'danger');
-             }
-         }
-         
-         // Función para generar contenido del análisis inteligente
-         function generarContenidoAnalisisInteligente(datos) {
-             let contenido = `
-                 <div class="row">
-                     <div class="col-12">
-                         <div class="alert alert-info">
-                             <h5><i class="bi bi-info-circle me-2"></i>Resumen del Análisis</h5>
-                             <p>Se analizaron <strong>${datos.archivos_analizados || 0}</strong> documentos con un total de <strong>${datos.total_apariciones || 0}</strong> frases clave identificadas.</p>
-                         </div>
-                     </div>
-                 </div>
-                 
-                 <div class="row">
-                     <div class="col-md-6">
-                         <div class="card">
-                             <div class="card-header bg-primary text-white">
-                                 <h6><i class="bi bi-graph-up me-2"></i>Estadísticas Generales</h6>
-                             </div>
-                             <div class="card-body">
-                                 <ul class="list-unstyled">
-                                     <li><strong>Archivos analizados:</strong> ${datos.archivos_analizados || 0}</li>
-                                     <li><strong>Total de apariciones:</strong> ${datos.total_apariciones || 0}</li>
-                                     <li><strong>Categorías de frases:</strong> ${Object.keys(datos.ranking_global || {}).length}</li>
-                                     <li><strong>Modelo IA disponible:</strong> ${datos.modelo_ia ? 'Sí' : 'No'}</li>
-                                 </ul>
-                             </div>
-                         </div>
-                     </div>
-                     
-                     <div class="col-md-6">
-                         <div class="card">
-                             <div class="card-header bg-success text-white">
-                                 <h6><i class="bi bi-lightbulb me-2"></i>Insights Principales</h6>
-                             </div>
-                             <div class="card-body">
-                                 <ul class="list-unstyled">
-                                     <li>🎯 <strong>Confianza del análisis:</strong> ${datos.confianza_global || 'N/A'}</li>
-                                     <li>📊 <strong>Probabilidad de éxito:</strong> ${datos.probabilidad_exito || 'N/A'}</li>
-                                     <li>🔍 <strong>Método de análisis:</strong> ${datos.metodo_analisis || 'N/A'}</li>
-                                 </ul>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-                 
-                 <div class="row mt-3">
-                     <div class="col-12">
-                         <div class="card">
-                             <div class="card-header bg-warning text-dark">
-                                 <h6><i class="bi bi-exclamation-triangle me-2"></i>Recomendaciones para Mejorar la Confianza</h6>
-                             </div>
-                             <div class="card-body">
-                                 <div id="recomendacionesContainer">
-                                     <div class="text-center">
-                                         <div class="spinner-border text-primary" role="status">
-                                             <span class="visually-hidden">Generando recomendaciones...</span>
-                                         </div>
-                                         <p class="mt-2">Generando recomendaciones personalizadas...</p>
-                                     </div>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-                 
-                 <div class="row mt-3">
-                     <div class="col-12">
-                         <div class="card">
-                             <div class="card-header bg-info text-white">
-                                 <h6><i class="bi bi-gear me-2"></i>Factores de Análisis Detallados</h6>
-                             </div>
-                             <div class="card-body">
-                                 <div id="factoresContainer">
-                                     <div class="text-center">
-                                         <div class="spinner-border text-info" role="status">
-                                             <span class="visually-hidden">Analizando factores...</span>
-                                         </div>
-                                         <p class="mt-2">Analizando factores de confianza...</p>
-                                     </div>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-             `;
-             
-             // Generar recomendaciones y factores de forma asíncrona
-             setTimeout(() => {
-                 generarRecomendacionesDetalladas(datos);
-                 generarFactoresDetallados(datos);
-             }, 1000);
-             
-             return contenido;
-         }
-         
-         // Función para generar recomendaciones detalladas
-         function generarRecomendacionesDetalladas(datos) {
-             const container = document.getElementById('recomendacionesContainer');
-             if (!container) return;
-             
-             let recomendaciones = `
-                 <div class="row">
-                     <div class="col-md-6">
-                         <h6 class="text-primary">🎯 Estrategias para Aumentar la Confianza</h6>
-                         <ul class="list-group list-group-flush">
-                             <li class="list-group-item">
-                                 <strong>Estructura del Documento:</strong>
-                                 <ul>
-                                     <li>Incluir sección de "Hechos" claramente definida</li>
-                                     <li>Agregar "Fundamentos de Derecho" específicos</li>
-                                     <li>Incluir "Conclusiones" bien argumentadas</li>
-                                     <li>Agregar "Solicitud" clara y específica</li>
-                                 </ul>
-                             </li>
-                             <li class="list-group-item">
-                                 <strong>Evidencia Médica:</strong>
-                                 <ul>
-                                     <li>Adjuntar informes médicos detallados</li>
-                                     <li>Incluir dictámenes periciales</li>
-                                     <li>Documentar secuelas permanentes</li>
-                                     <li>Especificar grado de incapacidad</li>
-                                 </ul>
-                             </li>
-                         </ul>
-                     </div>
-                     
-                     <div class="col-md-6">
-                         <h6 class="text-success">💡 Mejoras Específicas</h6>
-                         <ul class="list-group list-group-flush">
-                             <li class="list-group-item">
-                                 <strong>Procedimiento Legal:</strong>
-                                 <ul>
-                                     <li>Documentar reclamación administrativa previa</li>
-                                     <li>Verificar cumplimiento de plazos</li>
-                                     <li>Incluir notificaciones oficiales</li>
-                                 </ul>
-                             </li>
-                             <li class="list-group-item">
-                                 <strong>Terminología Jurídica:</strong>
-                                 <ul>
-                                     <li>Usar términos como "actor", "demandado"</li>
-                                     <li>Incluir "fundamentos" y "considerandos"</li>
-                                     <li>Agregar "vistos" y "resultando"</li>
-                                 </ul>
-                             </li>
-                         </ul>
-                     </div>
-                 </div>
-                 
-                 <div class="alert alert-warning mt-3">
-                     <h6><i class="bi bi-lightbulb me-2"></i>Consejo Clave</h6>
-                     <p>Para maximizar la probabilidad de éxito, asegúrate de que tu demanda incluya al menos 4 de los 6 factores analizados con puntuación alta (≥0.7).</p>
-                 </div>
-             `;
-             
-             container.innerHTML = recomendaciones;
-         }
-         
-         // Función para generar factores detallados
-         function generarFactoresDetallados(datos) {
-             const container = document.getElementById('factoresContainer');
-             if (!container) return;
-             
-             // Simular análisis de factores (en un caso real, esto vendría del backend)
-             const factores = {
-                 'palabras_clave': { score: 0.65, peso: 0.25, estado: 'medio' },
-                 'estructura': { score: 0.45, peso: 0.20, estado: 'bajo' },
-                 'evidencia': { score: 0.75, peso: 0.20, estado: 'alto' },
-                 'procedimiento': { score: 0.60, peso: 0.15, estado: 'medio' },
-                 'contexto': { score: 0.80, peso: 0.10, estado: 'alto' },
-                 'terminologia': { score: 0.50, peso: 0.10, estado: 'medio' }
-             };
-             
-             let contenido = `
-                 <div class="row">
-                     <div class="col-12">
-                         <div class="table-responsive">
-                             <table class="table table-striped">
-                                 <thead class="table-dark">
-                                     <tr>
-                                         <th>Factor</th>
-                                         <th>Puntuación</th>
-                                         <th>Peso</th>
-                                         <th>Estado</th>
-                                         <th>Impacto</th>
-                                     </tr>
-                                 </thead>
-                                 <tbody>
-             `;
-             
-             for (const [factor, datos] of Object.entries(factores)) {
-                 const nombre = factor.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-                 const color = datos.score >= 0.7 ? 'success' : datos.score >= 0.5 ? 'warning' : 'danger';
-                 const estado = datos.score >= 0.7 ? 'Alto' : datos.score >= 0.5 ? 'Medio' : 'Bajo';
-                 const impacto = (datos.score * datos.peso * 100).toFixed(1);
-                 
-                 contenido += `
-                     <tr>
-                         <td><strong>${nombre}</strong></td>
-                         <td>
-                             <div class="progress" style="height: 20px;">
-                                 <div class="progress-bar bg-${color}" style="width: ${datos.score * 100}%">
-                                     ${(datos.score * 100).toFixed(0)}%
-                                 </div>
-                             </div>
-                         </td>
-                         <td>${(datos.peso * 100).toFixed(0)}%</td>
-                         <td><span class="badge bg-${color}">${estado}</span></td>
-                         <td>${impacto}%</td>
-                     </tr>
-                 `;
-             }
-             
-             contenido += `
-                                 </tbody>
-                             </table>
-                         </div>
-                     </div>
-                 </div>
-                 
-                 <div class="alert alert-info mt-3">
-                     <h6><i class="bi bi-calculator me-2"></i>Análisis de Impacto</h6>
-                     <p>La puntuación total se calcula ponderando cada factor por su peso. Los factores con mayor peso tienen mayor impacto en la confianza final.</p>
-                 </div>
-             `;
-             
-             container.innerHTML = contenido;
-         }
-         
-         // Función para reconstruir la demanda
-         function reconstruirDemanda() {
-             try {
-                 if (!window.datosAnalisis) {
-                     throw new Error('No hay datos de análisis disponibles');
-                 }
-                 
-                 console.log('🔧 Iniciando reconstrucción de demanda...');
-                 
-                 // Generar demanda reconstruida
-                 const demandaReconstruida = generarDemandaReconstruida(window.datosAnalisis);
-                 
-                 // Mostrar modal de reconstrucción
-                 document.getElementById('reconstruccionModalBody').innerHTML = demandaReconstruida;
-                 const modal = new bootstrap.Modal(document.getElementById('reconstruccionModal'));
-                 modal.show();
-                 
-                 // Cerrar modal de análisis
-                 const analisisModal = bootstrap.Modal.getInstance(document.getElementById('analisisModal'));
-                 if (analisisModal) {
-                     analisisModal.hide();
-                 }
-                 
-             } catch (error) {
-                 console.error('❌ Error reconstruyendo demanda:', error);
-                 mostrarNotificacion(`Error reconstruyendo demanda: ${error.message}`, 'danger');
-             }
-         }
-         
-         // Función para generar demanda reconstruida
-         function generarDemandaReconstruida(datos) {
-             const fecha = new Date().toLocaleDateString('es-ES');
-             
-             return `
-                 <div class="row">
-                     <div class="col-12">
-                         <div class="alert alert-success">
-                             <h6><i class="bi bi-check-circle me-2"></i>Demanda Reconstruida Inteligentemente</h6>
-                             <p>Esta demanda ha sido optimizada basándose en el análisis de factores de confianza y mejores prácticas legales.</p>
-                         </div>
-                     </div>
-                 </div>
-                 
-                 <div class="row">
-                     <div class="col-12">
-                         <div class="card">
-                             <div class="card-header bg-primary text-white">
-                                 <h6><i class="bi bi-file-text me-2"></i>RECLAMACIÓN ADMINISTRATIVA PREVIA</h6>
-                             </div>
-                             <div class="card-body">
-                                 <div class="demanda-texto" id="demandaTexto">
-                                     <p><strong>EXPEDIENTE:</strong> [NÚMERO DE EXPEDIENTE]</p>
-                                     <p><strong>FECHA:</strong> ${fecha}</p>
-                                     <p><strong>ASUNTO:</strong> Reclamación Administrativa Previa por Incapacidad Permanente Parcial</p>
-                                     
-                                     <hr>
-                                     
-                                     <h6><strong>VISTOS:</strong></h6>
-                                     <p>Los presentes autos de reclamación administrativa previa presentada por D. [NOMBRE COMPLETO], en relación con la resolución del Instituto Nacional de la Seguridad Social (INSS) que deniega el reconocimiento de Incapacidad Permanente Parcial.</p>
-                                     
-                                     <h6><strong>RESULTANDO:</strong></h6>
-                                     
-                                     <h6><strong>PRIMERO.-</strong></h6>
-                                     <p>Que el interesado, D. [NOMBRE COMPLETO], trabajador de [PROFESIÓN] en la empresa "[NOMBRE EMPRESA]", sufrió un accidente laboral el día [FECHA ACCIDENTE], mientras realizaba tareas de [DESCRIPCIÓN TAREAS].</p>
-                                     
-                                     <h6><strong>SEGUNDO.-</strong></h6>
-                                     <p>Que como consecuencia del accidente, el trabajador sufrió lesiones en [PARTE DEL CUERPO LESIONADA] que requieren tratamiento especializado y han dejado secuelas permanentes.</p>
-                                     
-                                     <h6><strong>TERCERO.-</strong></h6>
-                                     <p>Que se han cumplido todos los trámites administrativos previos, incluyendo la presentación de la reclamación administrativa previa dentro de los plazos legalmente establecidos.</p>
-                                     
-                                     <h6><strong>FUNDAMENTOS DE DERECHO:</strong></h6>
-                                     <p>Por lo que se refiere al fondo de la cuestión, se invoca el artículo [ARTÍCULO RELEVANTE] de la Ley General de la Seguridad Social, que regula el reconocimiento de la Incapacidad Permanente Parcial.</p>
-                                     
-                                     <p>Asimismo, se fundamenta en la jurisprudencia del Tribunal Supremo que establece que [PRINCIPIO JURÍDICO RELEVANTE].</p>
-                                     
-                                     <h6><strong>CONCLUSIONES:</strong></h6>
-                                     <p>En consecuencia, se solicita:</p>
-                                     <ol>
-                                         <li>La declaración de Incapacidad Permanente Parcial con el grado correspondiente.</li>
-                                         <li>El reconocimiento de la prestación económica que proceda según la legislación vigente.</li>
-                                         <li>La aplicación de los coeficientes de corrección correspondientes.</li>
-                                     </ol>
-                                     
-                                     <h6><strong>SOLICITUD:</strong></h6>
-                                     <p>Por todo lo expuesto, se solicita a la Dirección Provincial del INSS que, en virtud de lo dispuesto en la normativa vigente, se sirva:</p>
-                                     <ol>
-                                         <li>Reconocer la Incapacidad Permanente Parcial al interesado.</li>
-                                         <li>Calcular la prestación económica correspondiente.</li>
-                                         <li>Notificar la resolución al interesado.</li>
-                                     </ol>
-                                     
-                                     <hr>
-                                     
-                                     <p><strong>FIRMA DEL INTERESADO:</strong></p>
-                                     <p>_________________________</p>
-                                     <p>D. [NOMBRE COMPLETO]</p>
-                                     <p>DNI: [NÚMERO DNI]</p>
-                                     <p>Dirección: [DIRECCIÓN COMPLETA]</p>
-                                     <p>Teléfono: [TELÉFONO]</p>
-                                     <p>Email: [EMAIL]</p>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-                 
-                 <div class="alert alert-warning mt-3">
-                     <h6><i class="bi bi-exclamation-triangle me-2"></i>Instrucciones de Uso</h6>
-                     <p>1. <strong>Personaliza</strong> los campos entre corchetes con tu información específica</p>
-                     <p>2. <strong>Adjunta</strong> toda la documentación médica y laboral disponible</p>
-                     <p>3. <strong>Verifica</strong> que se cumplan todos los plazos administrativos</p>
-                     <p>4. <strong>Revisa</strong> que la terminología jurídica sea correcta</p>
-                 </div>
-             `;
-         }
-         
-         // Función para copiar demanda reconstruida
-         function copiarDemandaReconstruida() {
-             const texto = document.getElementById('demandaTexto').innerText;
-             navigator.clipboard.writeText(texto).then(() => {
-                 mostrarNotificacion('✅ Demanda copiada al portapapeles', 'success');
-             }).catch(() => {
-                 mostrarNotificacion('❌ Error al copiar la demanda', 'danger');
-             });
-         }
-         
-         // Función para descargar demanda reconstruida
-         function descargarDemandaReconstruida() {
-             const texto = document.getElementById('demandaTexto').innerText;
-             const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
-             const url = window.URL.createObjectURL(blob);
-             const a = document.createElement('a');
-             a.href = url;
-             a.download = 'demanda_reconstruida.txt';
-             document.body.appendChild(a);
-             a.click();
-             document.body.removeChild(a);
-             window.URL.revokeObjectURL(url);
-             
-             mostrarNotificacion('✅ Demanda descargada correctamente', 'success');
-         }
-         
-         // Función para exportar análisis
-         function exportarAnalisis() {
-             try {
-                 const datos = window.datosAnalisis;
-                 if (!datos) {
-                     throw new Error('No hay datos de análisis para exportar');
-                 }
-                 
-                 const reporte = {
-                     fecha: new Date().toISOString(),
-                     resumen: {
-                         archivos_analizados: datos.archivos_analizados,
-                         total_apariciones: datos.total_apariciones,
-                         categorias_frases: Object.keys(datos.ranking_global || {}).length
-                     },
-                     ranking_global: datos.ranking_global,
-                     recomendaciones: generarRecomendacionesExportables(datos)
-                 };
-                 
-                 const blob = new Blob([JSON.stringify(reporte, null, 2)], { type: 'application/json' });
-                 const url = window.URL.createObjectURL(blob);
-                 const a = document.createElement('a');
-                 a.href = url;
-                 a.download = 'analisis_inteligente.json';
-                 document.body.appendChild(a);
-                 a.click();
-                 document.body.removeChild(a);
-                 window.URL.revokeObjectURL(url);
-                 
-                 mostrarNotificacion('✅ Análisis exportado correctamente', 'success');
-                 
-             } catch (error) {
-                 console.error('❌ Error exportando análisis:', error);
-                 mostrarNotificacion(`Error exportando análisis: ${error.message}`, 'danger');
-             }
-         }
-         
-         // Función para generar recomendaciones exportables
-         function generarRecomendacionesExportables(datos) {
-             return {
-                 confianza_actual: datos.confianza_global || 'N/A',
-                 probabilidad_exito: datos.probabilidad_exito || 'N/A',
-                 factores_mejorables: [
-                     'Estructura del documento',
-                     'Evidencia médica',
-                     'Procedimiento legal',
-                     'Terminología jurídica'
-                 ],
-                 acciones_recomendadas: [
-                     'Incluir secciones: hechos, argumentos, conclusiones, solicitud',
-                     'Adjuntar informes médicos detallados',
-                     'Documentar reclamación administrativa previa',
-                     'Usar terminología jurídica correcta'
-                                   ]
-              };
-          }
-          
-          // Función para debug avanzado del sistema
-          async function debugAvanzado() {
-              console.log('🚨 === DEBUG AVANZADO INICIADO ===');
-              
-              try {
-                  // 1. Verificar estado del DOM
-                  console.log('🔍 1. Verificando estado del DOM...');
-                  const elementosCriticos = {
-                      'analisisModal': document.getElementById('analisisModal'),
-                      'reconstruccionModal': document.getElementById('reconstruccionModal'),
-                      'fraseModal': document.getElementById('fraseModal'),
-                      'statsModal': document.getElementById('statsModal')
-                  };
-                  
-                  for (const [nombre, elemento] of Object.entries(elementosCriticos)) {
-                      if (elemento) {
-                          console.log(`  ✅ ${nombre}: Encontrado`);
-                      } else {
-                          console.error(`  ❌ ${nombre}: NO ENCONTRADO`);
-                      }
-                  }
-                  
-                  // 2. Verificar funciones disponibles
-                  console.log('🔍 2. Verificando funciones disponibles...');
-                  const funcionesCriticas = [
-                      'mostrarAnalisisInteligente',
-                      'reconstruirDemanda',
-                      'parseJsonSafely',
-                      'decodeHtmlEntities',
-                      'debugFraseData'
-                  ];
-                  
-                  for (const funcion of funcionesCriticas) {
-                      if (typeof window[funcion] === 'function') {
-                          console.log(`  ✅ ${funcion}: Disponible`);
-                      } else {
-                          console.error(`  ❌ ${funcion}: NO DISPONIBLE`);
-                      }
-                  }
-                  
-                  // 3. Verificar datos del contexto Jinja2
-                  console.log('🔍 3. Verificando contexto Jinja2...');
-                  if (typeof ranking_global !== 'undefined') {
-                      console.log(`  ✅ ranking_global: ${Object.keys(ranking_global || {}).length} elementos`);
-                      console.log(`  📊 Tipo: ${typeof ranking_global}`);
-                      console.log(`  🔑 Claves: ${Object.keys(ranking_global || {}).slice(0, 5).join(', ')}...`);
-                  } else {
-                      console.error('  ❌ ranking_global: NO DISPONIBLE');
-                  }
-                  
-                  // 4. Verificar elementos con data-frase
-                  console.log('🔍 4. Verificando elementos data-frase...');
-                  const elementos = document.querySelectorAll('[data-frase]');
-                  console.log(`  📊 Total elementos: ${elementos.length}`);
-                  
-                  if (elementos.length > 0) {
-                      const primerElemento = elementos[0];
-                      const frase = primerElemento.getAttribute('data-frase');
-                      const datos = primerElemento.getAttribute('data-datos');
-                      
-                      console.log(`  🔍 Primer elemento:`);
-                      console.log(`    - Frase: "${frase}"`);
-                      console.log(`    - Datos: "${datos}"`);
-                      console.log(`    - Longitud datos: ${datos ? datos.length : 'N/A'}`);
-                      
-                      if (datos && datos.trim() === '{') {
-                          console.error(`    🚨 PROBLEMA CRÍTICO: JSON incompleto detectado`);
-                          console.error(`    🔧 Esto indica un problema en el backend`);
-                      }
-                  }
-                  
-                  // 5. Verificar backend directamente
-                  console.log('🔍 5. Verificando backend...');
-                  try {
-                      const response = await fetch('/api/analizar');
-                      const data = await response.json();
-                      
-                      if (data && data.ranking_global) {
-                          console.log(`  ✅ Backend responde correctamente`);
-                          console.log(`  📊 ranking_global: ${Object.keys(data.ranking_global).length} elementos`);
-                      } else {
-                          console.error(`  ❌ Backend no devuelve ranking_global`);
-                          console.log(`  📊 Respuesta completa:`, data);
-                      }
-                  } catch (error) {
-                      console.error(`  ❌ Error conectando con backend: ${error.message}`);
-                  }
-                  
-                  // 6. Generar reporte de diagnóstico
-                  console.log('🔍 6. Generando reporte de diagnóstico...');
-                  const reporte = {
-                      timestamp: new Date().toISOString(),
-                      dom: {
-                          modales: Object.keys(elementosCriticos).filter(k => elementosCriticos[k]).length,
-                          elementos_data_frase: elementos.length
-                      },
-                      funciones: funcionesCriticas.filter(f => typeof window[f] === 'function').length,
-                      contexto: typeof ranking_global !== 'undefined',
-                      backend: 'Verificado en paso 5'
-                  };
-                  
-                  console.log('📋 REPORTE DE DIAGNÓSTICO:', reporte);
-                  
-                  // 7. Mostrar resumen al usuario
-                  const mensaje = `
-                      🔍 DIAGNÓSTICO COMPLETADO
-                      
-                      ✅ Elementos del DOM: ${reporte.dom.modales}/4 modales
-                      ✅ Funciones disponibles: ${reporte.funciones}/5 funciones críticas
-                      ✅ Contexto Jinja2: ${reporte.contexto ? 'SÍ' : 'NO'}
-                      📊 Elementos data-frase: ${reporte.dom.elementos_data_frase}
-                      
-                      ${reporte.dom.elementos_data_frase > 0 ? '⚠️ Revisa la consola para detalles específicos' : '✅ Sistema parece estar funcionando correctamente'}
-                  `;
-                  
-                  mostrarNotificacion(mensaje, reporte.dom.elementos_data_frase > 0 ? 'warning' : 'success');
-                  
-              } catch (error) {
-                  console.error('❌ Error en debug avanzado:', error);
-                  mostrarNotificacion(`Error en debug avanzado: ${error.message}`, 'danger');
-              }
-          }
-     </script>
- </body>
- </html>
+        // Función para decodificar entidades HTML
+        function decodeHtmlEntities(text) {
+            if (!text || typeof text !== 'string') return text;
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = text;
+            return textarea.value;
+        }
+
+        // Función para parsear JSON de forma segura
+        function parseJsonSafely(jsonString) {
+            if (!jsonString || typeof jsonString !== 'string') {
+                throw new Error('Input inválido');
+            }
+            
+            const trimmed = jsonString.trim();
+            if (trimmed === '{' || trimmed === '[' || trimmed === '"') {
+                throw new Error('JSON incompleto');
+            }
+            
+            try {
+                return JSON.parse(trimmed);
+            } catch (e1) {
+                try {
+                    const decoded = decodeHtmlEntities(trimmed);
+                    return JSON.parse(decoded);
+                } catch (e2) {
+                    throw new Error(`Error parsing JSON: ${e2.message}`);
+                }
+            }
+        }
+
+        // Función para debug de datos de frases
+        function debugFraseData() {
+            console.log('=== DEBUG: Datos de frases ===');
+            
+            const elementos = document.querySelectorAll('[data-frase]');
+            console.log(`Encontrados ${elementos.length} elementos con data-frase`);
+            
+            elementos.forEach((elemento, index) => {
+                const frase = elemento.getAttribute('data-frase');
+                const datos = elemento.getAttribute('data-datos');
+                
+                console.log(`Elemento ${index + 1}:`);
+                console.log(`  Frase: ${frase}`);
+                console.log(`  Datos: ${datos ? 'SÍ' : 'NO'}`);
+                
+                if (datos) {
+                    try {
+                        const parsed = parseJsonSafely(datos);
+                        console.log(`  ✅ Datos parseados:`, parsed);
+                    } catch (e) {
+                        console.error(`  ❌ Error parsing: ${e.message}`);
+                    }
+                }
+                console.log('---');
+            });
+        }
+
+        // Función para probar búsqueda de argumentos
+        function testBusquedaArgumentos() {
+            console.log('=== TEST: Búsqueda de Argumentos ===');
+            mostrarNotificacion('Test de búsqueda ejecutado', 'info');
+        }
+
+        // Función para verificar backend
+        async function verificarDatosBackend() {
+            try {
+                const response = await fetch('/api/analizar');
+                const data = await response.json();
+                console.log('✅ Backend responde:', data);
+                mostrarNotificacion('Backend verificado correctamente', 'success');
+            } catch (error) {
+                console.error('❌ Error backend:', error);
+                mostrarNotificacion('Error verificando backend', 'danger');
+            }
+        }
+
+        // Función para análisis inteligente
+        async function mostrarAnalisisInteligente() {
+            try {
+                const response = await fetch('/api/analizar');
+                const datos = await response.json();
+                console.log('✅ Análisis inteligente:', datos);
+                mostrarNotificacion('Análisis inteligente ejecutado', 'success');
+            } catch (error) {
+                console.error('❌ Error análisis:', error);
+                mostrarNotificacion('Error en análisis inteligente', 'danger');
+            }
+        }
+
+        // Función para debug avanzado
+        async function debugAvanzado() {
+            console.log('🚨 === DEBUG AVANZADO ===');
+            mostrarNotificacion('Debug avanzado ejecutado', 'info');
+        }
+
+        // Función de prueba
+        function testShowFraseDetails() {
+            console.log('=== TEST: showFraseDetails ===');
+            mostrarNotificacion('Test ejecutado correctamente', 'success');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const clickableElements = document.querySelectorAll('.clickable-frase');
+            clickableElements.forEach(function(element) {
+                element.addEventListener('click', function() {
+                    const frase = this.getAttribute('data-frase');
+                    const datos = this.getAttribute('data-datos');
+                    
+                    if (frase && datos) {
+                        try {
+                            const parsedData = parseJsonSafely(datos);
+                            console.log('Frase clickeada:', frase);
+                            console.log('Datos:', parsedData);
+                            mostrarNotificacion(`Frase "${frase}" clickeada`, 'info');
+                        } catch (e) {
+                            console.error('Error parsing datos:', e);
+                            mostrarNotificacion('Error al procesar los datos', 'danger');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
