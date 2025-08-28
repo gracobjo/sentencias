@@ -598,7 +598,10 @@ async def health_check():
 def analizar_sentencias_existentes() -> Dict[str, Any]:
     """Analiza las sentencias existentes en la carpeta"""
     try:
+        logger.info(f"🔍 Iniciando análisis de sentencias existentes en: {SENTENCIAS_DIR}")
+        
         if not SENTENCIAS_DIR.exists():
+            logger.warning(f"❌ La carpeta '{SENTENCIAS_DIR}' no existe")
             return {
                 "error": f"La carpeta '{SENTENCIAS_DIR}' no existe",
                 "archivos_analizados": 0,
@@ -611,7 +614,10 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
         archivos_soportados = [f for f in SENTENCIAS_DIR.iterdir() 
                               if f.suffix.lower() in ['.txt', '.pdf']]
         
+        logger.info(f"📁 Archivos encontrados: {[f.name for f in archivos_soportados]}")
+        
         if not archivos_soportados:
+            logger.warning(f"❌ No se encontraron archivos .txt o .pdf en '{SENTENCIAS_DIR}'")
             return {
                 "error": f"No se encontraron archivos .txt o .pdf en '{SENTENCIAS_DIR}'",
                 "archivos_analizados": 0,
@@ -626,36 +632,55 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
         
         for archivo in archivos_soportados:
             try:
+                logger.info(f"🔍 Analizando archivo: {archivo.name}")
+                
                 # Usar el analizador de IA si está disponible, sino el básico
                 if ANALIZADOR_IA_DISPONIBLE:
+                    logger.info(f"🤖 Usando analizador de IA para: {archivo.name}")
                     from backend.analisis import AnalizadorLegal
                     analizador = AnalizadorLegal()
                     resultado = analizador.analizar_documento(str(archivo))
                 else:
+                    logger.info(f"🔧 Usando analizador básico para: {archivo.name}")
                     resultado = analizador_basico.analizar_documento(str(archivo), archivo.name)
+                
+                logger.info(f"📊 Resultado para {archivo.name}: procesado={resultado.get('procesado')}")
                 
                 if resultado.get("procesado"):
                     resultados_por_archivo[archivo.name] = resultado
                     
-                    for categoria, datos in resultado.get("frases_clave", {}).items():
+                    # Procesar frases clave encontradas
+                    frases_clave = resultado.get("frases_clave", {})
+                    logger.info(f"🔑 Frases clave encontradas en {archivo.name}: {list(frases_clave.keys())}")
+                    
+                    for categoria, datos in frases_clave.items():
                         if categoria in ranking_global:
                             ranking_global[categoria]["total"] += datos["total"]
                             ranking_global[categoria]["ocurrencias"].extend(datos["ocurrencias"])
+                            logger.info(f"📈 Actualizando {categoria}: total={ranking_global[categoria]['total']}")
                         else:
                             ranking_global[categoria] = {
                                 "total": datos["total"],
                                 "ocurrencias": datos["ocurrencias"]
                             }
+                            logger.info(f"🆕 Nueva categoría {categoria}: total={datos['total']}")
                         total_apariciones += datos["total"]
                 else:
+                    logger.warning(f"⚠️ Archivo {archivo.name} no se pudo procesar")
                     resultados_por_archivo[archivo.name] = {"error": "No se pudo procesar"}
                     
             except Exception as e:
-                logger.error(f"Error analizando {archivo}: {e}")
+                logger.error(f"❌ Error analizando {archivo}: {e}")
                 resultados_por_archivo[archivo.name] = {"error": f"Error: {str(e)}"}
         
         # Ordenar ranking
         ranking_ordenado = dict(sorted(ranking_global.items(), key=lambda x: x[1]["total"], reverse=True))
+        
+        logger.info(f"📊 RESUMEN FINAL:")
+        logger.info(f"  - Archivos analizados: {len(archivos_soportados)}")
+        logger.info(f"  - Total apariciones: {total_apariciones}")
+        logger.info(f"  - Categorías encontradas: {list(ranking_ordenado.keys())}")
+        logger.info(f"  - Ranking global: {ranking_ordenado}")
         
         return {
             "archivos_analizados": len(archivos_soportados),
@@ -665,7 +690,7 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
         }
         
     except Exception as e:
-        logger.error(f"Error analizando sentencias: {e}")
+        logger.error(f"❌ Error analizando sentencias: {e}")
         return {
             "error": f"Error al analizar sentencias: {str(e)}",
             "archivos_analizados": 0,
