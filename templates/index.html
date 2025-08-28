@@ -81,6 +81,11 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
+                        <a class="nav-link" href="/subir">
+                            <i class="bi bi-upload me-1"></i>Subir Documento
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/api/analizar" target="_blank">
                             <i class="bi bi-code-slash me-1"></i>API
                         </a>
@@ -105,6 +110,16 @@
                 <p class="lead text-center text-muted">
                     Sistema de análisis automático de resoluciones en busca de frases clave relacionadas con IPP, RAP, INSS y otras categorías
                 </p>
+                
+                <!-- Botón prominente para subir archivos -->
+                <div class="text-center mt-4">
+                    <a href="/subir" class="btn btn-success btn-lg">
+                        <i class="bi bi-upload me-2"></i>Subir Nuevo Documento
+                    </a>
+                    <p class="text-muted mt-2">
+                        <small>Sube tus propios archivos PDF o TXT para analizarlos</small>
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -204,6 +219,15 @@
                 <button class="btn btn-warning" onclick="testShowFraseDetails()">
                     <i class="bi bi-bug me-2"></i>Test: Ver Detalles
                 </button>
+                <button class="btn btn-info" onclick="debugFraseData()">
+                    <i class="bi bi-info-circle me-2"></i>Debug: Datos Frases
+                </button>
+                <button class="btn btn-success" onclick="testBusquedaArgumentos()">
+                    <i class="bi bi-search me-2"></i>Test: Búsqueda Argumentos
+                </button>
+                <button class="btn btn-dark" onclick="verificarDatosBackend()">
+                    <i class="bi bi-server me-2"></i>Verificar Backend
+                </button>
             </div>
         </div>
 
@@ -231,49 +255,49 @@
                                 <tbody>
                                     {% for frase, datos in ranking_global.items() %}
                                     <tr class="clickable-row" onclick="toggleDetails(this, '{{ frase }}')">
-                                        <td class="px-4 fw-bold text-primary">{{ loop.index }}</td>
-                                        <td>
-                                            <span class="badge bg-light text-dark me-2">
-                                                {% if "incapacidad permanente parcial" in frase.lower() %}
-                                                    <i class="bi bi-person-x text-danger"></i> IPP
-                                                {% elif "reclamación administrativa previa" in frase.lower() %}
-                                                    <i class="bi bi-file-earmark-text text-warning"></i> RAP
-                                                {% elif "inss" in frase.lower() %}
-                                                    <i class="bi bi-building text-primary"></i> INSS
-                                                {% elif "lesiones permanentes no incapacitantes" in frase.lower() %}
-                                                    <i class="bi bi-heart-pulse text-info"></i> LPNI
-                                                {% elif "limpiadora" in frase.lower() %}
-                                                    <i class="bi bi-brush text-success"></i> LIMPIEZA
-                                                {% elif "manguito rotador" in frase.lower() or "supraespinoso" in frase.lower() or "hombro derecho" in frase.lower() %}
-                                                    <i class="bi bi-bandaid text-secondary"></i> LESIONES
-                                                {% else %}
-                                                    <i class="bi bi-tag text-muted"></i>
-                                                {% endif %}
-                                            </span>
-                                            <span class="clickable-frase" 
-                                                  data-frase="{{ frase }}" 
-                                                  data-datos="{{ datos|tojson|safe }}">
-                                                {{ frase }}
-                                            </span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-primary fs-6 clickable-badge" 
-                                                  data-frase="{{ frase }}" 
-                                                  data-datos="{{ datos|tojson|safe }}">
-                                                {{ ranking_global[frase].total }}
-                                            </span>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="progress progress-ranking" data-width="{{ (ranking_global[frase].total / total_apariciones * 100) | round(1) }}">
-                                                <div class="progress-bar bg-success" 
-                                                     role="progressbar" 
-                                                     aria-label="Progreso de {{ frase }}"
-                                                     aria-valuemin="0" 
-                                                     aria-valuemax="100">
-                                                    {{ (ranking_global[frase].total / total_apariciones * 100) | round(1) }}%
-                                                </div>
-                                            </div>
-                                        </td>
+                                         <td class="px-4 fw-bold text-primary">{{ loop.index }}</td>
+                                         <td>
+                                             <span class="badge bg-light text-dark me-2">
+                                                 {% if "incapacidad permanente parcial" in frase.lower() %}
+                                                     <i class="bi bi-person-x text-danger"></i> IPP
+                                                 {% elif "reclamación administrativa previa" in frase.lower() %}
+                                                     <i class="bi bi-file-earmark-text text-warning"></i> RAP
+                                                 {% elif "inss" in frase.lower() %}
+                                                     <i class="bi bi-building text-primary"></i> INSS
+                                                 {% elif "lesiones permanentes no incapacitantes" in frase.lower() %}
+                                                     <i class="bi bi-heart-pulse text-info"></i> LPNI
+                                                 {% elif "limpiadora" in frase.lower() %}
+                                                     <i class="bi bi-brush text-success"></i> LIMPIEZA
+                                                 {% elif "manguito rotador" in frase.lower() or "supraespinoso" in frase.lower() or "hombro derecho" in frase.lower() %}
+                                                     <i class="bi bi-bandaid text-secondary"></i> LESIONES
+                                                 {% else %}
+                                                     <i class="bi bi-tag text-muted"></i>
+                                                 {% endif %}
+                                             </span>
+                                             <span class="clickable-frase" 
+                                                   data-frase="{{ frase }}" 
+                                                   data-datos="{{ datos|tojson|safe }}">
+                                                 {{ frase }}
+                                             </span>
+                                         </td>
+                                         <td class="text-center">
+                                             <span class="badge bg-primary fs-6 clickable-badge" 
+                                                   data-frase="{{ frase }}" 
+                                                   data-datos="{{ datos|tojson|safe }}">
+                                                 {{ datos.total }}
+                                             </span>
+                                         </td>
+                                         <td class="text-center">
+                                             <div class="progress progress-ranking" data-width="{{ (datos.total / total_apariciones * 100) | round(1) }}">
+                                                 <div class="progress-bar bg-success" 
+                                                      role="progressbar" 
+                                                      aria-label="Progreso de {{ frase }}"
+                                                      aria-valuemin="0" 
+                                                      aria-valuemax="100">
+                                                     {{ (datos.total / total_apariciones * 100) | round(1) }}%
+                                                 </div>
+                                             </div>
+                                         </td>
                                     </tr>
                                     <!-- Detalle expandible de ocurrencias -->
                                     <tr class="detail-row">
@@ -283,7 +307,7 @@
                                                     <i class="bi bi-search me-2"></i>Ocurrencias de "{{ frase }}"
                                                 </h6>
                                                 <div class="row">
-                                                    {% for ocurrencia in ranking_global[frase].ocurrencias %}
+                                                    {% for ocurrencia in datos.ocurrencias %}
                                                     <div class="col-12 mb-3">
                                                         <div class="card border-0 shadow-sm">
                                                             <div class="card-header bg-white py-2">
@@ -328,57 +352,82 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-info text-white">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">
-                            <i class="bi bi-file-earmark-text me-2"></i>Detalle por Archivo
+                            <i class="bi bi-file-earmark-text me-2"></i>Documentos Analizados
                         </h5>
+                        <span class="badge bg-light text-dark">{{ resultados_por_archivo|length }} archivo(s)</span>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            {% for nombre_archivo, resultado in resultados_por_archivo.items() %}
-                            <div class="col-md-6 col-lg-4 mb-3">
-                                <div class="card h-100 {% if 'error' in resultado %}error-card{% elif resultado %}success-card{% else %}file-card{% endif %}">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h6 class="card-title mb-0 text-truncate" title="{{ nombre_archivo }}">
-                                            <i class="bi bi-file-text me-2"></i>{{ nombre_archivo }}
-                                        </h6>
-                                        <span class="badge {% if 'error' in resultado %}bg-danger{% elif resultado %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if resultados_por_archivo|length == 0 %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-inbox display-1 text-muted"></i>
+                                <h5 class="text-muted mt-3">No hay documentos analizados</h5>
+                                <p class="text-muted">Sube tu primer documento para comenzar el análisis</p>
+                                <a href="/subir" class="btn btn-primary">
+                                    <i class="bi bi-upload me-2"></i>Subir Documento
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="row">
+                                {% for nombre_archivo, resultado in resultados_por_archivo.items() %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100 {% if 'error' in resultado %}error-card{% elif resultado.frases_clave %}success-card{% else %}file-card{% endif %}">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="card-title mb-0 text-truncate" title="{{ nombre_archivo }}">
+                                                <i class="bi bi-file-text me-2"></i>{{ nombre_archivo }}
+                                            </h6>
+                                            <span class="badge {% if 'error' in resultado %}bg-danger{% elif resultado.frases_clave %}bg-success{% else %}bg-secondary{% endif %}">
+                                                {% if 'error' in resultado %}
+                                                    <i class="bi bi-exclamation-circle"></i> Error
+                                                {% elif resultado.frases_clave %}
+                                                    <i class="bi bi-check-circle"></i> Analizado
+                                                {% else %}
+                                                    <i class="bi bi-question-circle"></i> Pendiente
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
                                             {% if 'error' in resultado %}
-                                                <i class="bi bi-exclamation-circle"></i> Error
-                                            {% elif resultado %}
-                                                <i class="bi bi-check-circle"></i> OK
-                                            {% else %}
-                                                <i class="bi bi-question-circle"></i> Vacío
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    <div class="card-body">
-                                        {% if 'error' in resultado %}
-                                            <div class="text-danger">
-                                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                                {{ resultado.error }}
-                                            </div>
-                                        {% elif resultado %}
-                                            <div class="row">
-                                                {% for frase, cantidad in resultado.items() %}
-                                                <div class="col-12 mb-2">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <small class="text-muted">{{ frase[:30] }}{% if frase|length > 30 %}...{% endif %}</small>
-                                                        <span class="badge bg-primary">{{ cantidad }}</span>
+                                                <div class="text-danger">
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                                    {{ resultado.error }}
+                                                </div>
+                                            {% elif resultado.frases_clave %}
+                                                <div class="mb-3">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-calendar me-1"></i>
+                                                        {% if resultado.timestamp %}
+                                                            {{ resultado.timestamp }}
+                                                        {% else %}
+                                                            Recién analizado
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <strong>Frases encontradas:</strong>
+                                                    <div class="mt-2">
+                                                        {% for categoria, datos in resultado.frases_clave.items() %}
+                                                        <span class="badge bg-primary me-1 mb-1">{{ categoria|title }}: {{ datos.total }}</span>
+                                                        {% endfor %}
                                                     </div>
                                                 </div>
-                                                {% endfor %}
-                                            </div>
-                                        {% else %}
-                                            <div class="text-muted text-center">
-                                                <i class="bi bi-inbox me-2"></i>Archivo vacío
-                                            </div>
-                                        {% endif %}
+                                                <div class="d-grid">
+                                                    <a href="/archivo/{{ nombre_archivo }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-eye me-1"></i>Ver Detalles
+                                                    </a>
+                                                </div>
+                                            {% else %}
+                                                <div class="text-muted text-center">
+                                                    <i class="bi bi-clock me-2"></i>Pendiente de análisis
+                                                </div>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -592,23 +641,67 @@
                     
                     try {
                         let parsedData;
-                        if (info) {
+                        
+                        // Intentar parsear datos primero
+                        if (datos && datos.trim()) {
+                            try {
+                                console.log('Parsing datos...');
+                                // Decodificar entidades HTML antes de parsear
+                                const datosDecodificados = datos
+                                    .replace(/&quot;/g, '"')
+                                    .replace(/&#39;/g, "'")
+                                    .replace(/&amp;/g, '&')
+                                    .replace(/&lt;/g, '<')
+                                    .replace(/&gt;/g, '>');
+                                
+                                parsedData = JSON.parse(datosDecodificados);
+                                console.log('Datos parseados exitosamente:', parsedData);
+                            } catch (parseError) {
+                                console.warn('Error parsing datos, intentando con info:', parseError);
+                                console.error('Datos originales:', datos);
+                                console.error('Datos decodificados:', datosDecodificados);
+                                
+                                // Si falla datos, intentar con info
+                                if (info && info.trim()) {
+                                    try {
+                                        const infoDecodificada = info
+                                            .replace(/&quot;/g, '"')
+                                            .replace(/&#39;/g, "'")
+                                            .replace(/&amp;/g, '&')
+                                            .replace(/&lt;/g, '<')
+                                            .replace(/&gt;/g, '>');
+                                        parsedData = JSON.parse(infoDecodificada);
+                                    } catch (infoError) {
+                                        throw new Error(`No se pudieron parsear los datos: ${parseError.message}, ni la info: ${infoError.message}`);
+                                    }
+                                } else {
+                                    throw new Error('No se pudieron parsear los datos');
+                                }
+                            }
+                        } else if (info && info.trim()) {
                             // Para botones en tarjetas de estadísticas
                             console.log('Parsing info...');
-                            parsedData = JSON.parse(info);
-                        } else if (datos) {
-                            // Para elementos en la tabla principal
-                            console.log('Parsing datos...');
-                            parsedData = JSON.parse(datos);
+                            const infoDecodificada = info
+                                .replace(/&quot;/g, '"')
+                                .replace(/&#39;/g, "'")
+                                .replace(/&amp;/g, '&')
+                                .replace(/&lt;/g, '<')
+                                .replace(/&gt;/g, '>');
+                            parsedData = JSON.parse(infoDecodificada);
                         } else {
                             throw new Error('No se encontraron datos para procesar');
                         }
                         
-                        console.log('Datos parseados exitosamente:', parsedData);
                         showFraseDetails(frase, parsedData);
                     } catch (e) {
                         console.error('Error parsing data:', e);
-                        alert('Error al procesar los datos de la frase');
+                        console.error('Datos originales:', datos);
+                        console.error('Info original:', info);
+                        
+                        // Mostrar error más informativo
+                        const errorMsg = `Error al procesar los datos de la frase "${frase}": ${e.message}`;
+                        console.error(errorMsg);
+                        alert(errorMsg);
                     }
                 }
             });
@@ -650,10 +743,12 @@
         // Función para ir a la posición específica del texto
         function scrollToPosition(position, frase, archivo) {
             if (archivo) {
-                // Navegar a la página del archivo
-                window.open(`/archivo/${archivo}`, '_blank');
+                // Navegar a la página del archivo con parámetros para resaltar la frase
+                const url = `/archivo/${encodeURIComponent(archivo)}?highlight=${encodeURIComponent(frase)}&position=${position}`;
+                window.open(url, '_blank');
+                mostrarNotificacion(`Navegando a "${archivo}" para mostrar la frase "${frase}"`, 'info');
             } else {
-                alert(`Navegando a la posición ${position} de la frase "${frase}"\n\nEsta funcionalidad te llevará directamente al texto donde se encontró la frase.`);
+                mostrarNotificacion(`Navegando a la posición ${position} de la frase "${frase}"`, 'info');
             }
         }
 
@@ -907,14 +1002,17 @@
                                     <strong>Contexto:</strong><br>
                                     <span class="context-content">${ocurrencia.contexto}</span>
                                 </div>
-                                <div class="mt-3">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="scrollToPosition(${ocurrencia.posicion}, '${frase}', '${ocurrencia.archivo}')">
-                                        <i class="bi bi-arrow-up-circle me-1"></i>Ir al texto
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="copiarContexto('${ocurrencia.contexto}')">
-                                        <i class="bi bi-clipboard me-1"></i>Copiar contexto
-                                    </button>
-                                </div>
+                                                                 <div class="mt-3">
+                                     <button class="btn btn-sm btn-outline-primary" onclick="scrollToPosition(${ocurrencia.posicion}, '${frase}', '${ocurrencia.archivo}')">
+                                         <i class="bi bi-arrow-up-circle me-1"></i>Ir al texto
+                                     </button>
+                                     <button class="btn btn-sm btn-outline-secondary" onclick="copiarContexto('${ocurrencia.contexto.replace(/'/g, "\\'")}')">
+                                         <i class="bi bi-clipboard me-1"></i>Copiar contexto
+                                     </button>
+                                     <button class="btn btn-sm btn-outline-info" onclick="verArchivoCompleto('${ocurrencia.archivo}')">
+                                         <i class="bi bi-eye me-1"></i>Ver archivo completo
+                                     </button>
+                                 </div>
                             </div>
                         </div>
                     </div>
@@ -955,6 +1053,195 @@
             showFraseDetails("lesiones_hombro", datosPrueba);
         }
         
+        // Función para depurar datos de frases
+        function debugFraseData() {
+            console.log('=== DEBUG: Datos de frases ===');
+            
+            // Verificar datos del contexto Jinja2
+            console.log('=== CONTEXTO JINJA2 ===');
+            console.log('ranking_global disponible:', typeof ranking_global !== 'undefined');
+            if (typeof ranking_global !== 'undefined') {
+                console.log('ranking_global:', ranking_global);
+                console.log('Tipo:', typeof ranking_global);
+                console.log('Claves:', Object.keys(ranking_global));
+            }
+            
+            const elementos = document.querySelectorAll('[data-frase]');
+            console.log(`Encontrados ${elementos.length} elementos con data-frase`);
+            
+            let elementosConDatos = 0;
+            let elementosSinDatos = 0;
+            let erroresParsing = 0;
+            
+            elementos.forEach((elemento, index) => {
+                const frase = elemento.getAttribute('data-frase');
+                const datos = elemento.getAttribute('data-datos');
+                const info = elemento.getAttribute('data-info');
+                
+                console.log(`Elemento ${index + 1}:`);
+                console.log(`  Frase: ${frase}`);
+                console.log(`  Datos: ${datos ? 'SÍ' : 'NO'}`);
+                console.log(`  Info: ${info ? 'SÍ' : 'NO'}`);
+                
+                if (datos) {
+                    elementosConDatos++;
+                    try {
+                        const parsed = JSON.parse(datos);
+                        console.log(`  ✅ Datos parseados correctamente:`, parsed);
+                    } catch (e) {
+                        erroresParsing++;
+                        console.error(`  ❌ Error parsing datos: ${e.message}`);
+                        console.error(`  Datos crudos: ${datos}`);
+                        
+                        // Intentar decodificar entidades HTML
+                        try {
+                            const datosDecodificados = datos
+                                .replace(/&quot;/g, '"')
+                                .replace(/&#39;/g, "'")
+                                .replace(/&amp;/g, '&')
+                                .replace(/&lt;/g, '<')
+                                .replace(/&gt;/g, '>');
+                            
+                            const parsed = JSON.parse(datosDecodificados);
+                            console.log(`  🔧 Datos parseados después de decodificar:`, parsed);
+                        } catch (e2) {
+                            console.error(`  ❌ Error incluso después de decodificar: ${e2.message}`);
+                        }
+                    }
+                } else {
+                    elementosSinDatos++;
+                    console.log(`  ⚠️ No tiene datos`);
+                }
+                
+                if (info) {
+                    try {
+                        const parsed = JSON.parse(info);
+                        console.log(`  ✅ Info parseada:`, parsed);
+                    } catch (e) {
+                        console.error(`  ❌ Error parsing info: ${e.message}`);
+                        console.error(`  Info cruda: ${info}`);
+                    }
+                }
+                
+                console.log('---');
+            });
+            
+            console.log('=== RESUMEN DEBUG ===');
+            console.log(`Total elementos: ${elementos.length}`);
+            console.log(`Con datos: ${elementosConDatos}`);
+            console.log(`Sin datos: ${elementosSinDatos}`);
+            console.log(`Errores de parsing: ${erroresParsing}`);
+            
+            if (erroresParsing > 0) {
+                console.warn('⚠️ Hay elementos con errores de parsing. Revisa el template.');
+            }
+            
+            // Verificar si hay datos en los script tags
+            console.log('=== SCRIPT TAGS ===');
+            const scriptTags = document.querySelectorAll('script[type="application/json"]');
+            scriptTags.forEach((script, index) => {
+                console.log(`Script ${index + 1} (${script.id}):`);
+                try {
+                    const data = JSON.parse(script.textContent.trim());
+                    console.log(`  ✅ Datos válidos:`, data);
+                } catch (e) {
+                    console.error(`  ❌ Error parsing: ${e.message}`);
+                    console.error(`  Contenido:`, script.textContent.trim());
+                }
+            });
+        }
+        
+        // Función para probar la búsqueda de argumentos
+        function testBusquedaArgumentos() {
+            console.log('=== TEST: Búsqueda de Argumentos ===');
+            
+            // Buscar elementos con data-frase
+            const elementos = document.querySelectorAll('[data-frase]');
+            console.log(`Encontrados ${elementos.length} elementos con data-frase`);
+            
+            // Encontrar el primer elemento que tenga datos válidos
+            let elementoValido = null;
+            let datosValidos = null;
+            
+            for (const elemento of elementos) {
+                const datos = elemento.getAttribute('data-datos');
+                if (datos) {
+                    try {
+                        const parsed = JSON.parse(datos);
+                        elementoValido = elemento;
+                        datosValidos = parsed;
+                        break;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            }
+            
+            if (elementoValido && datosValidos) {
+                const frase = elementoValido.getAttribute('data-frase');
+                console.log(`✅ Elemento válido encontrado:`, frase);
+                console.log(`✅ Datos válidos:`, datosValidos);
+                
+                // Simular click en el elemento
+                console.log('🔄 Simulando click en el elemento...');
+                elementoValido.click();
+                
+                // Mostrar notificación de éxito
+                mostrarNotificacion(`Test exitoso: Elemento "${frase}" encontrado y clickeado`, 'success');
+            } else {
+                console.error('❌ No se encontraron elementos válidos para probar');
+                mostrarNotificacion('Test fallido: No hay elementos válidos para probar', 'danger');
+            }
+        }
+        
+        // Función para verificar datos del backend
+        async function verificarDatosBackend() {
+            console.log('=== VERIFICACIÓN BACKEND ===');
+            
+            try {
+                // Verificar endpoint de salud
+                console.log('🔍 Verificando endpoint de salud...');
+                const healthResponse = await fetch('/health');
+                const healthData = await healthResponse.text();
+                console.log('✅ Health endpoint:', healthData);
+                
+                // Verificar datos del ranking global
+                console.log('🔍 Verificando datos del ranking...');
+                const rankingResponse = await fetch('/api/analizar');
+                const rankingData = await rankingResponse.json();
+                console.log('✅ Datos del ranking:', rankingData);
+                
+                if (rankingData.ranking_global) {
+                    console.log('📊 Ranking global disponible:');
+                    console.log('  - Total de frases:', Object.keys(rankingData.ranking_global).length);
+                    console.log('  - Frases encontradas:', Object.keys(rankingData.ranking_global));
+                    
+                    // Verificar estructura de datos
+                    for (const [frase, datos] of Object.entries(rankingData.ranking_global)) {
+                        console.log(`  - "${frase}":`, datos);
+                        if (datos.ocurrencias) {
+                            console.log(`    - Ocurrencias: ${datos.ocurrencias.length}`);
+                        }
+                    }
+                } else {
+                    console.warn('⚠️ No hay ranking_global en la respuesta');
+                }
+                
+                // Verificar si hay archivos analizados
+                if (rankingData.archivos_analizados) {
+                    console.log('📁 Archivos analizados:', rankingData.archivos_analizados);
+                }
+                
+                if (rankingData.total_apariciones) {
+                    console.log('🔢 Total de apariciones:', rankingData.total_apariciones);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error verificando backend:', error);
+                alert(`Error verificando backend: ${error.message}`);
+            }
+        }
+        
         // Función para refresh manual
         function manualRefresh() {
             console.log('🔄 Actualización manual iniciada...');
@@ -983,6 +1270,25 @@
         
         // Actualizar indicador cada segundo
         setInterval(updateRefreshStatus, 1000);
+
+        // Función para mostrar notificaciones
+        function mostrarNotificacion(mensaje, tipo) {
+            const notificacion = document.createElement('div');
+            notificacion.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+            notificacion.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notificacion.innerHTML = `
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notificacion);
+            
+            // Auto-ocultar después de 5 segundos
+            setTimeout(() => {
+                if (notificacion.parentNode) {
+                    notificacion.remove();
+                }
+            }, 5000);
+        }
 
         // Función para copiar contexto
         function copiarContexto(contexto) {

@@ -370,6 +370,12 @@ async def pagina_principal(request: Request):
     try:
         # Analizar sentencias existentes
         resultado = analizar_sentencias_existentes()
+        
+        # DEBUG: Log del resultado
+        logger.info(f"Resultado de analizar_sentencias_existentes: {resultado}")
+        logger.info(f"ranking_global keys: {list(resultado.get('ranking_global', {}).keys())}")
+        logger.info(f"ranking_global length: {len(resultado.get('ranking_global', {}))}")
+        
         return templates.TemplateResponse("index.html", {
             "request": request,
             "archivos_analizados": resultado.get("archivos_analizados", 0),

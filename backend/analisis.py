@@ -133,7 +133,7 @@ class AnalizadorLegal:
                 "archivo": ruta_archivo,
                 "nombre_archivo": Path(ruta_archivo).name,
                 "procesado": True,
-                "texto_extraido": contenido[:1000] + "..." if len(contenido) > 1000 else contenido,
+                "texto_extraido": contenido,  # Mostrar texto completo
                 "longitud_texto": len(contenido),
                 "timestamp": self._obtener_timestamp(),
                 "ruta_archivo": ruta_archivo
@@ -289,9 +289,9 @@ class AnalizadorLegal:
                     start_pos = match.start()
                     end_pos = match.end()
                     
-                    # Obtener contexto (150 caracteres antes y después)
-                    context_start = max(0, start_pos - 150)
-                    context_end = min(len(texto), end_pos + 150)
+                    # Obtener contexto (300 caracteres antes y después para mayor claridad)
+                    context_start = max(0, start_pos - 300)
+                    context_end = min(len(texto), end_pos + 300)
                     contexto = texto[context_start:context_end]
                     
                     # Marcar la frase encontrada
@@ -315,48 +315,126 @@ class AnalizadorLegal:
         return resultados
     
     def _prediccion_basada_reglas(self, texto: str) -> Dict[str, Any]:
-        """Predicción basada en reglas y patrones"""
+        """Predicción basada en reglas y patrones con sistema de confianza mejorado"""
+        
+        # Sistema de puntuación avanzado
+        puntuacion = 0
+        factores = {}
+        
+        # 1. Análisis de palabras clave (peso: 30%)
+        palabras_favorables = [
+            "procedente", "estimamos", "accedemos", "concedemos", "reconocemos",
+            "favorable", "justificado", "acreditado", "confirmado", "establecido",
+            "fundada", "procede", "accede", "concede", "reconoce"
+        ]
+        
+        palabras_desfavorables = [
+            "desestimamos", "infundada", "rechazamos", "denegamos", "no procedente",
+            "desfavorable", "no acreditado", "insuficiente", "negligencia", "culpabilidad",
+            "infundada", "desestima", "rechaza", "denega"
+        ]
+        
         texto_lower = texto.lower()
+        favorables = sum(1 for palabra in palabras_favorables if palabra in texto_lower)
+        desfavorables = sum(1 for palabra in palabras_desfavorables if palabra in texto_lower)
         
-        palabras_positivas = [
-            "estimamos", "estimamos procedente", "procedente", "favorable",
-            "accedemos", "concedemos", "reconocemos", "declaramos procedente",
-            "estimamos fundada", "fundada", "estimamos parcialmente",
-            "estimamos fundada en parte", "estimamos parcialmente fundada"
-        ]
-        
-        palabras_negativas = [
-            "desestimamos", "desestimamos la reclamación", "desfavorable",
-            "no procedente", "rechazamos", "denegamos", "estimamos infundada",
-            "infundada", "desestimamos parcialmente", "estimamos infundada en parte"
-        ]
-        
-        positivas = sum(1 for palabra in palabras_positivas if palabra in texto_lower)
-        negativas = sum(1 for palabra in palabras_negativas if palabra in texto_lower)
-        
-        total = positivas + negativas
-        if total == 0:
-            return {
-                "es_favorable": True,
-                "confianza": 0.5,
-                "interpretacion": "Neutral - No hay indicadores claros"
+        # Calcular puntuación de palabras clave
+        total_palabras = favorables + desfavorables
+        if total_palabras > 0:
+            score_palabras = (favorables - desfavorables) / total_palabras
+            puntuacion += score_palabras * 0.3  # 30% del peso
+            factores["palabras_clave"] = {
+                "favorables": favorables,
+                "desfavorables": desfavorables,
+                "score": score_palabras,
+                "peso": 0.3
             }
         
-        # Calcular confianza basada en la diferencia
-        diferencia = abs(positivas - negativas)
-        confianza = min(0.95, max(0.1, 0.5 + (diferencia / (total + 1)) * 0.4))
+        # 2. Análisis de estructura del documento (peso: 20%)
+        estructura_score = 0
+        if "argumentos" in texto_lower or "fundamentos" in texto_lower:
+            estructura_score += 0.2
+        if "conclusiones" in texto_lower or "resolucion" in texto_lower:
+            estructura_score += 0.2
+        if "hechos" in texto_lower or "antecedentes" in texto_lower:
+            estructura_score += 0.1
         
-        es_favorable = positivas > negativas
+        puntuacion += estructura_score * 0.2
+        factores["estructura"] = {
+            "score": estructura_score,
+            "peso": 0.2
+        }
         
-        if es_favorable:
-            interpretacion = f"Favorable - {positivas} indicadores positivos encontrados"
+        # 3. Análisis de evidencia médica (peso: 25%)
+        evidencia_score = 0
+        if "informe médico" in texto_lower or "dictamen pericial" in texto_lower:
+            evidencia_score += 0.3
+        if "lesiones" in texto_lower and ("grave" in texto_lower or "permanente" in texto_lower):
+            evidencia_score += 0.2
+        if "accidente laboral" in texto_lower:
+            evidencia_score += 0.1
+        
+        puntuacion += evidencia_score * 0.25
+        factores["evidencia"] = {
+            "score": evidencia_score,
+            "peso": 0.25
+        }
+        
+        # 4. Análisis de procedimiento legal (peso: 15%)
+        procedimiento_score = 0
+        if "reclamación administrativa previa" in texto_lower:
+            procedimiento_score += 0.2
+        if "trámite" in texto_lower and "cumplido" in texto_lower:
+            procedimiento_score += 0.2
+        if "plazo" in texto_lower and "dentro" in texto_lower:
+            procedimiento_score += 0.1
+        
+        puntuacion += procedimiento_score * 0.15
+        factores["procedimiento"] = {
+            "score": procedimiento_score,
+            "peso": 0.15
+        }
+        
+        # 5. Análisis de contexto temporal (peso: 10%)
+        contexto_score = 0
+        if "durante" in texto_lower and "jornada" in texto_lower:
+            contexto_score += 0.2
+        if "lugar de trabajo" in texto_lower:
+            contexto_score += 0.2
+        if "medidas de seguridad" in texto_lower:
+            contexto_score += 0.1
+        
+        puntuacion += contexto_score * 0.1
+        factores["contexto"] = {
+            "score": contexto_score,
+            "peso": 0.1
+        }
+        
+        # Normalizar puntuación a rango [0, 1]
+        puntuacion = max(-1, min(1, puntuacion))
+        
+        # Convertir a confianza y decisión
+        confianza = abs(puntuacion)
+        es_favorable = puntuacion > 0
+        
+        # Ajustar confianza mínima
+        confianza = max(0.3, confianza)  # Mínimo 30% de confianza
+        
+        # Calcular interpretación
+        if confianza >= 0.8:
+            interpretacion = "Muy Favorable" if es_favorable else "Muy Desfavorable"
+        elif confianza >= 0.6:
+            interpretacion = "Favorable" if es_favorable else "Desfavorable"
         else:
-            interpretacion = f"Desfavorable - {negativas} indicadores negativos encontrados"
+            interpretacion = "Parcialmente Favorable" if es_favorable else "Parcialmente Desfavorable"
         
         return {
             "es_favorable": es_favorable,
             "confianza": confianza,
-            "interpretacion": interpretacion
+            "interpretacion": interpretacion,
+            "puntuacion_global": puntuacion,
+            "factores_analisis": factores,
+            "metodo": "Reglas y patrones mejorados"
         }
     
     def _extraer_argumentos_avanzados(self, texto: str) -> List[Dict[str, Any]]:
@@ -393,13 +471,19 @@ class AnalizadorLegal:
         return argumentos
     
     def _extraer_argumentos_basicos(self, texto: str) -> List[Dict[str, Any]]:
-        """Extrae argumentos legales básicos"""
+        """Extrae argumentos legales básicos con contexto mejorado"""
         argumentos = []
         
         patrones = [
             r"por\s+(?:lo\s+)?que\s+([^.]*?\.)",
             r"fundamentos?\s+(?:de\s+)?(?:derecho|derecho\s+por\s+lo\s+que)\s+([^.]*?\.)",
-            r"considerando\s+que\s+([^.]*?\.)"
+            r"considerando\s+que\s+([^.]*?\.)",
+            r"vistos\s+([^.]*?\.)",
+            r"resultando\s+([^.]*?\.)",
+            r"primer[ao]?\s*[.-]\s*([^.]*?\.)",
+            r"segund[ao]?\s*[.-]\s*([^.]*?\.)",
+            r"tercer[ao]?\s*[.-]\s*([^.]*?\.)",
+            r"decim[ao]?\s*[.-]\s*([^.]*?\.)"
         ]
         
         for patron in patrones:
@@ -407,12 +491,22 @@ class AnalizadorLegal:
             for match in matches:
                 argumento = match.group(1).strip()
                 if len(argumento) > 20:
+                    # Obtener contexto más amplio para el argumento
+                    start_pos = match.start()
+                    end_pos = match.end()
+                    
+                    # Contexto de 500 caracteres para argumentos completos
+                    context_start = max(0, start_pos - 500)
+                    context_end = min(len(texto), end_pos + 500)
+                    contexto = texto[context_start:context_end]
+                    
                     argumentos.append({
                         "tipo": "argumento_legal",
                         "texto": argumento,
-                        "posicion": match.start(),
-                        "confianza": 0.7,
-                        "categoria": "fundamento_juridico"
+                        "posicion": start_pos,
+                        "confianza": 0.8,
+                        "categoria": "fundamento_juridico",
+                        "contexto": contexto
                     })
         
         return argumentos
@@ -482,7 +576,7 @@ class AnalizadorLegal:
         return base
     
     def _generar_resumen_reglas(self, prediccion: Dict, frases_clave: Dict) -> str:
-        """Genera resumen basado en reglas"""
+        """Genera resumen basado en reglas con análisis detallado"""
         if prediccion["es_favorable"]:
             base = "Análisis favorable del documento legal. "
         else:
@@ -492,8 +586,24 @@ class AnalizadorLegal:
             total_frases = sum(datos["total"] for datos in frases_clave.values())
             base += f"Se identificaron {total_frases} frases clave relevantes. "
         
+        # Agregar información de factores si está disponible
+        if "factores_analisis" in prediccion:
+            factores = prediccion["factores_analisis"]
+            base += "Factores analizados: "
+            
+            if "palabras_clave" in factores:
+                base += f"Palabras clave ({factores['palabras_clave']['score']:.2f}), "
+            if "estructura" in factores:
+                base += f"Estructura ({factores['estructura']['score']:.2f}), "
+            if "evidencia" in factores:
+                base += f"Evidencia médica ({factores['evidencia']['score']:.2f}), "
+            if "procedimiento" in factores:
+                base += f"Procedimiento legal ({factores['procedimiento']['score']:.2f}), "
+            if "contexto" in factores:
+                base += f"Contexto laboral ({factores['contexto']['score']:.2f}). "
+        
         base += f"Confianza del análisis: {prediccion['confianza']:.1%}. "
-        base += "Análisis realizado con reglas y patrones."
+        base += f"Método: {prediccion.get('metodo', 'Reglas y patrones')}."
         
         return base
     
