@@ -585,7 +585,7 @@
                         const rawData = dataScript.textContent.trim();
                         console.log('Raw data from script tag:', rawData);
                         
-                        const parsedData = JSON.parse(rawData);
+                        const parsedData = parseJsonSafely(rawData);
                         console.log('Parsed data successfully:', parsedData);
                         showStatsDetails(type, parseInt(value), parsedData);
                     } catch (e) {
@@ -615,7 +615,7 @@
                     
                     if (frase && datos) {
                         try {
-                            const parsedData = JSON.parse(datos);
+                            const parsedData = parseJsonSafely(datos);
                             showFraseDetails(frase, parsedData);
                         } catch (e) {
                             console.error('Error parsing datos:', e);
@@ -642,35 +642,21 @@
                     try {
                         let parsedData;
                         
-                        // Intentar parsear datos primero
+                        // Intentar parsear datos primero usando la función robusta
                         if (datos && datos.trim()) {
                             try {
                                 console.log('Parsing datos...');
-                                // Decodificar entidades HTML antes de parsear
-                                const datosDecodificados = datos
-                                    .replace(/&quot;/g, '"')
-                                    .replace(/&#39;/g, "'")
-                                    .replace(/&amp;/g, '&')
-                                    .replace(/&lt;/g, '<')
-                                    .replace(/&gt;/g, '>');
-                                
-                                parsedData = JSON.parse(datosDecodificados);
+                                parsedData = parseJsonSafely(datos);
                                 console.log('Datos parseados exitosamente:', parsedData);
                             } catch (parseError) {
                                 console.warn('Error parsing datos, intentando con info:', parseError);
                                 console.error('Datos originales:', datos);
-                                console.error('Datos decodificados:', datosDecodificados);
+                                console.error('Datos decodificados:', decodeHtmlEntities(datos));
                                 
                                 // Si falla datos, intentar con info
                                 if (info && info.trim()) {
                                     try {
-                                        const infoDecodificada = info
-                                            .replace(/&quot;/g, '"')
-                                            .replace(/&#39;/g, "'")
-                                            .replace(/&amp;/g, '&')
-                                            .replace(/&lt;/g, '<')
-                                            .replace(/&gt;/g, '>');
-                                        parsedData = JSON.parse(infoDecodificada);
+                                        parsedData = parseJsonSafely(info);
                                     } catch (infoError) {
                                         throw new Error(`No se pudieron parsear los datos: ${parseError.message}, ni la info: ${infoError.message}`);
                                     }
@@ -681,13 +667,7 @@
                         } else if (info && info.trim()) {
                             // Para botones en tarjetas de estadísticas
                             console.log('Parsing info...');
-                            const infoDecodificada = info
-                                .replace(/&quot;/g, '"')
-                                .replace(/&#39;/g, "'")
-                                .replace(/&amp;/g, '&')
-                                .replace(/&lt;/g, '<')
-                                .replace(/&gt;/g, '>');
-                            parsedData = JSON.parse(infoDecodificada);
+                            parsedData = parseJsonSafely(info);
                         } else {
                             throw new Error('No se encontraron datos para procesar');
                         }
@@ -697,6 +677,8 @@
                         console.error('Error parsing data:', e);
                         console.error('Datos originales:', datos);
                         console.error('Info original:', info);
+                        console.error('Datos decodificados:', datos ? decodeHtmlEntities(datos) : 'N/A');
+                        console.error('Info decodificada:', info ? decodeHtmlEntities(info) : 'N/A');
                         
                         // Mostrar error más informativo
                         const errorMsg = `Error al procesar los datos de la frase "${frase}": ${e.message}`;
@@ -823,7 +805,7 @@
             try {
                 let datosObj;
                 if (typeof datos === 'string') {
-                    datosObj = JSON.parse(datos);
+                    datosObj = parseJsonSafely(datos);
                 } else {
                     datosObj = datos;
                 }
@@ -1053,6 +1035,46 @@
             showFraseDetails("lesiones_hombro", datosPrueba);
         }
         
+        // Función utilitaria para decodificar entidades HTML de forma segura
+        function decodeHtmlEntities(text) {
+            if (!text || typeof text !== 'string') return text;
+            
+            // Crear un elemento temporal para usar el parser del navegador
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = text;
+            return textarea.value;
+        }
+        
+        // Función para parsear JSON de forma robusta
+        function parseJsonSafely(jsonString) {
+            if (!jsonString || typeof jsonString !== 'string') {
+                throw new Error('Input debe ser un string válido');
+            }
+            
+            try {
+                // Primera opción: intentar parsear directamente
+                return JSON.parse(jsonString);
+            } catch (e) {
+                // Segunda opción: decodificar entidades HTML y parsear
+                try {
+                    const decoded = decodeHtmlEntities(jsonString);
+                    return JSON.parse(decoded);
+                } catch (e2) {
+                    // Tercera opción: limpiar caracteres problemáticos y parsear
+                    try {
+                        const cleaned = jsonString
+                            .replace(/^\s+|\s+$/g, '') // Eliminar espacios al inicio/final
+                            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Eliminar caracteres de control
+                            .replace(/[\u200B-\u200D\uFEFF]/g, ''); // Eliminar espacios de ancho cero
+                        
+                        return JSON.parse(cleaned);
+                    } catch (e3) {
+                        throw new Error(`Error parsing JSON después de 3 intentos: ${e.message}, ${e2.message}, ${e3.message}`);
+                    }
+                }
+            }
+        }
+        
         // Función para depurar datos de frases
         function debugFraseData() {
             console.log('=== DEBUG: Datos de frases ===');
@@ -1086,27 +1108,13 @@
                 if (datos) {
                     elementosConDatos++;
                     try {
-                        const parsed = JSON.parse(datos);
+                        const parsed = parseJsonSafely(datos);
                         console.log(`  ✅ Datos parseados correctamente:`, parsed);
                     } catch (e) {
                         erroresParsing++;
                         console.error(`  ❌ Error parsing datos: ${e.message}`);
                         console.error(`  Datos crudos: ${datos}`);
-                        
-                        // Intentar decodificar entidades HTML
-                        try {
-                            const datosDecodificados = datos
-                                .replace(/&quot;/g, '"')
-                                .replace(/&#39;/g, "'")
-                                .replace(/&amp;/g, '&')
-                                .replace(/&lt;/g, '<')
-                                .replace(/&gt;/g, '>');
-                            
-                            const parsed = JSON.parse(datosDecodificados);
-                            console.log(`  🔧 Datos parseados después de decodificar:`, parsed);
-                        } catch (e2) {
-                            console.error(`  ❌ Error incluso después de decodificar: ${e2.message}`);
-                        }
+                        console.error(`  Datos decodificados: ${decodeHtmlEntities(datos)}`);
                     }
                 } else {
                     elementosSinDatos++;
@@ -1115,11 +1123,12 @@
                 
                 if (info) {
                     try {
-                        const parsed = JSON.parse(info);
+                        const parsed = parseJsonSafely(info);
                         console.log(`  ✅ Info parseada:`, parsed);
                     } catch (e) {
                         console.error(`  ❌ Error parsing info: ${e.message}`);
                         console.error(`  Info cruda: ${info}`);
+                        console.error(`  Info decodificada: ${decodeHtmlEntities(info)}`);
                     }
                 }
                 
@@ -1167,7 +1176,7 @@
                 const datos = elemento.getAttribute('data-datos');
                 if (datos) {
                     try {
-                        const parsed = JSON.parse(datos);
+                        const parsed = parseJsonSafely(datos);
                         elementoValido = elemento;
                         datosValidos = parsed;
                         break;
