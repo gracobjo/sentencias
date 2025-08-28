@@ -225,11 +225,14 @@
                 <button class="btn btn-success" onclick="testBusquedaArgumentos()">
                     <i class="bi bi-search me-2"></i>Test: Búsqueda Argumentos
                 </button>
-                                 <button class="btn btn-dark" onclick="verificarDatosBackend()">
-                     <i class="bi bi-server me-2"></i>Verificar Backend
-                 </button>
-                 <button class="btn btn-primary" onclick="mostrarAnalisisInteligente()">
+                <button class="btn btn-dark" onclick="verificarDatosBackend()">
+                    <i class="bi bi-server me-2"></i>Verificar Backend
+                </button>
+                                 <button class="btn btn-primary" onclick="mostrarAnalisisInteligente()">
                      <i class="bi bi-brain me-2"></i>Análisis Inteligente
+                 </button>
+                 <button class="btn btn-danger" onclick="debugAvanzado()">
+                     <i class="bi bi-exclamation-triangle me-2"></i>Debug Avanzado
                  </button>
             </div>
         </div>
@@ -1100,133 +1103,148 @@
             return textarea.value;
         }
         
-        // Función para parsear JSON de forma robusta con diagnóstico completo
-        function parseJsonSafely(jsonString) {
-            // DIAGNÓSTICO INICIAL
-            console.log('🔍 === DIAGNÓSTICO JSON ===');
-            console.log('Tipo de input:', typeof jsonString);
-            console.log('Valor del input:', jsonString);
-            console.log('Longitud del input:', jsonString ? jsonString.length : 'N/A');
-            
-            // VALIDACIÓN DE TIPO
-            if (jsonString === null || jsonString === undefined) {
-                throw new Error('Input es null o undefined');
-            }
-            
-            if (typeof jsonString !== 'string') {
-                throw new Error(`Input debe ser string, recibido: ${typeof jsonString}`);
-            }
-            
-            if (jsonString.trim() === '') {
-                throw new Error('Input es un string vacío');
-            }
-            
-            // DETECCIÓN DE PROBLEMAS COMUNES
-            const problemas = [];
-            
-            if (jsonString.includes('&quot;') || jsonString.includes('&amp;') || 
-                jsonString.includes('&lt;') || jsonString.includes('&gt;')) {
-                problemas.push('Contiene entidades HTML');
-            }
-            
-            if (jsonString.includes('undefined') || jsonString.includes('null')) {
-                problemas.push('Contiene valores undefined/null como texto');
-            }
-            
-            if (jsonString.includes('\n') || jsonString.includes('\t') || jsonString.includes('\r')) {
-                problemas.push('Contiene caracteres de control');
-            }
-            
-            if (jsonString.match(/[\u200B-\u200D\uFEFF]/)) {
-                problemas.push('Contiene espacios de ancho cero Unicode');
-            }
-            
-            if (problemas.length > 0) {
-                console.log('⚠️ Problemas detectados:', problemas);
-            }
-            
-            // INTENTO 1: Parse directo
-            try {
-                console.log('🔄 Intento 1: Parse directo');
-                const resultado = JSON.parse(jsonString);
-                console.log('✅ Parse directo exitoso');
-                return resultado;
-            } catch (e1) {
-                console.log('❌ Intento 1 falló:', e1.message);
-                
-                // INTENTO 2: Decodificar entidades HTML
-                try {
-                    console.log('🔄 Intento 2: Decodificar entidades HTML');
-                    const decoded = decodeHtmlEntities(jsonString);
-                    console.log('Texto decodificado:', decoded);
-                    
-                    if (decoded === jsonString) {
-                        console.log('⚠️ No se detectaron cambios en la decodificación');
-                    }
-                    
-                    const resultado = JSON.parse(decoded);
-                    console.log('✅ Parse con decodificación HTML exitoso');
-                    return resultado;
-                } catch (e2) {
-                    console.log('❌ Intento 2 falló:', e2.message);
-                    
-                    // INTENTO 3: Limpieza agresiva de caracteres
-                    try {
-                        console.log('🔄 Intento 3: Limpieza agresiva de caracteres');
-                        const cleaned = jsonString
-                            .replace(/^\s+|\s+$/g, '') // Espacios inicio/final
-                            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Caracteres de control
-                            .replace(/[\u200B-\u200D\uFEFF]/g, '') // Espacios Unicode
-                            .replace(/\n/g, ' ') // Saltos de línea
-                            .replace(/\t/g, ' ') // Tabulaciones
-                            .replace(/\r/g, ' ') // Retornos de carro
-                            .replace(/\s+/g, ' '); // Múltiples espacios
-                        
-                        console.log('Texto limpiado:', cleaned);
-                        
-                        if (cleaned === jsonString) {
-                            console.log('⚠️ No se detectaron cambios en la limpieza');
-                        }
-                        
-                        const resultado = JSON.parse(cleaned);
-                        console.log('✅ Parse con limpieza exitoso');
-                        return resultado;
-                    } catch (e3) {
-                        console.log('❌ Intento 3 falló:', e3.message);
-                        
-                        // INTENTO 4: Análisis de estructura JSON
-                        try {
-                            console.log('🔄 Intento 4: Análisis de estructura JSON');
-                            const analisis = analizarEstructuraJSON(jsonString);
-                            console.log('Análisis de estructura:', analisis);
-                            
-                            // Intentar reparar JSON basado en el análisis
-                            const reparado = repararJSON(jsonString, analisis);
-                            console.log('JSON reparado:', reparado);
-                            
-                            const resultado = JSON.parse(reparado);
-                            console.log('✅ Parse con reparación exitoso');
-                            return resultado;
-                        } catch (e4) {
-                            console.log('❌ Intento 4 falló:', e4.message);
-                            
-                            // ERROR FINAL CON DIAGNÓSTICO COMPLETO
-                            const errorFinal = new Error(`Error parsing JSON después de 4 intentos:\n` +
-                                `1. Parse directo: ${e1.message}\n` +
-                                `2. Decodificación HTML: ${e2.message}\n` +
-                                `3. Limpieza de caracteres: ${e3.message}\n` +
-                                `4. Reparación JSON: ${e4.message}\n\n` +
-                                `Input original: ${jsonString}\n` +
-                                `Longitud: ${jsonString.length}\n` +
-                                `Problemas detectados: ${problemas.join(', ')}`);
-                            
-                            console.error('💥 ERROR FINAL:', errorFinal);
-                            throw errorFinal;
-                        }
-                    }
-                }
-            }
-        }
+                 // Función para parsear JSON de forma robusta con diagnóstico completo
+         function parseJsonSafely(jsonString) {
+             // DIAGNÓSTICO INICIAL
+             console.log('🔍 === DIAGNÓSTICO JSON ===');
+             console.log('Tipo de input:', typeof jsonString);
+             console.log('Valor del input:', jsonString);
+             console.log('Longitud del input:', jsonString ? jsonString.length : 'N/A');
+             
+             // VALIDACIÓN DE TIPO
+             if (jsonString === null || jsonString === undefined) {
+                 throw new Error('Input es null o undefined');
+             }
+             
+             if (typeof jsonString !== 'string') {
+                 throw new Error(`Input debe ser string, recibido: ${typeof jsonString}`);
+             }
+             
+             if (jsonString.trim() === '') {
+                 throw new Error('Input es un string vacío');
+             }
+             
+             // VALIDACIÓN DE JSON INCOMPLETO
+             const trimmed = jsonString.trim();
+             if (trimmed === '{' || trimmed === '[' || trimmed === '"' || trimmed === 'null') {
+                 throw new Error(`JSON incompleto detectado: "${trimmed}" - Falta contenido válido`);
+             }
+             
+             // DETECCIÓN DE PROBLEMAS COMUNES
+             const problemas = [];
+             
+             if (trimmed.includes('&quot;') || trimmed.includes('&amp;') || 
+                 trimmed.includes('&lt;') || trimmed.includes('&gt;')) {
+                 problemas.push('Contiene entidades HTML');
+             }
+             
+             if (trimmed.includes('undefined') || trimmed.includes('null')) {
+                 problemas.push('Contiene valores undefined/null como texto');
+             }
+             
+             if (trimmed.includes('\n') || trimmed.includes('\t') || trimmed.includes('\r')) {
+                 problemas.push('Contiene caracteres de control');
+             }
+             
+             if (trimmed.match(/[\u200B-\u200D\uFEFF]/)) {
+                 problemas.push('Contiene espacios de ancho cero Unicode');
+             }
+             
+             // Detectar JSON incompleto
+             if (trimmed.startsWith('{') && !trimmed.includes(':')) {
+                 problemas.push('JSON objeto incompleto - falta propiedades');
+             }
+             
+             if (trimmed.startsWith('[') && !trimmed.includes(',')) {
+                 problemas.push('JSON array incompleto - falta elementos');
+             }
+             
+             if (problemas.length > 0) {
+                 console.log('⚠️ Problemas detectados:', problemas);
+             }
+             
+             // INTENTO 1: Parse directo
+             try {
+                 console.log('🔄 Intento 1: Parse directo');
+                 const resultado = JSON.parse(trimmed);
+                 console.log('✅ Parse directo exitoso');
+                 return resultado;
+             } catch (e1) {
+                 console.log('❌ Intento 1 falló:', e1.message);
+                 
+                 // INTENTO 2: Decodificar entidades HTML
+                 try {
+                     console.log('🔄 Intento 2: Decodificar entidades HTML');
+                     const decoded = decodeHtmlEntities(trimmed);
+                     console.log('Texto decodificado:', decoded);
+                     
+                     if (decoded === trimmed) {
+                         console.log('⚠️ No se detectaron cambios en la decodificación');
+                     }
+                     
+                     const resultado = JSON.parse(decoded);
+                     console.log('✅ Parse con decodificación HTML exitoso');
+                     return resultado;
+                 } catch (e2) {
+                     console.log('❌ Intento 2 falló:', e2.message);
+                     
+                     // INTENTO 3: Limpieza agresiva de caracteres
+                     try {
+                         console.log('🔄 Intento 3: Limpieza agresiva de caracteres');
+                         const cleaned = trimmed
+                             .replace(/^\s+|\s+$/g, '') // Espacios inicio/final
+                             .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Caracteres de control
+                             .replace(/[\u200B-\u200D\uFEFF]/g, '') // Espacios Unicode
+                             .replace(/\n/g, ' ') // Saltos de línea
+                             .replace(/\t/g, ' ') // Tabulaciones
+                             .replace(/\r/g, ' ') // Retornos de carro
+                             .replace(/\s+/g, ' '); // Múltiples espacios
+                         
+                         console.log('Texto limpiado:', cleaned);
+                         
+                         if (cleaned === trimmed) {
+                             console.log('⚠️ No se detectaron cambios en la limpieza');
+                         }
+                         
+                         const resultado = JSON.parse(cleaned);
+                         console.log('✅ Parse con limpieza exitoso');
+                         return resultado;
+                     } catch (e3) {
+                         console.log('❌ Intento 3 falló:', e3.message);
+                         
+                         // INTENTO 4: Análisis de estructura JSON
+                         try {
+                             console.log('🔄 Intento 4: Análisis de estructura JSON');
+                             const analisis = analizarEstructuraJSON(trimmed);
+                             console.log('Análisis de estructura:', analisis);
+                             
+                             // Intentar reparar JSON basado en el análisis
+                             const reparado = repararJSON(trimmed, analisis);
+                             console.log('JSON reparado:', reparado);
+                             
+                             const resultado = JSON.parse(reparado);
+                             console.log('✅ Parse con reparación exitoso');
+                             return resultado;
+                         } catch (e4) {
+                             console.log('❌ Intento 4 falló:', e4.message);
+                             
+                             // ERROR FINAL CON DIAGNÓSTICO COMPLETO
+                             const errorFinal = new Error(`Error parsing JSON después de 4 intentos:\n` +
+                                 `1. Parse directo: ${e1.message}\n` +
+                                 `2. Decodificación HTML: ${e2.message}\n` +
+                                 `3. Limpieza de caracteres: ${e3.message}\n` +
+                                 `4. Reparación JSON: ${e4.message}\n\n` +
+                                 `Input original: "${jsonString}"\n` +
+                                 `Longitud: ${jsonString.length}\n` +
+                                 `Problemas detectados: ${problemas.join(', ')}`);
+                             
+                             console.error('💥 ERROR FINAL:', errorFinal);
+                             throw errorFinal;
+                         }
+                     }
+                 }
+             }
+         }
         
         // Función para analizar la estructura del JSON problemático
         function analizarEstructuraJSON(jsonString) {
@@ -1251,116 +1269,177 @@
             return analisis;
         }
         
-        // Función para intentar reparar JSON malformado
-        function repararJSON(jsonString, analisis) {
-            let reparado = jsonString;
-            
-            // Reparar comillas mal escapadas
-            reparado = reparado.replace(/&quot;/g, '"');
-            reparado = reparado.replace(/&#39;/g, "'");
-            reparado = reparado.replace(/&amp;/g, '&');
-            reparado = reparado.replace(/&lt;/g, '<');
-            reparado = reparado.replace(/&gt;/g, '>');
-            
-            // Reparar comillas simples por dobles
-            reparado = reparado.replace(/'/g, '"');
-            
-            // Reparar propiedades sin comillas
-            reparado = reparado.replace(/(\w+):/g, '"$1":');
-            
-            // Reparar valores sin comillas (solo strings)
-            reparado = reparado.replace(/:\s*([^",{}\[\]]+)(?=,|}|])/g, ':"$1"');
-            
-            // Eliminar comas extra al final
-            reparado = reparado.replace(/,(\s*[}\]])/g, '$1');
-            
-            return reparado;
-        }
+                 // Función para intentar reparar JSON malformado
+         function repararJSON(jsonString, analisis) {
+             let reparado = jsonString;
+             
+             // Casos especiales de JSON incompleto
+             if (reparado === '{') {
+                 reparado = '{}';
+                 console.log('🔄 Reparando JSON objeto vacío: {}');
+                 return reparado;
+             }
+             
+             if (reparado === '[') {
+                 reparado = '[]';
+                 console.log('🔄 Reparando JSON array vacío: []');
+                 return reparado;
+             }
+             
+             if (reparado === '"') {
+                 reparado = '""';
+                 console.log('🔄 Reparando JSON string vacío: ""');
+                 return reparado;
+             }
+             
+             // Reparar comillas mal escapadas
+             reparado = reparado.replace(/&quot;/g, '"');
+             reparado = reparado.replace(/&#39;/g, "'");
+             reparado = reparado.replace(/&amp;/g, '&');
+             reparado = reparado.replace(/&lt;/g, '<');
+             reparado = reparado.replace(/&gt;/g, '>');
+             
+             // Reparar comillas simples por dobles
+             reparado = reparado.replace(/'/g, '"');
+             
+             // Reparar propiedades sin comillas
+             reparado = reparado.replace(/(\w+):/g, '"$1":');
+             
+             // Reparar valores sin comillas (solo strings)
+             reparado = reparado.replace(/:\s*([^",{}\[\]]+)(?=,|}|])/g, ':"$1"');
+             
+             // Eliminar comas extra al final
+             reparado = reparado.replace(/,(\s*[}\]])/g, '$1');
+             
+             // Si empieza con { pero no termina con }, agregar }
+             if (reparado.startsWith('{') && !reparado.endsWith('}')) {
+                 reparado += '}';
+                 console.log('🔄 Agregando llave de cierre: }');
+             }
+             
+             // Si empieza con [ pero no termina con ], agregar ]
+             if (reparado.startsWith('[') && !reparado.endsWith(']')) {
+                 reparado += ']';
+                 console.log('🔄 Agregando corchete de cierre: ]');
+             }
+             
+             return reparado;
+         }
         
-        // Función para depurar datos de frases
-        function debugFraseData() {
-            console.log('=== DEBUG: Datos de frases ===');
-            
-            // Verificar datos del contexto Jinja2
-            console.log('=== CONTEXTO JINJA2 ===');
-            console.log('ranking_global disponible:', typeof ranking_global !== 'undefined');
-            if (typeof ranking_global !== 'undefined') {
-                console.log('ranking_global:', ranking_global);
-                console.log('Tipo:', typeof ranking_global);
-                console.log('Claves:', Object.keys(ranking_global));
-            }
-            
-            const elementos = document.querySelectorAll('[data-frase]');
-            console.log(`Encontrados ${elementos.length} elementos con data-frase`);
-            
-            let elementosConDatos = 0;
-            let elementosSinDatos = 0;
-            let erroresParsing = 0;
-            
-            elementos.forEach((elemento, index) => {
-                const frase = elemento.getAttribute('data-frase');
-                const datos = elemento.getAttribute('data-datos');
-                const info = elemento.getAttribute('data-info');
-                
-                console.log(`Elemento ${index + 1}:`);
-                console.log(`  Frase: ${frase}`);
-                console.log(`  Datos: ${datos ? 'SÍ' : 'NO'}`);
-                console.log(`  Info: ${info ? 'SÍ' : 'NO'}`);
-                
-                if (datos) {
-                    elementosConDatos++;
-                    try {
-                        const parsed = parseJsonSafely(datos);
-                        console.log(`  ✅ Datos parseados correctamente:`, parsed);
-                    } catch (e) {
-                        erroresParsing++;
-                        console.error(`  ❌ Error parsing datos: ${e.message}`);
-                        console.error(`  Datos crudos: ${datos}`);
-                        console.error(`  Datos decodificados: ${decodeHtmlEntities(datos)}`);
-                    }
-                } else {
-                    elementosSinDatos++;
-                    console.log(`  ⚠️ No tiene datos`);
-                }
-                
-                if (info) {
-                    try {
-                        const parsed = parseJsonSafely(info);
-                        console.log(`  ✅ Info parseada:`, parsed);
-                    } catch (e) {
-                        console.error(`  ❌ Error parsing info: ${e.message}`);
-                        console.error(`  Info cruda: ${info}`);
-                        console.error(`  Info decodificada: ${decodeHtmlEntities(info)}`);
-                    }
-                }
-                
-                console.log('---');
-            });
-            
-            console.log('=== RESUMEN DEBUG ===');
-            console.log(`Total elementos: ${elementos.length}`);
-            console.log(`Con datos: ${elementosConDatos}`);
-            console.log(`Sin datos: ${elementosSinDatos}`);
-            console.log(`Errores de parsing: ${erroresParsing}`);
-            
-            if (erroresParsing > 0) {
-                console.warn('⚠️ Hay elementos con errores de parsing. Revisa el template.');
-            }
-            
-            // Verificar si hay datos en los script tags
-            console.log('=== SCRIPT TAGS ===');
-            const scriptTags = document.querySelectorAll('script[type="application/json"]');
-            scriptTags.forEach((script, index) => {
-                console.log(`Script ${index + 1} (${script.id}):`);
-                try {
-                    const data = JSON.parse(script.textContent.trim());
-                    console.log(`  ✅ Datos válidos:`, data);
-                } catch (e) {
-                    console.error(`  ❌ Error parsing: ${e.message}`);
-                    console.error(`  Contenido:`, script.textContent.trim());
-                }
-            });
-        }
+                 // Función para depurar datos de frases
+         function debugFraseData() {
+             console.log('=== DEBUG: Datos de frases ===');
+             
+             // Verificar datos del contexto Jinja2
+             console.log('=== CONTEXTO JINJA2 ===');
+             console.log('ranking_global disponible:', typeof ranking_global !== 'undefined');
+             if (typeof ranking_global !== 'undefined') {
+                 console.log('ranking_global:', ranking_global);
+                 console.log('Tipo:', typeof ranking_global);
+                 console.log('Claves:', Object.keys(ranking_global));
+             }
+             
+             const elementos = document.querySelectorAll('[data-frase]');
+             console.log(`Encontrados ${elementos.length} elementos con data-frase`);
+             
+             let elementosConDatos = 0;
+             let elementosSinDatos = 0;
+             let erroresParsing = 0;
+             let jsonIncompletos = 0;
+             
+             elementos.forEach((elemento, index) => {
+                 const frase = elemento.getAttribute('data-frase');
+                 const datos = elemento.getAttribute('data-datos');
+                 const info = elemento.getAttribute('data-info');
+                 
+                 console.log(`Elemento ${index + 1}:`);
+                 console.log(`  Frase: ${frase}`);
+                 console.log(`  Datos: ${datos ? 'SÍ' : 'NO'}`);
+                 console.log(`  Info: ${info ? 'SÍ' : 'NO'}`);
+                 
+                 if (datos) {
+                     elementosConDatos++;
+                     
+                     // Verificar si es JSON incompleto antes de intentar parsear
+                     const trimmed = datos.trim();
+                     if (trimmed === '{' || trimmed === '[' || trimmed === '"' || trimmed === 'null') {
+                         jsonIncompletos++;
+                         console.error(`  🚨 JSON INCOMPLETO detectado: "${trimmed}"`);
+                         console.error(`  ⚠️ Este es un problema del backend - revisa la generación de datos`);
+                         continue;
+                     }
+                     
+                     try {
+                         const parsed = parseJsonSafely(datos);
+                         console.log(`  ✅ Datos parseados correctamente:`, parsed);
+                     } catch (e) {
+                         erroresParsing++;
+                         console.error(`  ❌ Error parsing datos: ${e.message}`);
+                         console.error(`  Datos crudos: "${datos}"`);
+                         console.error(`  Datos decodificados: "${decodeHtmlEntities(datos)}"`);
+                         
+                         // Si es un error de JSON incompleto, sugerir revisar el backend
+                         if (e.message.includes('JSON incompleto')) {
+                             console.error(`  🔧 SUGERENCIA: Revisa el backend - está generando JSON incompleto`);
+                         }
+                     }
+                 } else {
+                     elementosSinDatos++;
+                     console.log(`  ⚠️ No tiene datos`);
+                 }
+                 
+                 if (info) {
+                     try {
+                         const parsed = parseJsonSafely(info);
+                         console.log(`  ✅ Info parseada:`, parsed);
+                     } catch (e) {
+                         console.error(`  ❌ Error parsing info: ${e.message}`);
+                         console.error(`  Info cruda: "${info}"`);
+                         console.error(`  Info decodificada: "${decodeHtmlEntities(info)}"`);
+                     }
+                 }
+                 
+                 console.log('---');
+             });
+             
+             console.log('=== RESUMEN DEBUG ===');
+             console.log(`Total elementos: ${elementos.length}`);
+             console.log(`Con datos: ${elementosConDatos}`);
+             console.log(`Sin datos: ${elementosSinDatos}`);
+             console.log(`Errores de parsing: ${erroresParsing}`);
+             console.log(`JSON incompletos: ${jsonIncompletos}`);
+             
+             if (erroresParsing > 0) {
+                 console.warn('⚠️ Hay elementos con errores de parsing. Revisa el template.');
+             }
+             
+             if (jsonIncompletos > 0) {
+                 console.error('🚨 CRÍTICO: Hay elementos con JSON incompleto. Esto indica un problema en el backend.');
+                 console.error('🔧 ACCIÓN REQUERIDA: Revisa la función que genera los datos en el backend.');
+             }
+             
+             // Verificar si hay datos en los script tags
+             console.log('=== SCRIPT TAGS ===');
+             const scriptTags = document.querySelectorAll('script[type="application/json"]');
+             scriptTags.forEach((script, index) => {
+                 console.log(`Script ${index + 1} (${script.id}):`);
+                 try {
+                     const data = JSON.parse(script.textContent.trim());
+                     console.log(`  ✅ Datos válidos:`, data);
+                 } catch (e) {
+                     console.error(`  ❌ Error parsing: ${e.message}`);
+                     console.error(`  Contenido: "${script.textContent.trim()}"`);
+                 }
+             });
+             
+             // Verificar el backend directamente
+             console.log('=== VERIFICACIÓN BACKEND ===');
+             verificarDatosBackend().then(() => {
+                 console.log('✅ Verificación del backend completada');
+             }).catch((error) => {
+                 console.error('❌ Error verificando backend:', error);
+             });
+         }
         
         // Función para probar la búsqueda de argumentos
         function testBusquedaArgumentos() {
@@ -1976,9 +2055,132 @@
                      'Adjuntar informes médicos detallados',
                      'Documentar reclamación administrativa previa',
                      'Usar terminología jurídica correcta'
-                 ]
-             };
-         }
-    </script>
-</body>
-</html>
+                                   ]
+              };
+          }
+          
+          // Función para debug avanzado del sistema
+          async function debugAvanzado() {
+              console.log('🚨 === DEBUG AVANZADO INICIADO ===');
+              
+              try {
+                  // 1. Verificar estado del DOM
+                  console.log('🔍 1. Verificando estado del DOM...');
+                  const elementosCriticos = {
+                      'analisisModal': document.getElementById('analisisModal'),
+                      'reconstruccionModal': document.getElementById('reconstruccionModal'),
+                      'fraseModal': document.getElementById('fraseModal'),
+                      'statsModal': document.getElementById('statsModal')
+                  };
+                  
+                  for (const [nombre, elemento] of Object.entries(elementosCriticos)) {
+                      if (elemento) {
+                          console.log(`  ✅ ${nombre}: Encontrado`);
+                      } else {
+                          console.error(`  ❌ ${nombre}: NO ENCONTRADO`);
+                      }
+                  }
+                  
+                  // 2. Verificar funciones disponibles
+                  console.log('🔍 2. Verificando funciones disponibles...');
+                  const funcionesCriticas = [
+                      'mostrarAnalisisInteligente',
+                      'reconstruirDemanda',
+                      'parseJsonSafely',
+                      'decodeHtmlEntities',
+                      'debugFraseData'
+                  ];
+                  
+                  for (const funcion of funcionesCriticas) {
+                      if (typeof window[funcion] === 'function') {
+                          console.log(`  ✅ ${funcion}: Disponible`);
+                      } else {
+                          console.error(`  ❌ ${funcion}: NO DISPONIBLE`);
+                      }
+                  }
+                  
+                  // 3. Verificar datos del contexto Jinja2
+                  console.log('🔍 3. Verificando contexto Jinja2...');
+                  if (typeof ranking_global !== 'undefined') {
+                      console.log(`  ✅ ranking_global: ${Object.keys(ranking_global || {}).length} elementos`);
+                      console.log(`  📊 Tipo: ${typeof ranking_global}`);
+                      console.log(`  🔑 Claves: ${Object.keys(ranking_global || {}).slice(0, 5).join(', ')}...`);
+                  } else {
+                      console.error('  ❌ ranking_global: NO DISPONIBLE');
+                  }
+                  
+                  // 4. Verificar elementos con data-frase
+                  console.log('🔍 4. Verificando elementos data-frase...');
+                  const elementos = document.querySelectorAll('[data-frase]');
+                  console.log(`  📊 Total elementos: ${elementos.length}`);
+                  
+                  if (elementos.length > 0) {
+                      const primerElemento = elementos[0];
+                      const frase = primerElemento.getAttribute('data-frase');
+                      const datos = primerElemento.getAttribute('data-datos');
+                      
+                      console.log(`  🔍 Primer elemento:`);
+                      console.log(`    - Frase: "${frase}"`);
+                      console.log(`    - Datos: "${datos}"`);
+                      console.log(`    - Longitud datos: ${datos ? datos.length : 'N/A'}`);
+                      
+                      if (datos && datos.trim() === '{') {
+                          console.error(`    🚨 PROBLEMA CRÍTICO: JSON incompleto detectado`);
+                          console.error(`    🔧 Esto indica un problema en el backend`);
+                      }
+                  }
+                  
+                  // 5. Verificar backend directamente
+                  console.log('🔍 5. Verificando backend...');
+                  try {
+                      const response = await fetch('/api/analizar');
+                      const data = await response.json();
+                      
+                      if (data && data.ranking_global) {
+                          console.log(`  ✅ Backend responde correctamente`);
+                          console.log(`  📊 ranking_global: ${Object.keys(data.ranking_global).length} elementos`);
+                      } else {
+                          console.error(`  ❌ Backend no devuelve ranking_global`);
+                          console.log(`  📊 Respuesta completa:`, data);
+                      }
+                  } catch (error) {
+                      console.error(`  ❌ Error conectando con backend: ${error.message}`);
+                  }
+                  
+                  // 6. Generar reporte de diagnóstico
+                  console.log('🔍 6. Generando reporte de diagnóstico...');
+                  const reporte = {
+                      timestamp: new Date().toISOString(),
+                      dom: {
+                          modales: Object.keys(elementosCriticos).filter(k => elementosCriticos[k]).length,
+                          elementos_data_frase: elementos.length
+                      },
+                      funciones: funcionesCriticas.filter(f => typeof window[f] === 'function').length,
+                      contexto: typeof ranking_global !== 'undefined',
+                      backend: 'Verificado en paso 5'
+                  };
+                  
+                  console.log('📋 REPORTE DE DIAGNÓSTICO:', reporte);
+                  
+                  // 7. Mostrar resumen al usuario
+                  const mensaje = `
+                      🔍 DIAGNÓSTICO COMPLETADO
+                      
+                      ✅ Elementos del DOM: ${reporte.dom.modales}/4 modales
+                      ✅ Funciones disponibles: ${reporte.funciones}/5 funciones críticas
+                      ✅ Contexto Jinja2: ${reporte.contexto ? 'SÍ' : 'NO'}
+                      📊 Elementos data-frase: ${reporte.dom.elementos_data_frase}
+                      
+                      ${reporte.dom.elementos_data_frase > 0 ? '⚠️ Revisa la consola para detalles específicos' : '✅ Sistema parece estar funcionando correctamente'}
+                  `;
+                  
+                  mostrarNotificacion(mensaje, reporte.dom.elementos_data_frase > 0 ? 'warning' : 'success');
+                  
+              } catch (error) {
+                  console.error('❌ Error en debug avanzado:', error);
+                  mostrarNotificacion(`Error en debug avanzado: ${error.message}`, 'danger');
+              }
+          }
+     </script>
+ </body>
+ </html>
