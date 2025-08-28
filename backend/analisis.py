@@ -315,99 +315,160 @@ class AnalizadorLegal:
         return resultados
     
     def _prediccion_basada_reglas(self, texto: str) -> Dict[str, Any]:
-        """Predicción basada en reglas y patrones con sistema de confianza mejorado"""
+        """Predicción basada en reglas y patrones con sistema de confianza avanzado y detección automática de factores"""
         
-        # Sistema de puntuación avanzado
+        # Sistema de puntuación avanzado con detección automática
         puntuacion = 0
         factores = {}
         
-        # 1. Análisis de palabras clave (peso: 30%)
+        texto_lower = texto.lower()
+        
+        # 1. ANÁLISIS AVANZADO DE PALABRAS CLAVE (peso: 25%)
         palabras_favorables = [
             "procedente", "estimamos", "accedemos", "concedemos", "reconocemos",
             "favorable", "justificado", "acreditado", "confirmado", "establecido",
-            "fundada", "procede", "accede", "concede", "reconoce"
+            "fundada", "procede", "accede", "concede", "reconoce", "estimamos",
+            "accedemos", "concedemos", "reconocemos", "estimamos", "accedemos"
         ]
         
         palabras_desfavorables = [
             "desestimamos", "infundada", "rechazamos", "denegamos", "no procedente",
             "desfavorable", "no acreditado", "insuficiente", "negligencia", "culpabilidad",
-            "infundada", "desestima", "rechaza", "denega"
+            "infundada", "desestima", "rechaza", "denega", "desestimamos"
         ]
         
-        texto_lower = texto.lower()
         favorables = sum(1 for palabra in palabras_favorables if palabra in texto_lower)
         desfavorables = sum(1 for palabra in palabras_desfavorables if palabra in texto_lower)
         
-        # Calcular puntuación de palabras clave
         total_palabras = favorables + desfavorables
         if total_palabras > 0:
             score_palabras = (favorables - desfavorables) / total_palabras
-            puntuacion += score_palabras * 0.3  # 30% del peso
+            puntuacion += score_palabras * 0.25
             factores["palabras_clave"] = {
                 "favorables": favorables,
                 "desfavorables": desfavorables,
-                "score": score_palabras,
-                "peso": 0.3
+                "score": round(score_palabras, 3),
+                "peso": 0.25,
+                "recomendacion": self._generar_recomendacion_palabras_clave(favorables, desfavorables)
             }
         
-        # 2. Análisis de estructura del documento (peso: 20%)
+        # 2. ANÁLISIS AVANZADO DE ESTRUCTURA DEL DOCUMENTO (peso: 20%)
         estructura_score = 0
+        estructura_elementos = []
+        
         if "argumentos" in texto_lower or "fundamentos" in texto_lower:
-            estructura_score += 0.2
+            estructura_score += 0.3
+            estructura_elementos.append("argumentos/fundamentos")
         if "conclusiones" in texto_lower or "resolucion" in texto_lower:
-            estructura_score += 0.2
+            estructura_score += 0.3
+            estructura_elementos.append("conclusiones/resolución")
         if "hechos" in texto_lower or "antecedentes" in texto_lower:
-            estructura_score += 0.1
+            estructura_score += 0.2
+            estructura_elementos.append("hechos/antecedentes")
+        if "solicitud" in texto_lower or "petitum" in texto_lower:
+            estructura_score += 0.2
+            estructura_elementos.append("solicitud/petitum")
         
         puntuacion += estructura_score * 0.2
         factores["estructura"] = {
-            "score": estructura_score,
-            "peso": 0.2
+            "score": round(estructura_score, 3),
+            "peso": 0.2,
+            "elementos_detectados": estructura_elementos,
+            "recomendacion": self._generar_recomendacion_estructura(estructura_score, estructura_elementos)
         }
         
-        # 3. Análisis de evidencia médica (peso: 25%)
+        # 3. ANÁLISIS AVANZADO DE EVIDENCIA MÉDICA (peso: 20%)
         evidencia_score = 0
-        if "informe médico" in texto_lower or "dictamen pericial" in texto_lower:
-            evidencia_score += 0.3
-        if "lesiones" in texto_lower and ("grave" in texto_lower or "permanente" in texto_lower):
-            evidencia_score += 0.2
-        if "accidente laboral" in texto_lower:
-            evidencia_score += 0.1
+        evidencia_elementos = []
         
-        puntuacion += evidencia_score * 0.25
+        if "informe médico" in texto_lower or "dictamen pericial" in texto_lower:
+            evidencia_score += 0.4
+            evidencia_elementos.append("informe médico/dictamen pericial")
+        if "lesiones" in texto_lower and ("grave" in texto_lower or "permanente" in texto_lower):
+            evidencia_score += 0.3
+            evidencia_elementos.append("lesiones graves/permanentes")
+        if "accidente laboral" in texto_lower:
+            evidencia_score += 0.2
+            evidencia_elementos.append("accidente laboral")
+        if "secuelas" in texto_lower:
+            evidencia_score += 0.1
+            evidencia_elementos.append("secuelas")
+        
+        puntuacion += evidencia_score * 0.2
         factores["evidencia"] = {
-            "score": evidencia_score,
-            "peso": 0.25
+            "score": round(evidencia_score, 3),
+            "peso": 0.2,
+            "elementos_detectados": evidencia_elementos,
+            "recomendacion": self._generar_recomendacion_evidencia(evidencia_score, evidencia_elementos)
         }
         
-        # 4. Análisis de procedimiento legal (peso: 15%)
+        # 4. ANÁLISIS AVANZADO DE PROCEDIMIENTO LEGAL (peso: 15%)
         procedimiento_score = 0
+        procedimiento_elementos = []
+        
         if "reclamación administrativa previa" in texto_lower:
-            procedimiento_score += 0.2
+            procedimiento_score += 0.4
+            procedimiento_elementos.append("reclamación administrativa previa")
         if "trámite" in texto_lower and "cumplido" in texto_lower:
-            procedimiento_score += 0.2
+            procedimiento_score += 0.3
+            procedimiento_elementos.append("trámites cumplidos")
         if "plazo" in texto_lower and "dentro" in texto_lower:
+            procedimiento_score += 0.2
             procedimiento_score += 0.1
+            procedimiento_elementos.append("plazos respetados")
+        if "notificación" in texto_lower:
+            procedimiento_score += 0.1
+            procedimiento_elementos.append("notificaciones")
         
         puntuacion += procedimiento_score * 0.15
         factores["procedimiento"] = {
-            "score": procedimiento_score,
-            "peso": 0.15
+            "score": round(procedimiento_score, 3),
+            "peso": 0.15,
+            "elementos_detectados": procedimiento_elementos,
+            "recomendacion": self._generar_recomendacion_procedimiento(procedimiento_score, procedimiento_elementos)
         }
         
-        # 5. Análisis de contexto temporal (peso: 10%)
+        # 5. ANÁLISIS AVANZADO DE CONTEXTO TEMPORAL Y LABORAL (peso: 10%)
         contexto_score = 0
+        contexto_elementos = []
+        
         if "durante" in texto_lower and "jornada" in texto_lower:
-            contexto_score += 0.2
+            contexto_score += 0.3
+            contexto_elementos.append("accidente durante jornada")
         if "lugar de trabajo" in texto_lower:
-            contexto_score += 0.2
+            contexto_score += 0.3
+            contexto_elementos.append("accidente en lugar de trabajo")
         if "medidas de seguridad" in texto_lower:
-            contexto_score += 0.1
+            contexto_score += 0.2
+            contexto_elementos.append("medidas de seguridad")
+        if "empresa" in texto_lower and "responsabilidad" in texto_lower:
+            contexto_score += 0.2
+            contexto_elementos.append("responsabilidad empresarial")
         
         puntuacion += contexto_score * 0.1
         factores["contexto"] = {
-            "score": contexto_score,
-            "peso": 0.1
+            "score": round(contexto_score, 3),
+            "peso": 0.1,
+            "elementos_detectados": contexto_elementos,
+            "recomendacion": self._generar_recomendacion_contexto(contexto_score, contexto_elementos)
+        }
+        
+        # 6. ANÁLISIS AVANZADO DE TERMINOLOGÍA JURÍDICA (peso: 10%)
+        terminologia_score = 0
+        terminologia_elementos = []
+        
+        juridicos = ["actor", "demandado", "procedimiento", "instancia", "resolución", "recurso", "fundamento", "considerando"]
+        for termino in juridicos:
+            if termino in texto_lower:
+                terminologia_score += 0.125
+                terminologia_elementos.append(termino)
+        
+        puntuacion += terminologia_score * 0.1
+        factores["terminologia"] = {
+            "score": round(terminologia_score, 3),
+            "peso": 0.1,
+            "elementos_detectados": terminologia_elementos,
+            "recomendacion": self._generar_recomendacion_terminologia(terminologia_score, terminologia_elementos)
         }
         
         # Normalizar puntuación a rango [0, 1]
@@ -418,7 +479,7 @@ class AnalizadorLegal:
         es_favorable = puntuacion > 0
         
         # Ajustar confianza mínima
-        confianza = max(0.3, confianza)  # Mínimo 30% de confianza
+        confianza = max(0.3, confianza)
         
         # Calcular interpretación
         if confianza >= 0.8:
@@ -428,13 +489,164 @@ class AnalizadorLegal:
         else:
             interpretacion = "Parcialmente Favorable" if es_favorable else "Parcialmente Desfavorable"
         
+        # Generar recomendaciones generales
+        recomendaciones_generales = self._generar_recomendaciones_generales(factores, confianza, es_favorable)
+        
         return {
             "es_favorable": es_favorable,
-            "confianza": confianza,
+            "confianza": round(confianza, 3),
             "interpretacion": interpretacion,
-            "puntuacion_global": puntuacion,
+            "puntuacion_global": round(puntuacion, 3),
             "factores_analisis": factores,
-            "metodo": "Reglas y patrones mejorados"
+            "recomendaciones_generales": recomendaciones_generales,
+            "metodo": "Reglas y patrones avanzados con detección automática",
+            "probabilidad_exito": self._calcular_probabilidad_exito(confianza, factores)
+        }
+    
+    def _generar_recomendacion_palabras_clave(self, favorables: int, desfavorables: int) -> str:
+        """Genera recomendaciones específicas para palabras clave"""
+        if favorables > desfavorables:
+            if favorables >= 5:
+                return "✅ Excelente uso de terminología favorable. Mantén este enfoque positivo."
+            elif favorables >= 3:
+                return "✅ Buen uso de terminología favorable. Considera agregar más términos como 'justificado', 'acreditado'."
+            else:
+                return "⚠️ Uso limitado de terminología favorable. Agrega términos como 'procedente', 'estimamos', 'accedemos'."
+        else:
+            if desfavorables >= 5:
+                return "❌ Uso excesivo de terminología desfavorable. Reemplaza con términos positivos."
+            elif desfavorables >= 3:
+                return "⚠️ Uso moderado de terminología desfavorable. Revisa y reformula las frases negativas."
+            else:
+                return "⚠️ Algunos términos desfavorables detectados. Revisa el contexto y reformula si es necesario."
+    
+    def _generar_recomendacion_estructura(self, score: float, elementos: List[str]) -> str:
+        """Genera recomendaciones específicas para la estructura del documento"""
+        if score >= 0.8:
+            return "✅ Estructura excelente del documento. Incluye todos los elementos necesarios."
+        elif score >= 0.6:
+            return "✅ Buena estructura del documento. Considera agregar secciones faltantes."
+        elif score >= 0.4:
+            return "⚠️ Estructura parcial del documento. Agrega secciones como 'argumentos', 'conclusiones'."
+        else:
+            return "❌ Estructura deficiente del documento. Incluye secciones: hechos, argumentos, conclusiones, solicitud."
+    
+    def _generar_recomendacion_evidencia(self, score: float, elementos: List[str]) -> str:
+        """Genera recomendaciones específicas para evidencia médica"""
+        if score >= 0.8:
+            return "✅ Excelente evidencia médica. Incluye informes, lesiones y contexto del accidente."
+        elif score >= 0.6:
+            return "✅ Buena evidencia médica. Considera agregar más detalles sobre lesiones y secuelas."
+        elif score >= 0.4:
+            return "⚠️ Evidencia médica moderada. Agrega informes médicos y detalles de lesiones."
+        else:
+            return "❌ Evidencia médica insuficiente. Incluye informes médicos, dictámenes periciales y detalles de lesiones."
+    
+    def _generar_recomendacion_procedimiento(self, score: float, elementos: List[str]) -> str:
+        """Genera recomendaciones específicas para procedimiento legal"""
+        if score >= 0.8:
+            return "✅ Procedimiento legal excelente. Incluye RAP, trámites y plazos correctamente."
+        elif score >= 0.6:
+            return "✅ Buen procedimiento legal. Verifica que todos los trámites estén documentados."
+        elif score >= 0.4:
+            return "⚠️ Procedimiento legal moderado. Asegúrate de incluir RAP y documentar trámites."
+        else:
+            return "❌ Procedimiento legal deficiente. Incluye reclamación administrativa previa y documenta todos los trámites."
+    
+    def _generar_recomendacion_contexto(self, score: float, elementos: List[str]) -> str:
+        """Genera recomendaciones específicas para contexto laboral"""
+        if score >= 0.8:
+            return "✅ Excelente contexto laboral. Incluye lugar, jornada y responsabilidad empresarial."
+        elif score >= 0.6:
+            return "✅ Buen contexto laboral. Agrega detalles sobre medidas de seguridad."
+        elif score >= 0.4:
+            return "⚠️ Contexto laboral moderado. Incluye detalles sobre lugar de trabajo y jornada laboral."
+        else:
+            return "❌ Contexto laboral deficiente. Incluye lugar de trabajo, jornada laboral y responsabilidad empresarial."
+    
+    def _generar_recomendacion_terminologia(self, score: float, elementos: List[str]) -> str:
+        """Genera recomendaciones específicas para terminología jurídica"""
+        if score >= 0.8:
+            return "✅ Excelente uso de terminología jurídica. Incluye todos los términos necesarios."
+        elif score >= 0.6:
+            return "✅ Buen uso de terminología jurídica. Considera agregar más términos técnicos."
+        elif score >= 0.4:
+            return "⚠️ Uso moderado de terminología jurídica. Incluye términos como 'actor', 'demandado', 'fundamento'."
+        else:
+            return "❌ Uso deficiente de terminología jurídica. Incluye términos: actor, demandado, procedimiento, fundamento."
+    
+    def _generar_recomendaciones_generales(self, factores: Dict, confianza: float, es_favorable: bool) -> List[str]:
+        """Genera recomendaciones generales basadas en el análisis completo"""
+        recomendaciones = []
+        
+        # Recomendaciones por nivel de confianza
+        if confianza >= 0.8:
+            recomendaciones.append("🎯 **ALTA CONFIANZA**: El documento está bien estructurado y argumentado.")
+            recomendaciones.append("💡 **RECOMENDACIÓN**: Revisa solo detalles menores antes de presentar.")
+        elif confianza >= 0.6:
+            recomendaciones.append("✅ **CONFIANZA MEDIA-ALTA**: El documento tiene buena base pero puede mejorarse.")
+            recomendaciones.append("💡 **RECOMENDACIÓN**: Implementa las sugerencias específicas para aumentar la confianza.")
+        else:
+            recomendaciones.append("⚠️ **CONFIANZA BAJA**: El documento necesita mejoras significativas.")
+            recomendaciones.append("💡 **RECOMENDACIÓN**: Revisa completamente siguiendo todas las sugerencias.")
+        
+        # Recomendaciones específicas por factores
+        for factor, datos in factores.items():
+            if datos.get('score', 0) < 0.5:
+                recomendaciones.append(f"🔧 **{factor.replace('_', ' ').title()}**: {datos.get('recomendacion', 'Necesita mejora')}")
+        
+        # Recomendaciones de probabilidad de éxito
+        if es_favorable:
+            if confianza >= 0.7:
+                recomendaciones.append("🚀 **PROBABILIDAD DE ÉXITO**: ALTA - El caso tiene buenas perspectivas.")
+            else:
+                recomendaciones.append("📈 **PROBABILIDAD DE ÉXITO**: MEDIA - Con las mejoras sugeridas puede mejorar significativamente.")
+        else:
+            recomendaciones.append("⚠️ **PROBABILIDAD DE ÉXITO**: BAJA - El caso necesita reformulación completa.")
+        
+        return recomendaciones
+    
+    def _calcular_probabilidad_exito(self, confianza: float, factores: Dict) -> Dict[str, Any]:
+        """Calcula la probabilidad de éxito basada en confianza y factores"""
+        # Calcular score promedio de factores
+        scores = [datos.get('score', 0) for datos in factores.values()]
+        score_promedio = sum(scores) / len(scores) if scores else 0
+        
+        # Calcular probabilidad base
+        probabilidad_base = (confianza + score_promedio) / 2
+        
+        # Ajustar por factores críticos
+        ajuste = 0
+        if 'evidencia' in factores and factores['evidencia'].get('score', 0) >= 0.7:
+            ajuste += 0.1
+        if 'procedimiento' in factores and factores['procedimiento'].get('score', 0) >= 0.7:
+            ajuste += 0.1
+        if 'estructura' in factores and factores['estructura'].get('score', 0) >= 0.7:
+            ajuste += 0.05
+        
+        probabilidad_final = min(0.95, probabilidad_base + ajuste)
+        
+        # Clasificar probabilidad
+        if probabilidad_final >= 0.8:
+            clasificacion = "Muy Alta"
+            color = "success"
+        elif probabilidad_final >= 0.6:
+            clasificacion = "Alta"
+            color = "info"
+        elif probabilidad_final >= 0.4:
+            clasificacion = "Media"
+            color = "warning"
+        else:
+            clasificacion = "Baja"
+            color = "danger"
+        
+        return {
+            "probabilidad": round(probabilidad_final, 3),
+            "clasificacion": clasificacion,
+            "color": color,
+            "score_promedio_factores": round(score_promedio, 3),
+            "ajuste_por_factores_criticos": round(ajuste, 3),
+            "factores_analizados": len(factores)
         }
     
     def _extraer_argumentos_avanzados(self, texto: str) -> List[Dict[str, Any]]:

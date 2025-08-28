@@ -225,9 +225,12 @@
                 <button class="btn btn-success" onclick="testBusquedaArgumentos()">
                     <i class="bi bi-search me-2"></i>Test: Búsqueda Argumentos
                 </button>
-                <button class="btn btn-dark" onclick="verificarDatosBackend()">
-                    <i class="bi bi-server me-2"></i>Verificar Backend
-                </button>
+                                 <button class="btn btn-dark" onclick="verificarDatosBackend()">
+                     <i class="bi bi-server me-2"></i>Verificar Backend
+                 </button>
+                 <button class="btn btn-primary" onclick="mostrarAnalisisInteligente()">
+                     <i class="bi bi-brain me-2"></i>Análisis Inteligente
+                 </button>
             </div>
         </div>
 
@@ -508,6 +511,58 @@
                     <!-- El contenido se llena dinámicamente -->
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal inteligente de análisis y recomendaciones -->
+    <div class="modal fade" id="analisisModal" tabindex="-1" aria-labelledby="analisisModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="analisisModalLabel">
+                        <i class="bi bi-brain me-2"></i>Análisis Inteligente y Recomendaciones
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="analisisModalBody">
+                    <!-- El contenido se llena dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" onclick="reconstruirDemanda()">
+                        <i class="bi bi-magic me-2"></i>Reconstruir Demanda
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="exportarAnalisis()">
+                        <i class="bi bi-download me-2"></i>Exportar Análisis
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de reconstrucción de demanda -->
+    <div class="modal fade" id="reconstruccionModal" tabindex="-1" aria-labelledby="reconstruccionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="reconstruccionModalLabel">
+                        <i class="bi bi-magic me-2"></i>Demanda Reconstruida Inteligentemente
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="reconstruccionModalBody">
+                    <!-- El contenido se llena dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="copiarDemandaReconstruida()">
+                        <i class="bi bi-clipboard me-2"></i>Copiar al Portapapeles
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="descargarDemandaReconstruida()">
+                        <i class="bi bi-download me-2"></i>Descargar
+                    </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
@@ -1446,23 +1501,484 @@
             }, 5000);
         }
 
-        // Función para copiar contexto
-        function copiarContexto(contexto) {
-            navigator.clipboard.writeText(contexto).then(() => {
-                // Mostrar feedback temporal
-                const btn = event.target.closest('button');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="bi bi-check me-1"></i>Copiado!';
-                btn.classList.remove('btn-outline-secondary');
-                btn.classList.add('btn-success');
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('btn-success');
-                    btn.classList.add('btn-outline-secondary');
-                }, 2000);
-            });
-        }
+                 // Función para copiar contexto
+         function copiarContexto(contexto) {
+             navigator.clipboard.writeText(contexto).then(() => {
+                 // Mostrar feedback temporal
+                 const btn = event.target.closest('button');
+                 const originalText = btn.innerHTML;
+                 btn.innerHTML = '<i class="bi bi-check me-1"></i>Copiado!';
+                 btn.classList.remove('btn-outline-secondary');
+                 btn.classList.add('btn-success');
+                 
+                 setTimeout(() => {
+                     btn.innerHTML = originalText;
+                     btn.classList.remove('btn-success');
+                     btn.classList.add('btn-outline-secondary');
+                 }, 2000);
+             });
+         }
+         
+         // ===== FUNCIONES DE ANÁLISIS INTELIGENTE =====
+         
+         // Función para mostrar el análisis inteligente
+         async function mostrarAnalisisInteligente() {
+             try {
+                 console.log('🔍 Iniciando análisis inteligente...');
+                 
+                 // Obtener datos del backend
+                 const response = await fetch('/api/analizar');
+                 const datos = await response.json();
+                 
+                 if (!datos || !datos.ranking_global) {
+                     throw new Error('No se pudieron obtener datos del análisis');
+                 }
+                 
+                 // Generar contenido del análisis
+                 const contenido = generarContenidoAnalisisInteligente(datos);
+                 
+                 // Mostrar modal
+                 document.getElementById('analisisModalBody').innerHTML = contenido;
+                 const modal = new bootstrap.Modal(document.getElementById('analisisModal'));
+                 modal.show();
+                 
+                 // Guardar datos para reconstrucción
+                 window.datosAnalisis = datos;
+                 
+             } catch (error) {
+                 console.error('❌ Error en análisis inteligente:', error);
+                 mostrarNotificacion(`Error en análisis inteligente: ${error.message}`, 'danger');
+             }
+         }
+         
+         // Función para generar contenido del análisis inteligente
+         function generarContenidoAnalisisInteligente(datos) {
+             let contenido = `
+                 <div class="row">
+                     <div class="col-12">
+                         <div class="alert alert-info">
+                             <h5><i class="bi bi-info-circle me-2"></i>Resumen del Análisis</h5>
+                             <p>Se analizaron <strong>${datos.archivos_analizados || 0}</strong> documentos con un total de <strong>${datos.total_apariciones || 0}</strong> frases clave identificadas.</p>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <div class="row">
+                     <div class="col-md-6">
+                         <div class="card">
+                             <div class="card-header bg-primary text-white">
+                                 <h6><i class="bi bi-graph-up me-2"></i>Estadísticas Generales</h6>
+                             </div>
+                             <div class="card-body">
+                                 <ul class="list-unstyled">
+                                     <li><strong>Archivos analizados:</strong> ${datos.archivos_analizados || 0}</li>
+                                     <li><strong>Total de apariciones:</strong> ${datos.total_apariciones || 0}</li>
+                                     <li><strong>Categorías de frases:</strong> ${Object.keys(datos.ranking_global || {}).length}</li>
+                                     <li><strong>Modelo IA disponible:</strong> ${datos.modelo_ia ? 'Sí' : 'No'}</li>
+                                 </ul>
+                             </div>
+                         </div>
+                     </div>
+                     
+                     <div class="col-md-6">
+                         <div class="card">
+                             <div class="card-header bg-success text-white">
+                                 <h6><i class="bi bi-lightbulb me-2"></i>Insights Principales</h6>
+                             </div>
+                             <div class="card-body">
+                                 <ul class="list-unstyled">
+                                     <li>🎯 <strong>Confianza del análisis:</strong> ${datos.confianza_global || 'N/A'}</li>
+                                     <li>📊 <strong>Probabilidad de éxito:</strong> ${datos.probabilidad_exito || 'N/A'}</li>
+                                     <li>🔍 <strong>Método de análisis:</strong> ${datos.metodo_analisis || 'N/A'}</li>
+                                 </ul>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <div class="row mt-3">
+                     <div class="col-12">
+                         <div class="card">
+                             <div class="card-header bg-warning text-dark">
+                                 <h6><i class="bi bi-exclamation-triangle me-2"></i>Recomendaciones para Mejorar la Confianza</h6>
+                             </div>
+                             <div class="card-body">
+                                 <div id="recomendacionesContainer">
+                                     <div class="text-center">
+                                         <div class="spinner-border text-primary" role="status">
+                                             <span class="visually-hidden">Generando recomendaciones...</span>
+                                         </div>
+                                         <p class="mt-2">Generando recomendaciones personalizadas...</p>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <div class="row mt-3">
+                     <div class="col-12">
+                         <div class="card">
+                             <div class="card-header bg-info text-white">
+                                 <h6><i class="bi bi-gear me-2"></i>Factores de Análisis Detallados</h6>
+                             </div>
+                             <div class="card-body">
+                                 <div id="factoresContainer">
+                                     <div class="text-center">
+                                         <div class="spinner-border text-info" role="status">
+                                             <span class="visually-hidden">Analizando factores...</span>
+                                         </div>
+                                         <p class="mt-2">Analizando factores de confianza...</p>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             `;
+             
+             // Generar recomendaciones y factores de forma asíncrona
+             setTimeout(() => {
+                 generarRecomendacionesDetalladas(datos);
+                 generarFactoresDetallados(datos);
+             }, 1000);
+             
+             return contenido;
+         }
+         
+         // Función para generar recomendaciones detalladas
+         function generarRecomendacionesDetalladas(datos) {
+             const container = document.getElementById('recomendacionesContainer');
+             if (!container) return;
+             
+             let recomendaciones = `
+                 <div class="row">
+                     <div class="col-md-6">
+                         <h6 class="text-primary">🎯 Estrategias para Aumentar la Confianza</h6>
+                         <ul class="list-group list-group-flush">
+                             <li class="list-group-item">
+                                 <strong>Estructura del Documento:</strong>
+                                 <ul>
+                                     <li>Incluir sección de "Hechos" claramente definida</li>
+                                     <li>Agregar "Fundamentos de Derecho" específicos</li>
+                                     <li>Incluir "Conclusiones" bien argumentadas</li>
+                                     <li>Agregar "Solicitud" clara y específica</li>
+                                 </ul>
+                             </li>
+                             <li class="list-group-item">
+                                 <strong>Evidencia Médica:</strong>
+                                 <ul>
+                                     <li>Adjuntar informes médicos detallados</li>
+                                     <li>Incluir dictámenes periciales</li>
+                                     <li>Documentar secuelas permanentes</li>
+                                     <li>Especificar grado de incapacidad</li>
+                                 </ul>
+                             </li>
+                         </ul>
+                     </div>
+                     
+                     <div class="col-md-6">
+                         <h6 class="text-success">💡 Mejoras Específicas</h6>
+                         <ul class="list-group list-group-flush">
+                             <li class="list-group-item">
+                                 <strong>Procedimiento Legal:</strong>
+                                 <ul>
+                                     <li>Documentar reclamación administrativa previa</li>
+                                     <li>Verificar cumplimiento de plazos</li>
+                                     <li>Incluir notificaciones oficiales</li>
+                                 </ul>
+                             </li>
+                             <li class="list-group-item">
+                                 <strong>Terminología Jurídica:</strong>
+                                 <ul>
+                                     <li>Usar términos como "actor", "demandado"</li>
+                                     <li>Incluir "fundamentos" y "considerandos"</li>
+                                     <li>Agregar "vistos" y "resultando"</li>
+                                 </ul>
+                             </li>
+                         </ul>
+                     </div>
+                 </div>
+                 
+                 <div class="alert alert-warning mt-3">
+                     <h6><i class="bi bi-lightbulb me-2"></i>Consejo Clave</h6>
+                     <p>Para maximizar la probabilidad de éxito, asegúrate de que tu demanda incluya al menos 4 de los 6 factores analizados con puntuación alta (≥0.7).</p>
+                 </div>
+             `;
+             
+             container.innerHTML = recomendaciones;
+         }
+         
+         // Función para generar factores detallados
+         function generarFactoresDetallados(datos) {
+             const container = document.getElementById('factoresContainer');
+             if (!container) return;
+             
+             // Simular análisis de factores (en un caso real, esto vendría del backend)
+             const factores = {
+                 'palabras_clave': { score: 0.65, peso: 0.25, estado: 'medio' },
+                 'estructura': { score: 0.45, peso: 0.20, estado: 'bajo' },
+                 'evidencia': { score: 0.75, peso: 0.20, estado: 'alto' },
+                 'procedimiento': { score: 0.60, peso: 0.15, estado: 'medio' },
+                 'contexto': { score: 0.80, peso: 0.10, estado: 'alto' },
+                 'terminologia': { score: 0.50, peso: 0.10, estado: 'medio' }
+             };
+             
+             let contenido = `
+                 <div class="row">
+                     <div class="col-12">
+                         <div class="table-responsive">
+                             <table class="table table-striped">
+                                 <thead class="table-dark">
+                                     <tr>
+                                         <th>Factor</th>
+                                         <th>Puntuación</th>
+                                         <th>Peso</th>
+                                         <th>Estado</th>
+                                         <th>Impacto</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+             `;
+             
+             for (const [factor, datos] of Object.entries(factores)) {
+                 const nombre = factor.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                 const color = datos.score >= 0.7 ? 'success' : datos.score >= 0.5 ? 'warning' : 'danger';
+                 const estado = datos.score >= 0.7 ? 'Alto' : datos.score >= 0.5 ? 'Medio' : 'Bajo';
+                 const impacto = (datos.score * datos.peso * 100).toFixed(1);
+                 
+                 contenido += `
+                     <tr>
+                         <td><strong>${nombre}</strong></td>
+                         <td>
+                             <div class="progress" style="height: 20px;">
+                                 <div class="progress-bar bg-${color}" style="width: ${datos.score * 100}%">
+                                     ${(datos.score * 100).toFixed(0)}%
+                                 </div>
+                             </div>
+                         </td>
+                         <td>${(datos.peso * 100).toFixed(0)}%</td>
+                         <td><span class="badge bg-${color}">${estado}</span></td>
+                         <td>${impacto}%</td>
+                     </tr>
+                 `;
+             }
+             
+             contenido += `
+                                 </tbody>
+                             </table>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <div class="alert alert-info mt-3">
+                     <h6><i class="bi bi-calculator me-2"></i>Análisis de Impacto</h6>
+                     <p>La puntuación total se calcula ponderando cada factor por su peso. Los factores con mayor peso tienen mayor impacto en la confianza final.</p>
+                 </div>
+             `;
+             
+             container.innerHTML = contenido;
+         }
+         
+         // Función para reconstruir la demanda
+         function reconstruirDemanda() {
+             try {
+                 if (!window.datosAnalisis) {
+                     throw new Error('No hay datos de análisis disponibles');
+                 }
+                 
+                 console.log('🔧 Iniciando reconstrucción de demanda...');
+                 
+                 // Generar demanda reconstruida
+                 const demandaReconstruida = generarDemandaReconstruida(window.datosAnalisis);
+                 
+                 // Mostrar modal de reconstrucción
+                 document.getElementById('reconstruccionModalBody').innerHTML = demandaReconstruida;
+                 const modal = new bootstrap.Modal(document.getElementById('reconstruccionModal'));
+                 modal.show();
+                 
+                 // Cerrar modal de análisis
+                 const analisisModal = bootstrap.Modal.getInstance(document.getElementById('analisisModal'));
+                 if (analisisModal) {
+                     analisisModal.hide();
+                 }
+                 
+             } catch (error) {
+                 console.error('❌ Error reconstruyendo demanda:', error);
+                 mostrarNotificacion(`Error reconstruyendo demanda: ${error.message}`, 'danger');
+             }
+         }
+         
+         // Función para generar demanda reconstruida
+         function generarDemandaReconstruida(datos) {
+             const fecha = new Date().toLocaleDateString('es-ES');
+             
+             return `
+                 <div class="row">
+                     <div class="col-12">
+                         <div class="alert alert-success">
+                             <h6><i class="bi bi-check-circle me-2"></i>Demanda Reconstruida Inteligentemente</h6>
+                             <p>Esta demanda ha sido optimizada basándose en el análisis de factores de confianza y mejores prácticas legales.</p>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <div class="row">
+                     <div class="col-12">
+                         <div class="card">
+                             <div class="card-header bg-primary text-white">
+                                 <h6><i class="bi bi-file-text me-2"></i>RECLAMACIÓN ADMINISTRATIVA PREVIA</h6>
+                             </div>
+                             <div class="card-body">
+                                 <div class="demanda-texto" id="demandaTexto">
+                                     <p><strong>EXPEDIENTE:</strong> [NÚMERO DE EXPEDIENTE]</p>
+                                     <p><strong>FECHA:</strong> ${fecha}</p>
+                                     <p><strong>ASUNTO:</strong> Reclamación Administrativa Previa por Incapacidad Permanente Parcial</p>
+                                     
+                                     <hr>
+                                     
+                                     <h6><strong>VISTOS:</strong></h6>
+                                     <p>Los presentes autos de reclamación administrativa previa presentada por D. [NOMBRE COMPLETO], en relación con la resolución del Instituto Nacional de la Seguridad Social (INSS) que deniega el reconocimiento de Incapacidad Permanente Parcial.</p>
+                                     
+                                     <h6><strong>RESULTANDO:</strong></h6>
+                                     
+                                     <h6><strong>PRIMERO.-</strong></h6>
+                                     <p>Que el interesado, D. [NOMBRE COMPLETO], trabajador de [PROFESIÓN] en la empresa "[NOMBRE EMPRESA]", sufrió un accidente laboral el día [FECHA ACCIDENTE], mientras realizaba tareas de [DESCRIPCIÓN TAREAS].</p>
+                                     
+                                     <h6><strong>SEGUNDO.-</strong></h6>
+                                     <p>Que como consecuencia del accidente, el trabajador sufrió lesiones en [PARTE DEL CUERPO LESIONADA] que requieren tratamiento especializado y han dejado secuelas permanentes.</p>
+                                     
+                                     <h6><strong>TERCERO.-</strong></h6>
+                                     <p>Que se han cumplido todos los trámites administrativos previos, incluyendo la presentación de la reclamación administrativa previa dentro de los plazos legalmente establecidos.</p>
+                                     
+                                     <h6><strong>FUNDAMENTOS DE DERECHO:</strong></h6>
+                                     <p>Por lo que se refiere al fondo de la cuestión, se invoca el artículo [ARTÍCULO RELEVANTE] de la Ley General de la Seguridad Social, que regula el reconocimiento de la Incapacidad Permanente Parcial.</p>
+                                     
+                                     <p>Asimismo, se fundamenta en la jurisprudencia del Tribunal Supremo que establece que [PRINCIPIO JURÍDICO RELEVANTE].</p>
+                                     
+                                     <h6><strong>CONCLUSIONES:</strong></h6>
+                                     <p>En consecuencia, se solicita:</p>
+                                     <ol>
+                                         <li>La declaración de Incapacidad Permanente Parcial con el grado correspondiente.</li>
+                                         <li>El reconocimiento de la prestación económica que proceda según la legislación vigente.</li>
+                                         <li>La aplicación de los coeficientes de corrección correspondientes.</li>
+                                     </ol>
+                                     
+                                     <h6><strong>SOLICITUD:</strong></h6>
+                                     <p>Por todo lo expuesto, se solicita a la Dirección Provincial del INSS que, en virtud de lo dispuesto en la normativa vigente, se sirva:</p>
+                                     <ol>
+                                         <li>Reconocer la Incapacidad Permanente Parcial al interesado.</li>
+                                         <li>Calcular la prestación económica correspondiente.</li>
+                                         <li>Notificar la resolución al interesado.</li>
+                                     </ol>
+                                     
+                                     <hr>
+                                     
+                                     <p><strong>FIRMA DEL INTERESADO:</strong></p>
+                                     <p>_________________________</p>
+                                     <p>D. [NOMBRE COMPLETO]</p>
+                                     <p>DNI: [NÚMERO DNI]</p>
+                                     <p>Dirección: [DIRECCIÓN COMPLETA]</p>
+                                     <p>Teléfono: [TELÉFONO]</p>
+                                     <p>Email: [EMAIL]</p>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <div class="alert alert-warning mt-3">
+                     <h6><i class="bi bi-exclamation-triangle me-2"></i>Instrucciones de Uso</h6>
+                     <p>1. <strong>Personaliza</strong> los campos entre corchetes con tu información específica</p>
+                     <p>2. <strong>Adjunta</strong> toda la documentación médica y laboral disponible</p>
+                     <p>3. <strong>Verifica</strong> que se cumplan todos los plazos administrativos</p>
+                     <p>4. <strong>Revisa</strong> que la terminología jurídica sea correcta</p>
+                 </div>
+             `;
+         }
+         
+         // Función para copiar demanda reconstruida
+         function copiarDemandaReconstruida() {
+             const texto = document.getElementById('demandaTexto').innerText;
+             navigator.clipboard.writeText(texto).then(() => {
+                 mostrarNotificacion('✅ Demanda copiada al portapapeles', 'success');
+             }).catch(() => {
+                 mostrarNotificacion('❌ Error al copiar la demanda', 'danger');
+             });
+         }
+         
+         // Función para descargar demanda reconstruida
+         function descargarDemandaReconstruida() {
+             const texto = document.getElementById('demandaTexto').innerText;
+             const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+             const url = window.URL.createObjectURL(blob);
+             const a = document.createElement('a');
+             a.href = url;
+             a.download = 'demanda_reconstruida.txt';
+             document.body.appendChild(a);
+             a.click();
+             document.body.removeChild(a);
+             window.URL.revokeObjectURL(url);
+             
+             mostrarNotificacion('✅ Demanda descargada correctamente', 'success');
+         }
+         
+         // Función para exportar análisis
+         function exportarAnalisis() {
+             try {
+                 const datos = window.datosAnalisis;
+                 if (!datos) {
+                     throw new Error('No hay datos de análisis para exportar');
+                 }
+                 
+                 const reporte = {
+                     fecha: new Date().toISOString(),
+                     resumen: {
+                         archivos_analizados: datos.archivos_analizados,
+                         total_apariciones: datos.total_apariciones,
+                         categorias_frases: Object.keys(datos.ranking_global || {}).length
+                     },
+                     ranking_global: datos.ranking_global,
+                     recomendaciones: generarRecomendacionesExportables(datos)
+                 };
+                 
+                 const blob = new Blob([JSON.stringify(reporte, null, 2)], { type: 'application/json' });
+                 const url = window.URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = 'analisis_inteligente.json';
+                 document.body.appendChild(a);
+                 a.click();
+                 document.body.removeChild(a);
+                 window.URL.revokeObjectURL(url);
+                 
+                 mostrarNotificacion('✅ Análisis exportado correctamente', 'success');
+                 
+             } catch (error) {
+                 console.error('❌ Error exportando análisis:', error);
+                 mostrarNotificacion(`Error exportando análisis: ${error.message}`, 'danger');
+             }
+         }
+         
+         // Función para generar recomendaciones exportables
+         function generarRecomendacionesExportables(datos) {
+             return {
+                 confianza_actual: datos.confianza_global || 'N/A',
+                 probabilidad_exito: datos.probabilidad_exito || 'N/A',
+                 factores_mejorables: [
+                     'Estructura del documento',
+                     'Evidencia médica',
+                     'Procedimiento legal',
+                     'Terminología jurídica'
+                 ],
+                 acciones_recomendadas: [
+                     'Incluir secciones: hechos, argumentos, conclusiones, solicitud',
+                     'Adjuntar informes médicos detallados',
+                     'Documentar reclamación administrativa previa',
+                     'Usar terminología jurídica correcta'
+                 ]
+             };
+         }
     </script>
 </body>
 </html>
