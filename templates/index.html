@@ -1045,34 +1045,181 @@
             return textarea.value;
         }
         
-        // Función para parsear JSON de forma robusta
+        // Función para parsear JSON de forma robusta con diagnóstico completo
         function parseJsonSafely(jsonString) {
-            if (!jsonString || typeof jsonString !== 'string') {
-                throw new Error('Input debe ser un string válido');
+            // DIAGNÓSTICO INICIAL
+            console.log('🔍 === DIAGNÓSTICO JSON ===');
+            console.log('Tipo de input:', typeof jsonString);
+            console.log('Valor del input:', jsonString);
+            console.log('Longitud del input:', jsonString ? jsonString.length : 'N/A');
+            
+            // VALIDACIÓN DE TIPO
+            if (jsonString === null || jsonString === undefined) {
+                throw new Error('Input es null o undefined');
             }
             
+            if (typeof jsonString !== 'string') {
+                throw new Error(`Input debe ser string, recibido: ${typeof jsonString}`);
+            }
+            
+            if (jsonString.trim() === '') {
+                throw new Error('Input es un string vacío');
+            }
+            
+            // DETECCIÓN DE PROBLEMAS COMUNES
+            const problemas = [];
+            
+            if (jsonString.includes('&quot;') || jsonString.includes('&amp;') || 
+                jsonString.includes('&lt;') || jsonString.includes('&gt;')) {
+                problemas.push('Contiene entidades HTML');
+            }
+            
+            if (jsonString.includes('undefined') || jsonString.includes('null')) {
+                problemas.push('Contiene valores undefined/null como texto');
+            }
+            
+            if (jsonString.includes('\n') || jsonString.includes('\t') || jsonString.includes('\r')) {
+                problemas.push('Contiene caracteres de control');
+            }
+            
+            if (jsonString.match(/[\u200B-\u200D\uFEFF]/)) {
+                problemas.push('Contiene espacios de ancho cero Unicode');
+            }
+            
+            if (problemas.length > 0) {
+                console.log('⚠️ Problemas detectados:', problemas);
+            }
+            
+            // INTENTO 1: Parse directo
             try {
-                // Primera opción: intentar parsear directamente
-                return JSON.parse(jsonString);
-            } catch (e) {
-                // Segunda opción: decodificar entidades HTML y parsear
+                console.log('🔄 Intento 1: Parse directo');
+                const resultado = JSON.parse(jsonString);
+                console.log('✅ Parse directo exitoso');
+                return resultado;
+            } catch (e1) {
+                console.log('❌ Intento 1 falló:', e1.message);
+                
+                // INTENTO 2: Decodificar entidades HTML
                 try {
+                    console.log('🔄 Intento 2: Decodificar entidades HTML');
                     const decoded = decodeHtmlEntities(jsonString);
-                    return JSON.parse(decoded);
+                    console.log('Texto decodificado:', decoded);
+                    
+                    if (decoded === jsonString) {
+                        console.log('⚠️ No se detectaron cambios en la decodificación');
+                    }
+                    
+                    const resultado = JSON.parse(decoded);
+                    console.log('✅ Parse con decodificación HTML exitoso');
+                    return resultado;
                 } catch (e2) {
-                    // Tercera opción: limpiar caracteres problemáticos y parsear
+                    console.log('❌ Intento 2 falló:', e2.message);
+                    
+                    // INTENTO 3: Limpieza agresiva de caracteres
                     try {
+                        console.log('🔄 Intento 3: Limpieza agresiva de caracteres');
                         const cleaned = jsonString
-                            .replace(/^\s+|\s+$/g, '') // Eliminar espacios al inicio/final
-                            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Eliminar caracteres de control
-                            .replace(/[\u200B-\u200D\uFEFF]/g, ''); // Eliminar espacios de ancho cero
+                            .replace(/^\s+|\s+$/g, '') // Espacios inicio/final
+                            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Caracteres de control
+                            .replace(/[\u200B-\u200D\uFEFF]/g, '') // Espacios Unicode
+                            .replace(/\n/g, ' ') // Saltos de línea
+                            .replace(/\t/g, ' ') // Tabulaciones
+                            .replace(/\r/g, ' ') // Retornos de carro
+                            .replace(/\s+/g, ' '); // Múltiples espacios
                         
-                        return JSON.parse(cleaned);
+                        console.log('Texto limpiado:', cleaned);
+                        
+                        if (cleaned === jsonString) {
+                            console.log('⚠️ No se detectaron cambios en la limpieza');
+                        }
+                        
+                        const resultado = JSON.parse(cleaned);
+                        console.log('✅ Parse con limpieza exitoso');
+                        return resultado;
                     } catch (e3) {
-                        throw new Error(`Error parsing JSON después de 3 intentos: ${e.message}, ${e2.message}, ${e3.message}`);
+                        console.log('❌ Intento 3 falló:', e3.message);
+                        
+                        // INTENTO 4: Análisis de estructura JSON
+                        try {
+                            console.log('🔄 Intento 4: Análisis de estructura JSON');
+                            const analisis = analizarEstructuraJSON(jsonString);
+                            console.log('Análisis de estructura:', analisis);
+                            
+                            // Intentar reparar JSON basado en el análisis
+                            const reparado = repararJSON(jsonString, analisis);
+                            console.log('JSON reparado:', reparado);
+                            
+                            const resultado = JSON.parse(reparado);
+                            console.log('✅ Parse con reparación exitoso');
+                            return resultado;
+                        } catch (e4) {
+                            console.log('❌ Intento 4 falló:', e4.message);
+                            
+                            // ERROR FINAL CON DIAGNÓSTICO COMPLETO
+                            const errorFinal = new Error(`Error parsing JSON después de 4 intentos:\n` +
+                                `1. Parse directo: ${e1.message}\n` +
+                                `2. Decodificación HTML: ${e2.message}\n` +
+                                `3. Limpieza de caracteres: ${e3.message}\n` +
+                                `4. Reparación JSON: ${e4.message}\n\n` +
+                                `Input original: ${jsonString}\n` +
+                                `Longitud: ${jsonString.length}\n` +
+                                `Problemas detectados: ${problemas.join(', ')}`);
+                            
+                            console.error('💥 ERROR FINAL:', errorFinal);
+                            throw errorFinal;
+                        }
                     }
                 }
             }
+        }
+        
+        // Función para analizar la estructura del JSON problemático
+        function analizarEstructuraJSON(jsonString) {
+            const analisis = {
+                tieneLlaves: jsonString.includes('{') && jsonString.includes('}'),
+                tieneCorchetes: jsonString.includes('[') && jsonString.includes(']'),
+                tieneComillas: jsonString.includes('"'),
+                tieneComas: jsonString.includes(','),
+                tieneDosPuntos: jsonString.includes(':'),
+                longitud: jsonString.length,
+                primerCaracter: jsonString.charAt(0),
+                ultimoCaracter: jsonString.charAt(jsonString.length - 1),
+                caracteresEspeciales: []
+            };
+            
+            // Detectar caracteres especiales problemáticos
+            const caracteresEspeciales = jsonString.match(/[^\w\s{}[\]",:.-]/g);
+            if (caracteresEspeciales) {
+                analisis.caracteresEspeciales = [...new Set(caracteresEspeciales)];
+            }
+            
+            return analisis;
+        }
+        
+        // Función para intentar reparar JSON malformado
+        function repararJSON(jsonString, analisis) {
+            let reparado = jsonString;
+            
+            // Reparar comillas mal escapadas
+            reparado = reparado.replace(/&quot;/g, '"');
+            reparado = reparado.replace(/&#39;/g, "'");
+            reparado = reparado.replace(/&amp;/g, '&');
+            reparado = reparado.replace(/&lt;/g, '<');
+            reparado = reparado.replace(/&gt;/g, '>');
+            
+            // Reparar comillas simples por dobles
+            reparado = reparado.replace(/'/g, '"');
+            
+            // Reparar propiedades sin comillas
+            reparado = reparado.replace(/(\w+):/g, '"$1":');
+            
+            // Reparar valores sin comillas (solo strings)
+            reparado = reparado.replace(/:\s*([^",{}\[\]]+)(?=,|}|])/g, ':"$1"');
+            
+            // Eliminar comas extra al final
+            reparado = reparado.replace(/,(\s*[}\]])/g, '$1');
+            
+            return reparado;
         }
         
         // Función para depurar datos de frases
