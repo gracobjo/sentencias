@@ -307,9 +307,13 @@ class AnalizadorLegal:
                     })
             
             if total > 0:
+                # Obtener frases únicas encontradas
+                frases_encontradas = list(set([oc["frase"] for oc in ocurrencias]))
+                
                 resultados[categoria] = {
                     "total": total,
-                    "ocurrencias": ocurrencias
+                    "ocurrencias": ocurrencias,
+                    "frases": frases_encontradas
                 }
         
         return resultados

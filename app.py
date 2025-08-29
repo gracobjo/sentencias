@@ -211,9 +211,13 @@ class AnalizadorBasico:
                     })
             
             if total > 0:
+                # Obtener frases únicas encontradas
+                frases_encontradas = list(set([oc["frase"] for oc in ocurrencias]))
+                
                 resultados[categoria] = {
                     "total": total,
-                    "ocurrencias": ocurrencias
+                    "ocurrencias": ocurrencias,
+                    "frases": frases_encontradas
                 }
         
         return resultados
@@ -522,8 +526,8 @@ async def mostrar_resultados(request: Request, archivo_id: str):
 
 
 @app.get("/archivo/{archivo_id}", response_class=HTMLResponse)
-async def ver_archivo(request: Request, archivo_id: str):
-    """Muestra el contenido completo de un archivo con frases clave resaltadas"""
+async def ver_archivo(request: Request, archivo_id: str, highlight: str = None, pos: int = None, index: int = None):
+    """Muestra el contenido completo de un archivo con frases clave resaltadas y opcionalmente resalta una aparición específica"""
     try:
         # Buscar el archivo en la carpeta de sentencias
         archivo_path = SENTENCIAS_DIR / archivo_id
@@ -554,7 +558,12 @@ async def ver_archivo(request: Request, archivo_id: str):
             "prediccion": resultado.get("prediccion", {}),
             "argumentos": resultado.get("argumentos", []),
             "insights": resultado.get("insights_juridicos", []),
-            "total_frases": resultado.get("total_frases_clave", 0)
+            "total_frases": resultado.get("total_frases_clave", 0),
+            "highlight_info": {
+                "frase": highlight,
+                "posicion": pos,
+                "index": index
+            } if highlight else None
         }
         
         return templates.TemplateResponse("archivo.html", {
@@ -654,6 +663,74 @@ async def health_check():
             "models": str(MODELS_DIR)
         }
     }
+
+
+@app.get("/api/documento/{nombre_archivo}")
+async def obtener_documento(nombre_archivo: str):
+    """Obtiene detalles de un documento específico"""
+    try:
+        # Decodificar el nombre del archivo
+        nombre_decodificado = nombre_archivo
+        
+        # Buscar el archivo en el directorio de sentencias
+        archivo_path = SENTENCIAS_DIR / nombre_decodificado
+        
+        if not archivo_path.exists():
+            raise HTTPException(status_code=404, detail=f"Documento '{nombre_decodificado}' no encontrado")
+        
+        # Obtener información del archivo
+        stat = archivo_path.stat()
+        tamaño = f"{stat.st_size / 1024:.1f} KB"
+        fecha_modificacion = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Intentar analizar el documento si no ha sido analizado
+        try:
+            if ANALIZADOR_IA_DISPONIBLE:
+                from backend.analisis import AnalizadorLegal
+                analizador = AnalizadorLegal()
+                resultado = analizador.analizar_documento(str(archivo_path))
+            else:
+                resultado = analizador_basico.analizar_documento(str(archivo_path), nombre_decodificado)
+            
+            if resultado.get("procesado"):
+                return {
+                    "nombre": nombre_decodificado,
+                    "procesado": True,
+                    "tamaño": tamaño,
+                    "fecha_procesamiento": fecha_modificacion,
+                    "frases_clave": resultado.get("frases_clave", {}),
+                    "total_frases": sum(info["total"] for info in resultado.get("frases_clave", {}).values()),
+                    "resumen": resultado.get("resumen", ""),
+                    "tipo_documento": resultado.get("tipo_documento", "desconocido")
+                }
+            else:
+                return {
+                    "nombre": nombre_decodificado,
+                    "procesado": False,
+                    "tamaño": tamaño,
+                    "fecha_procesamiento": fecha_modificacion,
+                    "error": resultado.get("error", "Error desconocido en el procesamiento"),
+                    "frases_clave": {},
+                    "total_frases": 0
+                }
+                
+        except Exception as e:
+            logger.error(f"Error analizando documento {nombre_decodificado}: {e}")
+            return {
+                "nombre": nombre_decodificado,
+                "procesado": False,
+                "tamaño": tamaño,
+                "fecha_procesamiento": fecha_modificacion,
+                "error": f"Error en el análisis: {str(e)}",
+                "frases_clave": {},
+                "total_frases": 0
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error obteniendo documento {nombre_archivo}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
 
 def analizar_sentencias_existentes() -> Dict[str, Any]:

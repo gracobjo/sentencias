@@ -46,40 +46,46 @@ def analizar_tendencias(ranking_global: Dict[str, Any]) -> Dict[str, Any]:
     """Analiza tendencias en las frases clave"""
     try:
         # Ordenar por total de apariciones
-        ranking_ordenado = sorted(ranking_global.items(), key=lambda x: x[1]["total"], reverse=True)
-        
-        # Identificar categorías dominantes
-        categorias_dominantes = ranking_ordenado[:3] if len(ranking_ordenado) >= 3 else ranking_ordenado
-        
-        # Calcular tendencias por categoría
-        tendencias = {}
-        for categoria, datos in ranking_ordenado:
-            total = datos["total"]
-            ocurrencias = datos.get("ocurrencias", [])
+        if ranking_global:
+            ranking_ordenado = sorted(ranking_global.items(), key=lambda x: x[1].get("total", 0) if x[1] and isinstance(x[1], dict) else 0, reverse=True)
             
-            # Analizar distribución temporal si hay datos
-            if ocurrencias:
-                tendencias[categoria] = {
-                    "total": total,
-                    "frecuencia": "alta" if total > 50 else "media" if total > 20 else "baja",
-                    "tendencia": "creciente" if total > 30 else "estable" if total > 15 else "decreciente",
-                    "impacto": "alto" if total > 40 else "medio" if total > 20 else "bajo"
-                }
-            else:
-                tendencias[categoria] = {
-                    "total": total,
-                    "frecuencia": "media",
-                    "tendencia": "estable",
-                    "impacto": "medio"
-                }
+            # Identificar categorías dominantes
+            categorias_dominantes = ranking_ordenado[:3] if len(ranking_ordenado) >= 3 else ranking_ordenado
+            
+            # Calcular tendencias por categoría
+            tendencias = {}
+            for categoria, datos in ranking_ordenado:
+                if datos and isinstance(datos, dict):
+                    total = datos.get("total", 0)
+                    ocurrencias = datos.get("ocurrencias", [])
+                    
+                    # Analizar distribución temporal si hay datos
+                    if ocurrencias:
+                        tendencias[categoria] = {
+                            "total": total,
+                            "frecuencia": "alta" if total > 50 else "media" if total > 20 else "baja",
+                            "tendencia": "creciente" if total > 30 else "estable" if total > 15 else "decreciente",
+                            "impacto": "alto" if total > 40 else "medio" if total > 20 else "bajo"
+                        }
+                    else:
+                        tendencias[categoria] = {
+                            "total": total,
+                            "frecuencia": "media",
+                            "tendencia": "estable",
+                            "impacto": "medio"
+                        }
+        else:
+            ranking_ordenado = []
+            categorias_dominantes = []
+            tendencias = {}
         
         return {
             "categorias_dominantes": [{"categoria": cat, "total": datos["total"]} for cat, datos in categorias_dominantes],
             "tendencias_por_categoria": tendencias,
             "resumen_tendencias": {
                 "total_categorias": len(tendencias),
-                "categoria_mas_frecuente": max(tendencias.items(), key=lambda x: x[1]["total"])[0] if tendencias else "N/A",
-                "promedio_apariciones": sum(datos["total"] for datos in tendencias.values()) / len(tendencias) if tendencias else 0
+                "categoria_mas_frecuente": max(tendencias.items(), key=lambda x: x[1]["total"])[0] if tendencias and any(datos["total"] > 0 for datos in tendencias.values()) else "N/A",
+                "promedio_apariciones": sum(datos["total"] for datos in tendencias.values()) / len(tendencias) if tendencias and len(tendencias) > 0 else 0
             }
         }
         
@@ -97,32 +103,35 @@ def analizar_correlaciones(ranking_global: Dict[str, Any]) -> Dict[str, Any]:
         # Analizar correlaciones entre categorías principales
         categorias_principales = ["incapacidad_permanente_parcial", "reclamacion_administrativa", "inss", "lesiones_permanentes"]
         
-        for cat1 in categorias_principales:
-            if cat1 in ranking_global:
-                correlaciones[cat1] = {}
-                for cat2 in categorias_principales:
-                    if cat2 != cat1 and cat2 in ranking_global:
-                        # Calcular correlación simple basada en apariciones
-                        total1 = ranking_global[cat1]["total"]
-                        total2 = ranking_global[cat2]["total"]
-                        
-                        # Correlación basada en frecuencia relativa
-                        if total1 > 0 and total2 > 0:
-                            correlacion = min(total1, total2) / max(total1, total2)
-                            correlaciones[cat1][cat2] = {
-                                "valor": round(correlacion, 3),
-                                "fuerza": "fuerte" if correlacion > 0.7 else "moderada" if correlacion > 0.4 else "débil",
-                                "tipo": "positiva" if correlacion > 0.5 else "negativa"
-                            }
-                        else:
-                            correlaciones[cat1][cat2] = {"valor": 0, "fuerza": "nula", "tipo": "sin correlación"}
+        if ranking_global:
+            for cat1 in categorias_principales:
+                if cat1 in ranking_global and ranking_global[cat1] and isinstance(ranking_global[cat1], dict):
+                    correlaciones[cat1] = {}
+                    for cat2 in categorias_principales:
+                        if cat2 != cat1 and cat2 in ranking_global and ranking_global[cat2] and isinstance(ranking_global[cat2], dict):
+                            # Calcular correlación simple basada en apariciones
+                            total1 = ranking_global[cat1].get("total", 0)
+                            total2 = ranking_global[cat2].get("total", 0)
+                            
+                            # Correlación basada en frecuencia relativa
+                            if total1 > 0 and total2 > 0:
+                                correlacion = min(total1, total2) / max(total1, total2)
+                                correlaciones[cat1][cat2] = {
+                                    "valor": round(correlacion, 3),
+                                    "fuerza": "fuerte" if correlacion > 0.7 else "moderada" if correlacion > 0.4 else "débil",
+                                    "tipo": "positiva" if correlacion > 0.5 else "negativa"
+                                }
+                            else:
+                                correlaciones[cat1][cat2] = {"valor": 0, "fuerza": "nula", "tipo": "sin correlación"}
+        else:
+            correlaciones = {}
         
         return {
             "matriz_correlaciones": correlaciones,
             "resumen_correlaciones": {
                 "correlaciones_fuertes": sum(1 for cat1 in correlaciones.values() for cat2 in cat1.values() if cat2["fuerza"] == "fuerte"),
                 "correlaciones_moderadas": sum(1 for cat1 in correlaciones.values() for cat2 in cat1.values() if cat2["fuerza"] == "moderada"),
-                "categoria_mas_correlacionada": max(correlaciones.items(), key=lambda x: len([v for v in x[1].values() if v["fuerza"] in ["fuerte", "moderada"]]))[0] if correlaciones else "N/A"
+                "categoria_mas_correlacionada": max(correlaciones.items(), key=lambda x: len([v for v in x[1].values() if v["fuerza"] in ["fuerte", "moderada"]]))[0] if correlaciones and any(len([v for v in cat.values() if v["fuerza"] in ["fuerte", "moderada"]]) > 0 for cat in correlaciones.values()) else "N/A"
             }
         }
         
@@ -138,25 +147,26 @@ def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: 
         patrones_favorables = []
         patrones_desfavorables = []
         
-        for archivo, resultado in resultados_por_archivo.items():
-            if resultado.get("procesado") and resultado.get("prediccion"):
-                prediccion = resultado["prediccion"]
-                frases_clave = resultado.get("frases_clave", {})
-                
-                if prediccion.get("es_favorable"):
-                    patrones_favorables.append({
-                        "archivo": archivo,
-                        "confianza": prediccion.get("confianza", 0),
-                        "frases_clave": list(frases_clave.keys()),
-                        "total_frases": sum(datos["total"] for datos in frases_clave.values())
-                    })
-                else:
-                    patrones_desfavorables.append({
-                        "archivo": archivo,
-                        "confianza": prediccion.get("confianza", 0),
-                        "frases_clave": list(frases_clave.keys()),
-                        "total_frases": sum(datos["total"] for datos in frases_clave.values())
-                    })
+        if resultados_por_archivo:
+            for archivo, resultado in resultados_por_archivo.items():
+                if resultado and isinstance(resultado, dict) and resultado.get("procesado") and resultado.get("prediccion"):
+                    prediccion = resultado["prediccion"]
+                    frases_clave = resultado.get("frases_clave", {})
+                    
+                    if prediccion.get("es_favorable"):
+                        patrones_favorables.append({
+                            "archivo": archivo,
+                            "confianza": prediccion.get("confianza", 0),
+                            "frases_clave": list(frases_clave.keys()) if frases_clave else [],
+                            "total_frases": sum(datos["total"] for datos in frases_clave.values()) if frases_clave else 0
+                        })
+                    else:
+                        patrones_desfavorables.append({
+                            "archivo": archivo,
+                            "confianza": prediccion.get("confianza", 0),
+                            "frases_clave": list(frases_clave.keys()) if frases_clave else [],
+                            "total_frases": sum(datos["total"] for datos in frases_clave.values()) if frases_clave else 0
+                        })
         
         # Calcular probabilidades
         total_resoluciones = len(patrones_favorables) + len(patrones_desfavorables)
@@ -196,21 +206,26 @@ def identificar_factores_clave(patrones: List[Dict[str, Any]]) -> List[Dict[str,
         # Contar frecuencia de frases clave
         frecuencia_frases = {}
         for patron in patrones:
-            for frase in patron.get("frases_clave", []):
-                frecuencia_frases[frase] = frecuencia_frases.get(frase, 0) + 1
+            frases_clave = patron.get("frases_clave", [])
+            if frases_clave and isinstance(frases_clave, list):
+                for frase in frases_clave:
+                    if frase:
+                        frecuencia_frases[frase] = frecuencia_frases.get(frase, 0) + 1
         
         # Ordenar por frecuencia
         factores_ordenados = sorted(frecuencia_frases.items(), key=lambda x: x[1], reverse=True)
         
         # Convertir a formato estructurado
         factores_clave = []
-        for frase, frecuencia in factores_ordenados[:5]:  # Top 5
-            factores_clave.append({
-                "frase": frase,
-                "frecuencia": frecuencia,
-                "porcentaje": round(frecuencia / len(patrones) * 100, 1),
-                "impacto": "alto" if frecuencia > len(patrones) * 0.7 else "medio" if frecuencia > len(patrones) * 0.4 else "bajo"
-            })
+        if patrones and len(patrones) > 0:
+            for frase, frecuencia in factores_ordenados[:5]:  # Top 5
+                porcentaje = round(frecuencia / len(patrones) * 100, 1) if len(patrones) > 0 else 0
+                factores_clave.append({
+                    "frase": frase,
+                    "frecuencia": frecuencia,
+                    "porcentaje": porcentaje,
+                    "impacto": "alto" if frecuencia > len(patrones) * 0.7 else "medio" if frecuencia > len(patrones) * 0.4 else "bajo"
+                })
         
         return factores_clave
         
@@ -230,22 +245,31 @@ def analizar_riesgo_legal(ranking_global: Dict[str, Any]) -> Dict[str, Any]:
         }
         
         analisis_riesgo = {}
-        for nivel, categorias in categorias_riesgo.items():
-            riesgo_total = 0
-            for categoria in categorias:
-                if categoria in ranking_global:
-                    riesgo_total += ranking_global[categoria]["total"]
-            
-            analisis_riesgo[nivel] = {
-                "total_apariciones": riesgo_total,
-                "categorias": categorias,
-                "nivel_riesgo": nivel
-            }
+        if ranking_global:
+            for nivel, categorias in categorias_riesgo.items():
+                riesgo_total = 0
+                for categoria in categorias:
+                    if categoria in ranking_global and ranking_global[categoria] and isinstance(ranking_global[categoria], dict):
+                        riesgo_total += ranking_global[categoria].get("total", 0)
+                
+                analisis_riesgo[nivel] = {
+                    "total_apariciones": riesgo_total,
+                    "categorias": categorias,
+                    "nivel_riesgo": nivel
+                }
+        else:
+            # Si no hay datos de ranking_global, inicializar con valores por defecto
+            for nivel, categorias in categorias_riesgo.items():
+                analisis_riesgo[nivel] = {
+                    "total_apariciones": 0,
+                    "categorias": categorias,
+                    "nivel_riesgo": nivel
+                }
         
         # Calcular riesgo general
-        riesgo_general = sum(analisis_riesgo["alto"]["total_apariciones"]) * 3 + \
-                        sum(analisis_riesgo["medio"]["total_apariciones"]) * 2 + \
-                        sum(analisis_riesgo["bajo"]["total_apariciones"])
+        riesgo_general = analisis_riesgo.get("alto", {}).get("total_apariciones", 0) * 3 + \
+                        analisis_riesgo.get("medio", {}).get("total_apariciones", 0) * 2 + \
+                        analisis_riesgo.get("bajo", {}).get("total_apariciones", 0)
         
         nivel_riesgo_general = "alto" if riesgo_general > 100 else "medio" if riesgo_general > 50 else "bajo"
         
@@ -313,27 +337,29 @@ def generar_insights_juridicos(resultado_base: Dict[str, Any], analisis_predicti
         }
         
         # Analizar patrones de frases clave
-        for categoria, datos in ranking_global.items():
-            total = datos["total"]
-            
-            if total > 30:
-                insights["patrones_identificados"].append({
-                    "categoria": categoria,
-                    "descripcion": f"Patrón fuerte identificado en {categoria} con {total} apariciones",
-                    "impacto": "alto",
-                    "accion_recomendada": "Monitorear y analizar en detalle"
-                })
-            elif total > 15:
-                insights["tendencias_emergentes"].append({
-                    "categoria": categoria,
-                    "descripcion": f"Tendencia emergente en {categoria} con {total} apariciones",
-                    "impacto": "medio",
-                    "accion_recomendada": "Seguir de cerca"
-                })
+        if ranking_global:
+            for categoria, datos in ranking_global.items():
+                if datos and isinstance(datos, dict):
+                    total = datos.get("total", 0)
+                    
+                    if total > 30:
+                        insights["patrones_identificados"].append({
+                            "categoria": categoria,
+                            "descripcion": f"Patrón fuerte identificado en {categoria} con {total} apariciones",
+                            "impacto": "alto",
+                            "accion_recomendada": "Monitorear y analizar en detalle"
+                        })
+                    elif total > 15:
+                        insights["tendencias_emergentes"].append({
+                            "categoria": categoria,
+                            "descripcion": f"Tendencia emergente en {categoria} con {total} apariciones",
+                            "impacto": "medio",
+                            "accion_recomendada": "Seguir de cerca"
+                        })
         
         # Generar alertas basadas en análisis de riesgo
         analisis_riesgo = analisis_predictivo.get("analisis_riesgo", {})
-        if analisis_riesgo.get("riesgo_general", {}).get("nivel") == "alto":
+        if analisis_riesgo and analisis_riesgo.get("riesgo_general", {}).get("nivel") == "alto":
             insights["alertas"].append({
                 "tipo": "riesgo_alto",
                 "descripcion": "Nivel de riesgo legal alto detectado",
@@ -342,7 +368,8 @@ def generar_insights_juridicos(resultado_base: Dict[str, Any], analisis_predicti
             })
         
         # Identificar oportunidades
-        if len(insights["patrones_identificados"]) > 3:
+        patrones_identificados = insights.get("patrones_identificados", [])
+        if patrones_identificados and len(patrones_identificados) > 3:
             insights["oportunidades"].append({
                 "tipo": "patrones_fuertes",
                 "descripcion": "Múltiples patrones fuertes identificados",
@@ -374,30 +401,41 @@ def extraer_factores_clave(resultado_base: Dict[str, Any]) -> List[Dict[str, Any
         factores_clave = []
         
         # Analizar cada categoría
-        for categoria, datos in ranking_global.items():
-            total = datos["total"]
-            ocurrencias = datos.get("ocurrencias", [])
-            
-            # Calcular impacto de la categoría
-            impacto = "alto" if total > 40 else "medio" if total > 20 else "bajo"
-            
-            # Analizar contexto de las ocurrencias
-            contextos = []
-            for ocurrencia in ocurrencias[:5]:  # Top 5 contextos
-                contextos.append({
-                    "texto": ocurrencia.get("contexto", "")[:100] + "..." if len(ocurrencia.get("contexto", "")) > 100 else ocurrencia.get("contexto", ""),
-                    "posicion": ocurrencia.get("posicion", 0),
-                    "archivo": ocurrencia.get("archivo", "N/A")
-                })
-            
-            factores_clave.append({
-                "categoria": categoria,
-                "total_apariciones": total,
-                "impacto": impacto,
-                "contextos_ejemplo": contextos,
-                "descripcion": generar_descripcion_factor(categoria, total),
-                "recomendaciones": generar_recomendaciones_factor(categoria, total)
-            })
+        if ranking_global:
+            for categoria, datos in ranking_global.items():
+                if datos and isinstance(datos, dict):
+                    total = datos.get("total", 0)
+                    ocurrencias = datos.get("ocurrencias", [])
+                    
+                    # Calcular impacto de la categoría
+                    impacto = "alto" if total > 40 else "medio" if total > 20 else "bajo"
+                    
+                    # Analizar contexto de las ocurrencias
+                    contextos = []
+                    if ocurrencias and len(ocurrencias) > 0:
+                        for ocurrencia in ocurrencias[:5]:  # Top 5 contextos
+                            contexto_texto = ocurrencia.get("contexto", "")
+                            if contexto_texto:
+                                texto_truncado = contexto_texto[:100] + "..." if len(contexto_texto) > 100 else contexto_texto
+                            else:
+                                texto_truncado = "Sin contexto disponible"
+                            
+                            contextos.append({
+                                "texto": texto_truncado,
+                                "posicion": ocurrencia.get("posicion", 0),
+                                "archivo": ocurrencia.get("archivo", "N/A")
+                            })
+                    
+                    factores_clave.append({
+                        "categoria": categoria,
+                        "total_apariciones": total,
+                        "impacto": impacto,
+                        "contextos_ejemplo": contextos,
+                        "descripcion": generar_descripcion_factor(categoria, total),
+                        "recomendaciones": generar_recomendaciones_factor(categoria, total)
+                    })
+        else:
+            factores_clave = []
         
         # Ordenar por impacto
         factores_clave.sort(key=lambda x: x["total_apariciones"], reverse=True)
@@ -456,7 +494,7 @@ def generar_recomendaciones(resultado_base: Dict[str, Any], analisis_predictivo:
         
         # Recomendaciones basadas en patrones
         predicciones = analisis_predictivo.get("predicciones", {})
-        if predicciones.get("probabilidad_favorable", 0) > 70:
+        if predicciones and predicciones.get("probabilidad_favorable", 0) > 70:
             recomendaciones.append({
                 "tipo": "optimista",
                 "titulo": "Alta probabilidad de resolución favorable",
@@ -468,7 +506,7 @@ def generar_recomendaciones(resultado_base: Dict[str, Any], analisis_predictivo:
                 ],
                 "prioridad": "alta"
             })
-        elif predicciones.get("probabilidad_desfavorable", 0) > 70:
+        elif predicciones and predicciones.get("probabilidad_desfavorable", 0) > 70:
             recomendaciones.append({
                 "tipo": "precaución",
                 "titulo": "Alta probabilidad de resolución desfavorable",
@@ -484,7 +522,7 @@ def generar_recomendaciones(resultado_base: Dict[str, Any], analisis_predictivo:
         
         # Recomendaciones basadas en riesgo
         analisis_riesgo = analisis_predictivo.get("analisis_riesgo", {})
-        nivel_riesgo = analisis_riesgo.get("riesgo_general", {}).get("nivel", "medio")
+        nivel_riesgo = analisis_riesgo.get("riesgo_general", {}).get("nivel", "medio") if analisis_riesgo and analisis_riesgo.get("riesgo_general") else "medio"
         
         if nivel_riesgo == "alto":
             recomendaciones.append({
@@ -546,7 +584,7 @@ def calcular_confianza_analisis(resultado_base: Dict[str, Any]) -> float:
         
         # Ajustar por calidad de datos
         ranking_global = resultado_base.get("ranking_global", {})
-        if len(ranking_global) >= 5:
+        if ranking_global and len(ranking_global) >= 5:
             confianza += 0.1
         
         return min(0.95, max(0.1, confianza))
@@ -563,17 +601,23 @@ def calcular_confianza_prediccion(ranking_global: Dict[str, Any]) -> float:
             return 0.1
         
         # Calcular confianza basada en la consistencia de los datos
-        totales = [datos["total"] for datos in ranking_global.values()]
-        if not totales:
-            return 0.1
-        
-        # Desviación estándar relativa
-        promedio = sum(totales) / len(totales)
-        varianza = sum((x - promedio) ** 2 for x in totales) / len(totales)
-        desviacion = varianza ** 0.5
-        
-        # Menor desviación = mayor confianza
-        confianza = max(0.1, 1 - (desviacion / promedio) if promedio > 0 else 0.1)
+        if ranking_global:
+            totales = [datos.get("total", 0) for datos in ranking_global.values() if datos and isinstance(datos, dict)]
+            if not totales:
+                return 0.1
+            
+            # Desviación estándar relativa
+            promedio = sum(totales) / len(totales)
+            if promedio > 0:
+                varianza = sum((x - promedio) ** 2 for x in totales) / len(totales)
+                desviacion = varianza ** 0.5
+                
+                # Menor desviación = mayor confianza
+                confianza = max(0.1, 1 - (desviacion / promedio))
+            else:
+                confianza = 0.1
+        else:
+            confianza = 0.1
         
         return min(0.95, confianza)
         
@@ -594,12 +638,15 @@ def calcular_confianza_prediccion_especifica(patrones_favorables: List[Dict[str,
         confianzas_desfavorables = [p.get("confianza", 0.5) for p in patrones_desfavorables]
         
         # Promedio de confianzas
-        confianza_promedio = (sum(confianzas_favorables) + sum(confianzas_desfavorables)) / total_patrones
-        
-        # Ajustar por cantidad de datos
-        factor_cantidad = min(1.0, total_patrones / 10)  # Máximo 10 patrones
-        
-        confianza_final = confianza_promedio * factor_cantidad
+        if total_patrones > 0:
+            confianza_promedio = (sum(confianzas_favorables) + sum(confianzas_desfavorables)) / total_patrones
+            
+            # Ajustar por cantidad de datos
+            factor_cantidad = min(1.0, total_patrones / 10)  # Máximo 10 patrones
+            
+            confianza_final = confianza_promedio * factor_cantidad
+        else:
+            confianza_final = 0.1
         
         return min(0.95, max(0.1, confianza_final))
         
@@ -614,15 +661,16 @@ def identificar_patrones_favorables(resultado_base: Dict[str, Any]) -> List[Dict
         resultados_por_archivo = resultado_base.get("resultados_por_archivo", {})
         patrones = []
         
-        for archivo, resultado in resultados_por_archivo.items():
-            if resultado.get("procesado") and resultado.get("prediccion", {}).get("es_favorable"):
-                frases_clave = resultado.get("frases_clave", {})
-                patrones.append({
-                    "archivo": archivo,
-                    "frases_clave": list(frases_clave.keys()),
-                    "total_frases": sum(datos["total"] for datos in frases_clave.values()),
-                    "confianza": resultado.get("prediccion", {}).get("confianza", 0)
-                })
+        if resultados_por_archivo:
+            for archivo, resultado in resultados_por_archivo.items():
+                if resultado and isinstance(resultado, dict) and resultado.get("procesado") and resultado.get("prediccion", {}).get("es_favorable"):
+                    frases_clave = resultado.get("frases_clave", {})
+                    patrones.append({
+                        "archivo": archivo,
+                        "frases_clave": list(frases_clave.keys()) if frases_clave else [],
+                        "total_frases": sum(datos["total"] for datos in frases_clave.values()) if frases_clave else 0,
+                        "confianza": resultado.get("prediccion", {}).get("confianza", 0)
+                    })
         
         return patrones
         

@@ -637,6 +637,12 @@
             try {
                 contenido.innerHTML = textoResaltado;
                 console.log(`✅ Resaltadas ${posiciones.length} frases clave`);
+                
+                // Si hay información de highlight específico, resaltar esa aparición
+                const highlightInfo = {{ archivo.highlight_info|tojson|safe }};
+                if (highlightInfo && highlightInfo.frase) {
+                    resaltarAparicionEspecifica(highlightInfo.frase, highlightInfo.posicion, highlightInfo.index);
+                }
             } catch (error) {
                 console.error('❌ Error aplicando resaltado:', error);
                 console.error('Texto resaltado problemático:', textoResaltado);
@@ -645,8 +651,61 @@
             }
         }
         
+        // Función para resaltar una aparición específica
+        function resaltarAparicionEspecifica(frase, posicion, index) {
+            console.log(`🎯 Resaltando aparición específica: "${frase}" en posición ${posicion}, índice ${index}`);
+            
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) return;
+            
+            // Buscar la frase en el contenido HTML
+            const spans = contenido.querySelectorAll('.frase-resaltada');
+            let aparicionEncontrada = null;
+            let contador = 0;
+            
+            for (const span of spans) {
+                if (span.textContent.toLowerCase().includes(frase.toLowerCase())) {
+                    if (contador === index) {
+                        aparicionEncontrada = span;
+                        break;
+                    }
+                    contador++;
+                }
+            }
+            
+            if (aparicionEncontrada) {
+                // Resaltar la aparición específica con un estilo especial
+                aparicionEncontrada.style.backgroundColor = '#ff6b6b';
+                aparicionEncontrada.style.border = '2px solid #e74c3c';
+                aparicionEncontrada.style.boxShadow = '0 0 10px rgba(231, 76, 60, 0.5)';
+                aparicionEncontrada.style.transform = 'scale(1.1)';
+                aparicionEncontrada.style.zIndex = '1000';
+                
+                // Hacer scroll a la aparición
+                aparicionEncontrada.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                
+                // Mostrar notificación
+                mostrarNotificacion(`Aparición resaltada: "${frase}"`, 'success');
+                
+                // Restaurar estilo después de 5 segundos
+                setTimeout(() => {
+                    aparicionEncontrada.style.backgroundColor = '';
+                    aparicionEncontrada.style.border = '';
+                    aparicionEncontrada.style.boxShadow = '';
+                    aparicionEncontrada.style.transform = '';
+                    aparicionEncontrada.style.zIndex = '';
+                }, 5000);
+                
+                console.log('✅ Aparición específica resaltada y centrada');
+            } else {
+                console.warn('⚠️ No se encontró la aparición específica para resaltar');
+            }
+        }
+
         // Función para limpiar HTML mal formado
-        function limpiarHTMLMalformado(texto) {
             if (typeof texto !== 'string') return texto;
             
             // Eliminar todas las etiquetas HTML y su contenido
