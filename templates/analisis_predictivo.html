@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔮 Análisis Predictivo - Analizador de Sentencias IPP/INSS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            border: none;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        .metric-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .prediction-card {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 15px;
+            border: none;
+        }
+        .risk-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-radius: 15px;
+            border: none;
+        }
+        .insight-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-radius: 15px;
+            border: none;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        .progress-custom {
+            height: 25px;
+            border-radius: 15px;
+        }
+        .badge-custom {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="bi bi-graph-up-arrow"></i> Análisis Predictivo Inteligente
+                    </h1>
+                    <p class="lead mb-4">
+                        Descubre patrones ocultos, predice resultados y toma decisiones informadas 
+                        basándote en el análisis inteligente de resoluciones legales.
+                    </p>
+                    <button class="btn btn-light btn-custom me-3" onclick="cargarAnalisis()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar Análisis
+                    </button>
+                    <a href="/" class="btn btn-outline-light btn-custom">
+                        <i class="bi bi-house"></i> Volver al Inicio
+                    </a>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <i class="bi bi-brain" style="font-size: 8rem; opacity: 0.8;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner text-center py-5" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-3 text-muted">Analizando datos y generando predicciones...</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-5" id="mainContent" style="display: none;">
+        <!-- Resumen Ejecutivo -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="mb-4">
+                    <i class="bi bi-clipboard-data"></i> Resumen Ejecutivo
+                </h2>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card metric-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="metric-icon text-primary">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <h3 class="card-title" id="totalDocumentos">-</h3>
+                        <p class="card-text text-muted">Documentos Analizados</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card metric-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="metric-icon text-success">
+                            <i class="bi bi-key"></i>
+                        </div>
+                        <h3 class="card-title" id="totalFrasesClave">-</h3>
+                        <p class="card-text text-muted">Frases Clave Identificadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card metric-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="metric-icon text-info">
+                            <i class="bi bi-tags"></i>
+                        </div>
+                        <h3 class="card-title" id="categoriasIdentificadas">-</h3>
+                        <p class="card-text text-muted">Categorías Identificadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card metric-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="metric-icon text-warning">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h3 class="card-title" id="confianzaAnalisis">-</h3>
+                        <p class="card-text text-muted">Confianza del Análisis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predicciones y Riesgo -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="card prediction-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-crystal-ball"></i> Predicciones de Resultados
+                        </h4>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Probabilidad Favorable</span>
+                                <span id="probabilidadFavorable">-</span>
+                            </div>
+                            <div class="progress progress-custom">
+                                <div class="progress-bar bg-success" id="barraFavorable" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Probabilidad Desfavorable</span>
+                                <span id="probabilidadDesfavorable">-</span>
+                            </div>
+                            <div class="progress progress-custom">
+                                <div class="progress-bar bg-danger" id="barraDesfavorable" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <span class="badge badge-custom bg-primary" id="tendenciaGeneral">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card risk-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-exclamation-triangle"></i> Análisis de Riesgo
+                        </h4>
+                        <div class="mb-3">
+                            <strong>Nivel de Riesgo:</strong>
+                            <span class="badge badge-custom" id="nivelRiesgo">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Valor de Riesgo:</strong>
+                            <span id="valorRiesgo">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Interpretación:</strong>
+                            <p class="mt-2" id="interpretacionRiesgo">-</p>
+                        </div>
+                        <div id="recomendacionesRiesgo">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3">
+                        <i class="bi bi-bar-chart"></i> Top Categorías por Frecuencia
+                    </h5>
+                    <canvas id="chartCategorias"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3">
+                        <i class="bi bi-pie-chart"></i> Distribución de Probabilidades
+                    </h5>
+                    <canvas id="chartProbabilidades"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights y Recomendaciones -->
+        <div class="row mb-5">
+            <div class="col-lg-8 mb-4">
+                <div class="card insight-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-lightbulb"></i> Insights Jurídicos
+                        </h4>
+                        <div id="insightsContainer">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="card metric-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-list-check"></i> Recomendaciones
+                        </h4>
+                        <div id="recomendacionesContainer">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Factores Clave -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-target"></i> Factores Clave Identificados
+                        </h4>
+                        <div id="factoresClaveContainer">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let chartCategorias, chartProbabilidades;
+
+        // Cargar análisis al iniciar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarAnalisis();
+        });
+
+        async function cargarAnalisis() {
+            mostrarLoading(true);
+            
+            try {
+                const response = await fetch('/api/analisis-predictivo');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarDatos(data);
+                    crearGraficos(data);
+                } else {
+                    mostrarError('Error al cargar el análisis: ' + data.error);
+                }
+            } catch (error) {
+                mostrarError('Error de conexión: ' + error.message);
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        function mostrarLoading(mostrar) {
+            document.getElementById('loadingSpinner').style.display = mostrar ? 'block' : 'none';
+            document.getElementById('mainContent').style.display = mostrar ? 'none' : 'block';
+        }
+
+        function mostrarError(mensaje) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-custom';
+            alertDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Error:</strong> ${mensaje}
+            `;
+            
+            const container = document.querySelector('.container-fluid');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        function mostrarDatos(data) {
+            // Resumen ejecutivo
+            document.getElementById('totalDocumentos').textContent = data.resumen_ejecutivo.total_documentos;
+            document.getElementById('totalFrasesClave').textContent = data.resumen_ejecutivo.total_frases_clave;
+            document.getElementById('categoriasIdentificadas').textContent = data.resumen_ejecutivo.categorias_identificadas;
+            document.getElementById('confianzaAnalisis').textContent = (data.resumen_ejecutivo.confianza_analisis * 100).toFixed(0) + '%';
+
+            // Predicciones
+            const probFavorable = data.analisis_predictivo.predicciones.probabilidad_favorable;
+            const probDesfavorable = data.analisis_predictivo.predicciones.probabilidad_desfavorable;
+            
+            document.getElementById('probabilidadFavorable').textContent = probFavorable + '%';
+            document.getElementById('probabilidadDesfavorable').textContent = probDesfavorable + '%';
+            
+            document.getElementById('barraFavorable').style.width = probFavorable + '%';
+            document.getElementById('barraDesfavorable').style.width = probDesfavorable + '%';
+            
+            document.getElementById('tendenciaGeneral').textContent = data.analisis_predictivo.predicciones.resumen.tendencia_general;
+
+            // Análisis de riesgo
+            const riesgo = data.analisis_predictivo.analisis_riesgo.riesgo_general;
+            document.getElementById('nivelRiesgo').textContent = riesgo.nivel;
+            document.getElementById('valorRiesgo').textContent = riesgo.valor;
+            document.getElementById('interpretacionRiesgo').textContent = riesgo.interpretacion;
+
+            // Mostrar recomendaciones de riesgo
+            mostrarRecomendacionesRiesgo(data.analisis_predictivo.analisis_riesgo.recomendaciones_riesgo);
+
+            // Mostrar insights
+            mostrarInsights(data.insights_juridicos);
+
+            // Mostrar recomendaciones
+            mostrarRecomendaciones(data.recomendaciones);
+
+            // Mostrar factores clave
+            mostrarFactoresClave(data.factores_clave);
+        }
+
+        function mostrarRecomendacionesRiesgo(recomendaciones) {
+            const container = document.getElementById('recomendacionesRiesgo');
+            container.innerHTML = '<strong>Acciones Recomendadas:</strong><ul class="mt-2">';
+            
+            recomendaciones.forEach(rec => {
+                container.innerHTML += `<li>${rec}</li>`;
+            });
+            
+            container.innerHTML += '</ul>';
+        }
+
+        function mostrarInsights(insights) {
+            const container = document.getElementById('insightsContainer');
+            let html = '';
+
+            // Patrones identificados
+            if (insights.patrones_identificados.length > 0) {
+                html += '<div class="mb-3"><strong>🔍 Patrones Identificados:</strong><ul>';
+                insights.patrones_identificados.forEach(patron => {
+                    html += `<li>${patron.descripcion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            // Tendencias emergentes
+            if (insights.tendencias_emergentes.length > 0) {
+                html += '<div class="mb-3"><strong>📈 Tendencias Emergentes:</strong><ul>';
+                insights.tendencias_emergentes.forEach(tendencia => {
+                    html += `<li>${tendencia.descripcion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            // Alertas
+            if (insights.alertas.length > 0) {
+                html += '<div class="mb-3"><strong>⚠️ Alertas:</strong><ul>';
+                insights.alertas.forEach(alerta => {
+                    html += `<li>${alerta.descripcion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            // Oportunidades
+            if (insights.oportunidades.length > 0) {
+                html += '<div class="mb-3"><strong>💡 Oportunidades:</strong><ul>';
+                insights.oportunidades.forEach(oportunidad => {
+                    html += `<li>${oportunidad.descripcion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function mostrarRecomendaciones(recomendaciones) {
+            const container = document.getElementById('recomendacionesContainer');
+            let html = '';
+
+            recomendaciones.forEach(rec => {
+                const badgeClass = rec.prioridad === 'crítica' ? 'bg-danger' : 
+                                 rec.prioridad === 'alta' ? 'bg-warning' : 'bg-info';
+                
+                html += `
+                    <div class="mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge ${badgeClass}">${rec.prioridad}</span>
+                            <small class="text-muted">${rec.tipo}</small>
+                        </div>
+                        <h6>${rec.titulo}</h6>
+                        <p class="small mb-2">${rec.descripcion}</p>
+                        <ul class="small">
+                            ${rec.acciones.map(accion => `<li>${accion}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function mostrarFactoresClave(factores) {
+            const container = document.getElementById('factoresClaveContainer');
+            let html = '<div class="row">';
+
+            factores.forEach(factor => {
+                const impactoClass = factor.impacto === 'alto' ? 'bg-danger' : 
+                                   factor.impacto === 'medio' ? 'bg-warning' : 'bg-success';
+                
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="card-title mb-0">${factor.categoria}</h6>
+                                    <span class="badge ${impactoClass}">${factor.impacto}</span>
+                                </div>
+                                <p class="small text-muted mb-2">${factor.descripcion}</p>
+                                <div class="mb-2">
+                                    <strong>Total apariciones:</strong> ${factor.total_apariciones}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Recomendaciones:</strong>
+                                    <ul class="small">
+                                        ${factor.recomendaciones.map(rec => `<li>${rec}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function crearGraficos(data) {
+            // Gráfico de categorías
+            const ctxCategorias = document.getElementById('chartCategorias').getContext('2d');
+            if (chartCategorias) chartCategorias.destroy();
+            
+            const categoriasData = data.analisis_predictivo.tendencias.categorias_dominantes;
+            chartCategorias = new Chart(ctxCategorias, {
+                type: 'bar',
+                data: {
+                    labels: categoriasData.map(cat => cat.categoria),
+                    datasets: [{
+                        label: 'Total Apariciones',
+                        data: categoriasData.map(cat => cat.total),
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de probabilidades
+            const ctxProbabilidades = document.getElementById('chartProbabilidades').getContext('2d');
+            if (chartProbabilidades) chartProbabilidades.destroy();
+            
+            const predicciones = data.analisis_predictivo.predicciones;
+            chartProbabilidades = new Chart(ctxProbabilidades, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Favorable', 'Desfavorable'],
+                    datasets: [{
+                        data: [predicciones.probabilidad_favorable, predicciones.probabilidad_desfavorable],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(255, 99, 132, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

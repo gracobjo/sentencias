@@ -579,6 +579,67 @@ async def api_analizar():
         return {"error": f"Error al analizar: {str(e)}"}
 
 
+@app.get("/api/analisis-predictivo")
+async def api_analisis_predictivo():
+    """Endpoint API para análisis predictivo e inteligente de resoluciones"""
+    try:
+        # Importar funciones del módulo de análisis predictivo
+        from backend.analisis_predictivo import (
+            realizar_analisis_predictivo,
+            generar_insights_juridicos,
+            identificar_patrones_favorables,
+            extraer_factores_clave,
+            generar_recomendaciones,
+            calcular_confianza_analisis
+        )
+        
+        # Obtener datos base
+        resultado_base = analizar_sentencias_existentes()
+        
+        # Realizar análisis predictivo avanzado
+        analisis_predictivo = realizar_analisis_predictivo(resultado_base)
+        
+        # Generar insights y recomendaciones
+        insights = generar_insights_juridicos(resultado_base, analisis_predictivo)
+        
+        # Crear respuesta estructurada para UX mejorada
+        return {
+            "status": "success",
+            "timestamp": datetime.now().isoformat(),
+            "resumen_ejecutivo": {
+                "total_documentos": resultado_base.get("archivos_analizados", 0),
+                "total_frases_clave": resultado_base.get("total_apariciones", 0),
+                "categorias_identificadas": len(resultado_base.get("ranking_global", {})),
+                "confianza_analisis": calcular_confianza_analisis(resultado_base)
+            },
+            "analisis_predictivo": analisis_predictivo,
+            "insights_juridicos": insights,
+            "patrones_favorables": identificar_patrones_favorables(resultado_base),
+            "factores_clave": extraer_factores_clave(resultado_base),
+            "recomendaciones": generar_recomendaciones(resultado_base, analisis_predictivo),
+            "datos_estadisticos": resultado_base,
+            "metadata": {
+                "modelo_ia": ANALIZADOR_IA_DISPONIBLE,
+                "version_analisis": "2.0.0",
+                "fecha_ultima_actualizacion": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error en análisis predictivo: {e}")
+        return {
+            "status": "error",
+            "error": f"Error en análisis predictivo: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
+
+
+@app.get("/analisis-predictivo")
+async def pagina_analisis_predictivo():
+    """Página web para el análisis predictivo"""
+    return templates.TemplateResponse("analisis_predictivo.html", {"request": {}})
+
+
 @app.get("/health")
 async def health_check():
     """Endpoint de salud del sistema"""

@@ -11,8 +11,87 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <!-- Estilos personalizados -->
     <link href="/static/style.css" rel="stylesheet">
+    
+    <style>
+        .clickable-frase {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .clickable-frase:hover {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .ranking-filters {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .frase-highlight {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: 2px;
+            display: inline-block;
+        }
+        
+        .stats-card {
+            transition: transform 0.2s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .modal-xl {
+            max-width: 90%;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .documento-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+        
+        .documento-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #007bff;
+        }
+        
+        .documento-card .card-body {
+            min-height: 120px;
+        }
+        
+        .documento-card .card-title {
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+        
+        .text-truncate {
+            max-width: 200px;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <!-- Header -->
@@ -74,35 +153,170 @@
             </div>
         </div>
 
+        <!-- Documentos Analizados -->
+        {% if resultados_por_archivo %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-files me-2"></i>Documentos Analizados
+                            <span class="badge bg-light text-dark ms-2">{{ resultados_por_archivo|length }} documentos</span>
+                        </h5>
+                        <div>
+                            <button class="btn btn-light btn-sm" onclick="exportarDocumentos()">
+                                <i class="bi bi-download me-1"></i>Exportar Lista
+                            </button>
+                            <button class="btn btn-light btn-sm" onclick="mostrarDetallesDocumentos()">
+                                <i class="bi bi-info-circle me-1"></i>Ver Detalles
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for nombre_archivo, resultado in resultados_por_archivo.items() %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100 border-0 shadow-sm documento-card" 
+                                     data-archivo="{{ nombre_archivo }}"
+                                     onclick="mostrarDetallesDocumento('{{ nombre_archivo }}')">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            {% if nombre_archivo.endswith('.pdf') %}
+                                                <i class="bi bi-file-pdf text-danger fs-4 me-2"></i>
+                                            {% elif nombre_archivo.endswith('.txt') %}
+                                                <i class="bi bi-file-text text-primary fs-4 me-2"></i>
+                                            {% else %}
+                                                <i class="bi bi-file-earmark text-secondary fs-4 me-2"></i>
+                                            {% endif %}
+                                            <h6 class="card-title mb-0 text-truncate" title="{{ nombre_archivo }}">
+                                                {{ nombre_archivo }}
+                                            </h6>
+                                        </div>
+                                        
+                                        {% if resultado.get('procesado') %}
+                                            <div class="text-success mb-2">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                <small>Procesado correctamente</small>
+                                            </div>
+                                            {% if resultado.get('frases_clave') %}
+                                                <div class="mb-2">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-tags me-1"></i>
+                                                        {{ resultado.frases_clave|length }} categorías encontradas
+                                                    </small>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-search me-1"></i>
+                                                        {{ resultado.get('total_frases', 0) }} frases clave
+                                                    </small>
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="text-danger mb-2">
+                                                <i class="bi bi-x-circle me-1"></i>
+                                                <small>Error en procesamiento</small>
+                                            </div>
+                                            {% if resultado.get('error') %}
+                                                <div class="text-danger">
+                                                    <small>{{ resultado.error }}</small>
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0 p-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                {% if resultado.get('procesado') %}
+                                                    <i class="bi bi-clock me-1"></i>
+                                                    {{ resultado.get('tiempo_procesamiento', 'N/A') }}
+                                                {% endif %}
+                                            </small>
+                                            <button class="btn btn-outline-primary btn-sm" 
+                                                    onclick="event.stopPropagation(); verDocumento('{{ nombre_archivo }}')"
+                                                    title="Ver documento">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Ranking Global -->
         {% if ranking_global %}
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">
                             <i class="bi bi-trophy me-2"></i>Ranking Global de Frases Clave
                         </h5>
+                        <div>
+                            <button class="btn btn-light btn-sm" onclick="exportarRanking()">
+                                <i class="bi bi-download me-1"></i>Exportar
+                            </button>
+                            <button class="btn btn-light btn-sm" onclick="mostrarGraficoRanking()">
+                                <i class="bi bi-graph-up me-1"></i>Gráfico
+                            </button>
+                        </div>
                     </div>
+                    
+                    <!-- Filtros y búsqueda -->
+                    <div class="ranking-filters">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="searchFrase" class="form-label">Buscar frase:</label>
+                                <input type="text" class="form-control" id="searchFrase" placeholder="Escriba para filtrar...">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="minApariciones" class="form-label">Mín. apariciones:</label>
+                                <input type="number" class="form-control" id="minApariciones" min="1" value="1">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="ordenRanking" class="form-label">Ordenar por:</label>
+                                <select class="form-select" id="ordenRanking">
+                                    <option value="total">Total apariciones</option>
+                                    <option value="porcentaje">Porcentaje</option>
+                                    <option value="alfabetico">Alfabético</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-primary w-100" onclick="aplicarFiltros()">
+                                    <i class="bi bi-funnel me-1"></i>Filtrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0">
+                            <table class="table table-hover mb-0" id="rankingTable">
                                 <thead>
                                     <tr>
                                         <th class="px-4">#</th>
                                         <th>Frase Clave</th>
                                         <th class="text-center">Apariciones</th>
                                         <th class="text-center">Porcentaje</th>
+                                        <th class="text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for frase, datos in ranking_global.items() %}
-                                    <tr>
+                                    <tr class="ranking-row" data-frase="{{ frase }}" data-total="{{ datos.total }}">
                                         <td class="px-4 fw-bold text-primary">{{ loop.index }}</td>
                                         <td>
                                             <span class="clickable-frase" 
                                                   data-frase="{{ frase }}" 
-                                                  data-frase-index="{{ loop.index0 }}">
+                                                  data-frase-index="{{ loop.index0 }}"
+                                                  onclick="mostrarDetallesFrase('{{ frase }}')">
                                                 {{ frase }}
                                             </span>
                                         </td>
@@ -111,6 +325,19 @@
                                         </td>
                                         <td class="text-center">
                                             {{ (datos.total / total_apariciones * 100) | round(1) }}%
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-info" onclick="mostrarDetallesFrase('{{ frase }}')" title="Ver detalles">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success" onclick="compararFrase('{{ frase }}')" title="Comparar">
+                                                    <i class="bi bi-arrow-left-right"></i>
+                                                </button>
+                                                <button class="btn btn-outline-warning" onclick="resaltarFrase('{{ frase }}')" title="Resaltar">
+                                                    <i class="bi bi-highlighter"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -121,7 +348,142 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Estadísticas rápidas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card border-0 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-list-ol text-primary fs-1"></i>
+                        <h5 class="card-title mt-2">{{ ranking_global|length }}</h5>
+                        <p class="card-text text-muted">Frases Clave</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card border-0 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-file-text text-success fs-1"></i>
+                        <h5 class="card-title mt-2">{{ total_apariciones }}</h5>
+                        <p class="card-text text-muted">Total Apariciones</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card border-0 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-graph-up text-warning fs-1"></i>
+                        <h5 class="card-title mt-2">{{ (ranking_global.values() | map(attribute='total') | max) if ranking_global else 0 }}</h5>
+                        <p class="card-text text-muted">Máx. Apariciones</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card border-0 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-percent text-info fs-1"></i>
+                        <h5 class="card-title mt-2">{{ ((ranking_global.values() | map(attribute='total') | max) / total_apariciones * 100) | round(1) if ranking_global and total_apariciones > 0 else 0 }}%</h5>
+                        <p class="card-text text-muted">Frase Dominante</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botón de Análisis Predictivo -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <a href="/analisis-predictivo" class="btn btn-primary btn-lg">
+                    <i class="bi bi-crystal-ball me-2"></i>Análisis Predictivo Inteligente
+                </a>
+                <p class="text-muted mt-2">
+                    Descubre patrones ocultos y predice resultados basándote en el análisis inteligente
+                </p>
+            </div>
+        </div>
         {% endif %}
+    </div>
+
+    <!-- Modal para detalles de frase -->
+    <div class="modal fade" id="fraseModal" tabindex="-1" aria-labelledby="fraseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="fraseModalLabel">
+                        <i class="bi bi-info-circle me-2"></i>Detalles de Frase Clave
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="fraseModalBody">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="exportarFraseDetalle()">Exportar Detalles</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para comparación -->
+    <div class="modal fade" id="comparacionModal" tabindex="-1" aria-labelledby="comparacionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="comparacionModalLabel">
+                        <i class="bi bi-arrow-left-right me-2"></i>Comparación de Frases
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="comparacionModalBody">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para detalles de documento -->
+    <div class="modal fade" id="documentoModal" tabindex="-1" aria-labelledby="documentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="documentoModalLabel">
+                        <i class="bi bi-file-text me-2"></i>Detalles del Documento
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="documentoModalBody">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="exportarDocumentoDetalle()">Exportar Detalles</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para detalles generales de documentos -->
+    <div class="modal fade" id="documentosGeneralesModal" tabindex="-1" aria-labelledby="documentosGeneralesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="documentosGeneralesModalLabel">
+                        <i class="bi bi-files me-2"></i>Resumen General de Documentos
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="documentosGeneralesModalBody">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-success" onclick="exportarResumenDocumentos()">Exportar Resumen</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Script con datos del backend -->
@@ -136,6 +498,8 @@
     <script>
         // Variables globales
         let rankingGlobalData = null;
+        let fraseSeleccionada = null;
+        let fraseComparacion = null;
         
         // Función para mostrar notificaciones
         function mostrarNotificacion(mensaje, tipo) {
@@ -171,6 +535,789 @@
                 console.error('❌ Error cargando datos del ranking:', error);
                 return false;
             }
+        }
+
+        // Función para mostrar detalles de una frase
+        function mostrarDetallesFrase(frase) {
+            if (!rankingGlobalData || !rankingGlobalData[frase]) {
+                mostrarNotificacion('No hay datos disponibles para esta frase', 'warning');
+                return;
+            }
+
+            fraseSeleccionada = frase;
+            const datos = rankingGlobalData[frase];
+            
+            const modalBody = document.getElementById('fraseModalBody');
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Información General</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Frase:</strong></td><td>${frase}</td></tr>
+                            <tr><td><strong>Total Apariciones:</strong></td><td><span class="badge bg-primary">${datos.total}</span></td></tr>
+                            <tr><td><strong>Porcentaje:</strong></td><td>${((datos.total / {{ total_apariciones }}) * 100).toFixed(1)}%</td></tr>
+                            <tr><td><strong>Posición Ranking:</strong></td><td>${obtenerPosicionRanking(frase)}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success">Estadísticas</h6>
+                        <div class="chart-container">
+                            <canvas id="fraseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-info">Ocurrencias Detalladas</h6>
+                        ${generarTablaOcurrencias(datos.ocurrencias || [])}
+                    </div>
+                </div>
+            `;
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('fraseModal'));
+            modal.show();
+            
+            // Crear gráfico después de mostrar el modal
+            setTimeout(() => crearGraficoFrase(frase, datos), 100);
+        }
+
+        // Función para generar tabla de ocurrencias
+        function generarTablaOcurrencias(ocurrencias) {
+            if (!ocurrencias || ocurrencias.length === 0) {
+                return '<p class="text-muted">No hay información detallada de ocurrencias disponible.</p>';
+            }
+            
+            let tabla = '<div class="table-responsive"><table class="table table-sm table-striped">';
+            tabla += '<thead><tr><th>Documento</th><th>Contexto</th><th>Posición</th></tr></thead><tbody>';
+            
+            ocurrencias.forEach(ocurrencia => {
+                tabla += `<tr>
+                    <td>${ocurrencia.documento || 'N/A'}</td>
+                    <td>${ocurrencia.contexto || 'N/A'}</td>
+                    <td>${ocurrencia.posicion || 'N/A'}</td>
+                </tr>`;
+            });
+            
+            tabla += '</tbody></table></div>';
+            return tabla;
+        }
+
+        // Función para crear gráfico de la frase
+        function crearGraficoFrase(frase, datos) {
+            const ctx = document.getElementById('fraseChart');
+            if (!ctx) return;
+            
+            // Destruir gráfico existente si hay uno
+            if (window.fraseChart) {
+                window.fraseChart.destroy();
+            }
+            
+            // Datos para el gráfico
+            const chartData = {
+                labels: ['Esta Frase', 'Otras Frases'],
+                datasets: [{
+                    label: 'Apariciones',
+                    data: [datos.total, {{ total_apariciones }} - datos.total],
+                    backgroundColor: ['#007bff', '#e9ecef'],
+                    borderColor: ['#0056b3', '#adb5bd'],
+                    borderWidth: 2
+                }]
+            };
+            
+            window.fraseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: `Distribución de "${frase}"`
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función para comparar frases
+        function compararFrase(frase) {
+            if (!rankingGlobalData || !rankingGlobalData[frase]) {
+                mostrarNotificacion('No hay datos disponibles para esta frase', 'warning');
+                return;
+            }
+
+            fraseComparacion = frase;
+            const datos = rankingGlobalData[frase];
+            
+            // Obtener top 5 frases para comparar
+            const frasesComparables = Object.entries(rankingGlobalData)
+                .sort((a, b) => b[1].total - a[1].total)
+                .slice(0, 5)
+                .filter(([f, _]) => f !== frase);
+            
+            const modalBody = document.getElementById('comparacionModalBody');
+            modalBody.innerHTML = `
+                <h6 class="text-success mb-3">Comparando: <strong>${frase}</strong></h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">${frase}</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Apariciones:</span>
+                                <span class="badge bg-primary">${datos.total}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Porcentaje:</span>
+                                <span>${((datos.total / {{ total_apariciones }}) * 100).toFixed(1)}%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Posición:</span>
+                                <span>${obtenerPosicionRanking(frase)}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info">Otras Frases Principales</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr><th>Frase</th><th>Apariciones</th><th>%</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${frasesComparables.map(([f, d]) => `
+                                        <tr>
+                                            <td>${f}</td>
+                                            <td><span class="badge bg-secondary">${d.total}</span></td>
+                                            <td>${((d.total / {{ total_apariciones }}) * 100).toFixed(1)}%</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="chart-container">
+                            <canvas id="comparacionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('comparacionModal'));
+            modal.show();
+            
+            // Crear gráfico de comparación
+            setTimeout(() => crearGraficoComparacion(frase, frasesComparables), 100);
+        }
+
+        // Función para crear gráfico de comparación
+        function crearGraficoComparacion(frase, frasesComparables) {
+            const ctx = document.getElementById('comparacionChart');
+            if (!ctx) return;
+            
+            // Destruir gráfico existente si hay uno
+            if (window.comparacionChart) {
+                window.comparacionChart.destroy();
+            }
+            
+            const datos = rankingGlobalData[frase];
+            const chartData = {
+                labels: [frase, ...frasesComparables.map(([f, _]) => f)],
+                datasets: [{
+                    label: 'Apariciones',
+                    data: [datos.total, ...frasesComparables.map(([_, d]) => d.total)],
+                    backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'],
+                    borderWidth: 2
+                }]
+            };
+            
+            window.comparacionChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Comparación de Apariciones'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función para resaltar frase en el ranking
+        function resaltarFrase(frase) {
+            // Remover resaltado previo
+            document.querySelectorAll('.ranking-row').forEach(row => {
+                row.classList.remove('table-warning');
+            });
+            
+            // Resaltar la fila seleccionada
+            const fila = document.querySelector(`[data-frase="${frase}"]`);
+            if (fila) {
+                fila.classList.add('table-warning');
+                fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                mostrarNotificacion(`Frase "${frase}" resaltada en el ranking`, 'info');
+            }
+        }
+
+        // Función para obtener posición en el ranking
+        function obtenerPosicionRanking(frase) {
+            if (!rankingGlobalData) return 'N/A';
+            
+            const frases = Object.entries(rankingGlobalData)
+                .sort((a, b) => b[1].total - a[1].total);
+            
+            const posicion = frases.findIndex(([f, _]) => f === frase);
+            return posicion !== -1 ? posicion + 1 : 'N/A';
+        }
+
+        // Función para aplicar filtros
+        function aplicarFiltros() {
+            const searchTerm = document.getElementById('searchFrase').value.toLowerCase();
+            const minApariciones = parseInt(document.getElementById('minApariciones').value) || 1;
+            const orden = document.getElementById('ordenRanking').value;
+            
+            const filas = document.querySelectorAll('.ranking-row');
+            let filasVisibles = 0;
+            
+            filas.forEach(fila => {
+                const frase = fila.getAttribute('data-frase').toLowerCase();
+                const total = parseInt(fila.getAttribute('data-total'));
+                
+                const cumpleBusqueda = frase.includes(searchTerm);
+                const cumpleMinimo = total >= minApariciones;
+                
+                if (cumpleBusqueda && cumpleMinimo) {
+                    fila.style.display = '';
+                    filasVisibles++;
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+            
+            // Reordenar filas según el criterio seleccionado
+            reordenarRanking(orden);
+            
+            mostrarNotificacion(`Mostrando ${filasVisibles} frases que cumplen los filtros`, 'success');
+        }
+
+        // Función para reordenar ranking
+        function reordenarRanking(orden) {
+            const tbody = document.querySelector('#rankingTable tbody');
+            const filas = Array.from(tbody.querySelectorAll('.ranking-row'));
+            
+            filas.sort((a, b) => {
+                const fraseA = a.getAttribute('data-frase');
+                const fraseB = b.getAttribute('data-frase');
+                const totalA = parseInt(a.getAttribute('data-total'));
+                const totalB = parseInt(b.getAttribute('data-total'));
+                
+                switch (orden) {
+                    case 'total':
+                        return totalB - totalA;
+                    case 'porcentaje':
+                        const porcentajeA = (totalA / {{ total_apariciones }}) * 100;
+                        const porcentajeB = (totalB / {{ total_apariciones }}) * 100;
+                        return porcentajeB - porcentajeA;
+                    case 'alfabetico':
+                        return fraseA.localeCompare(fraseB);
+                    default:
+                        return 0;
+                }
+            });
+            
+            // Reinsertar filas en el nuevo orden
+            filas.forEach((fila, index) => {
+                const numero = fila.querySelector('td:first-child');
+                numero.textContent = index + 1;
+                tbody.appendChild(fila);
+            });
+        }
+
+        // Función para mostrar gráfico del ranking
+        function mostrarGraficoRanking() {
+            if (!rankingGlobalData) {
+                mostrarNotificacion('No hay datos disponibles para el gráfico', 'warning');
+                return;
+            }
+            
+            // Crear modal para el gráfico
+            const modalHTML = `
+                <div class="modal fade" id="graficoModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-graph-up me-2"></i>Gráfico del Ranking
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="chart-container">
+                                    <canvas id="rankingChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Agregar modal al DOM si no existe
+            if (!document.getElementById('graficoModal')) {
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            }
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('graficoModal'));
+            modal.show();
+            
+            // Crear gráfico
+            setTimeout(() => crearGraficoRanking(), 100);
+        }
+
+        // Función para crear gráfico del ranking
+        function crearGraficoRanking() {
+            const ctx = document.getElementById('rankingChart');
+            if (!ctx) return;
+            
+            // Destruir gráfico existente si hay uno
+            if (window.rankingChart) {
+                window.rankingChart.destroy();
+            }
+            
+            // Obtener top 10 frases
+            const topFrases = Object.entries(rankingGlobalData)
+                .sort((a, b) => b[1].total - a[1].total)
+                .slice(0, 10);
+            
+            const chartData = {
+                labels: topFrases.map(([f, _]) => f.length > 20 ? f.substring(0, 20) + '...' : f),
+                datasets: [{
+                    label: 'Apariciones',
+                    data: topFrases.map(([_, d]) => d.total),
+                    backgroundColor: 'rgba(0, 123, 255, 0.8)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 2
+                }]
+            };
+            
+            window.rankingChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Top 10 Frases Clave por Apariciones'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función para exportar ranking
+        function exportarRanking() {
+            if (!rankingGlobalData) {
+                mostrarNotificacion('No hay datos disponibles para exportar', 'warning');
+                return;
+            }
+            
+            const frases = Object.entries(rankingGlobalData)
+                .sort((a, b) => b[1].total - a[1].total)
+                .map(([frase, datos], index) => ({
+                    posicion: index + 1,
+                    frase: frase,
+                    apariciones: datos.total,
+                    porcentaje: ((datos.total / {{ total_apariciones }}) * 100).toFixed(1)
+                }));
+            
+            const csv = [
+                ['Posición', 'Frase Clave', 'Apariciones', 'Porcentaje'],
+                ...frases.map(f => [f.posicion, f.frase, f.apariciones, f.porcentaje + '%'])
+            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'ranking_frases_clave.csv';
+            link.click();
+            
+            mostrarNotificacion('Ranking exportado como CSV', 'success');
+        }
+
+        // Función para exportar detalles de frase
+        function exportarFraseDetalle() {
+            if (!fraseSeleccionada || !rankingGlobalData[fraseSeleccionada]) {
+                mostrarNotificacion('No hay frase seleccionada para exportar', 'warning');
+                return;
+            }
+            
+            const datos = rankingGlobalData[fraseSeleccionada];
+            const contenido = `Detalles de Frase Clave: ${fraseSeleccionada}\n\n` +
+                            `Total Apariciones: ${datos.total}\n` +
+                            `Porcentaje: ${((datos.total / {{ total_apariciones }}) * 100).toFixed(1)}%\n` +
+                            `Posición en Ranking: ${obtenerPosicionRanking(fraseSeleccionada)}\n\n` +
+                            `Ocurrencias:\n${JSON.stringify(datos.ocurrencias || [], null, 2)}`;
+            
+            const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `detalle_${fraseSeleccionada.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+            link.click();
+            
+            mostrarNotificacion('Detalles de frase exportados', 'success');
+        }
+
+        // ===== FUNCIONES PARA DOCUMENTOS =====
+
+        // Función para mostrar detalles de un documento específico
+        function mostrarDetallesDocumento(nombreArchivo) {
+            // Obtener datos del documento desde el backend
+            fetch(`/api/documento/${encodeURIComponent(nombreArchivo)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const modalBody = document.getElementById('documentoModalBody');
+                    const modalTitle = document.getElementById('documentoModalLabel');
+                    
+                    modalTitle.innerHTML = `<i class="bi bi-file-text me-2"></i>${nombreArchivo}`;
+                    
+                    if (data.error) {
+                        modalBody.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Error al obtener detalles: ${data.error}
+                            </div>
+                        `;
+                    } else {
+                        modalBody.innerHTML = generarContenidoDocumento(nombreArchivo, data);
+                    }
+                    
+                    // Mostrar modal
+                    const modal = new bootstrap.Modal(document.getElementById('documentoModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error obteniendo detalles del documento:', error);
+                    mostrarNotificacion('Error obteniendo detalles del documento', 'danger');
+                });
+        }
+
+        // Función para generar contenido del modal de documento
+        function generarContenidoDocumento(nombreArchivo, datos) {
+            let contenido = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Información del Documento</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Nombre:</strong></td><td>${nombreArchivo}</td></tr>
+                            <tr><td><strong>Estado:</strong></td><td>
+                                ${datos.procesado ? 
+                                    '<span class="badge bg-success">Procesado</span>' : 
+                                    '<span class="badge bg-danger">Error</span>'
+                                }
+                            </td></tr>
+                            <tr><td><strong>Tipo:</strong></td><td>${nombreArchivo.split('.').pop().toUpperCase()}</td></tr>
+                            <tr><td><strong>Tamaño:</strong></td><td>${datos.tamaño || 'N/A'}</td></tr>
+                            <tr><td><strong>Fecha Procesamiento:</strong></td><td>${datos.fecha_procesamiento || 'N/A'}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success">Estadísticas de Análisis</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="card bg-light text-center p-3">
+                                    <h4 class="text-primary mb-1">${datos.frases_clave ? Object.keys(datos.frases_clave).length : 0}</h4>
+                                    <small class="text-muted">Categorías</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light text-center p-3">
+                                    <h4 class="text-success mb-1">${datos.total_frases || 0}</h4>
+                                    <small class="text-muted">Frases Clave</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (datos.frases_clave && Object.keys(datos.frases_clave).length > 0) {
+                contenido += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-info">Frases Clave Encontradas</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Categoría</th>
+                                            <th>Frases</th>
+                                            <th>Apariciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
+                
+                Object.entries(datos.frases_clave).forEach(([categoria, info]) => {
+                    contenido += `
+                        <tr>
+                            <td><strong>${categoria.replace(/_/g, ' ').toUpperCase()}</strong></td>
+                            <td>${info.frases ? info.frases.join(', ') : 'N/A'}</td>
+                            <td><span class="badge bg-primary">${info.total}</span></td>
+                        </tr>
+                    `;
+                });
+                
+                contenido += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (datos.error) {
+                contenido += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                <h6 class="text-danger">Error en Procesamiento</h6>
+                                <p class="mb-0">${datos.error}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return contenido;
+        }
+
+        // Función para mostrar detalles generales de todos los documentos
+        function mostrarDetallesDocumentos() {
+            const modalBody = document.getElementById('documentosGeneralesModalBody');
+            
+            // Obtener datos de los documentos desde el DOM
+            const documentos = {{ resultados_por_archivo|tojson|safe }};
+            
+            if (!documentos || Object.keys(documentos).length === 0) {
+                modalBody.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No hay documentos disponibles para mostrar.
+                    </div>
+                `;
+            } else {
+                let contenido = `
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-primary">Resumen de Documentos</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="card bg-primary text-white text-center p-3">
+                                        <h4 class="mb-1">${Object.keys(documentos).length}</h4>
+                                        <small>Total Documentos</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-success text-white text-center p-3">
+                                        <h4 class="mb-1">${Object.values(documentos).filter(d => d.procesado).length}</h4>
+                                        <small>Procesados</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-danger text-white text-center p-3">
+                                        <h4 class="mb-1">${Object.values(documentos).filter(d => !d.procesado).length}</h4>
+                                        <small>Con Errores</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-info text-white text-center p-3">
+                                        <h4 class="mb-1">${Object.values(documentos).reduce((sum, d) => sum + (d.total_frases || 0), 0)}</h4>
+                                        <small>Total Frases</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-success">Lista Detallada</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Documento</th>
+                                            <th>Estado</th>
+                                            <th>Categorías</th>
+                                            <th>Frases</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
+                
+                Object.entries(documentos).forEach(([nombre, datos]) => {
+                    contenido += `
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    ${nombre.endsWith('.pdf') ? '<i class="bi bi-file-pdf text-danger me-2"></i>' : 
+                                      nombre.endsWith('.txt') ? '<i class="bi bi-file-text text-primary me-2"></i>' : 
+                                      '<i class="bi bi-file-earmark text-secondary me-2"></i>'}
+                                    <span title="${nombre}">${nombre.length > 30 ? nombre.substring(0, 30) + '...' : nombre}</span>
+                                </div>
+                            </td>
+                            <td>
+                                ${datos.procesado ? 
+                                    '<span class="badge bg-success">Procesado</span>' : 
+                                    '<span class="badge bg-danger">Error</span>'
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-info">${datos.frases_clave ? Object.keys(datos.frases_clave).length : 0}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">${datos.total_frases || 0}</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-outline-primary btn-sm" onclick="mostrarDetallesDocumento('${nombre}')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                contenido += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                modalBody.innerHTML = contenido;
+            }
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('documentosGeneralesModal'));
+            modal.show();
+        }
+
+        // Función para ver el documento (descargar o abrir)
+        function verDocumento(nombreArchivo) {
+            // Intentar abrir el documento en una nueva pestaña
+            const url = `/documento/${encodeURIComponent(nombreArchivo)}`;
+            window.open(url, '_blank');
+        }
+
+        // Función para exportar lista de documentos
+        function exportarDocumentos() {
+            const documentos = {{ resultados_por_archivo|tojson|safe }};
+            
+            if (!documentos || Object.keys(documentos).length === 0) {
+                mostrarNotificacion('No hay documentos para exportar', 'warning');
+                return;
+            }
+            
+            const csv = [
+                ['Documento', 'Estado', 'Categorías', 'Total Frases', 'Error'],
+                ...Object.entries(documentos).map(([nombre, datos]) => [
+                    nombre,
+                    datos.procesado ? 'Procesado' : 'Error',
+                    datos.frases_clave ? Object.keys(datos.frases_clave).length : 0,
+                    datos.total_frases || 0,
+                    datos.error || 'N/A'
+                ])
+            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'documentos_analizados.csv';
+            link.click();
+            
+            mostrarNotificacion('Lista de documentos exportada', 'success');
+        }
+
+        // Función para exportar detalles de documento
+        function exportarDocumentoDetalle() {
+            // Esta función se implementará cuando se seleccione un documento
+            mostrarNotificacion('Función de exportación de documento en desarrollo', 'info');
+        }
+
+        // Función para exportar resumen de documentos
+        function exportarResumenDocumentos() {
+            const documentos = {{ resultados_por_archivo|tojson|safe }};
+            
+            if (!documentos || Object.keys(documentos).length === 0) {
+                mostrarNotificacion('No hay documentos para exportar', 'warning');
+                return;
+            }
+            
+            const resumen = `RESUMEN DE DOCUMENTOS ANALIZADOS\n` +
+                           `================================\n\n` +
+                           `Total de Documentos: ${Object.keys(documentos).length}\n` +
+                           `Documentos Procesados: ${Object.values(documentos).filter(d => d.procesado).length}\n` +
+                           `Documentos con Errores: ${Object.values(documentos).filter(d => !d.procesado).length}\n` +
+                           `Total de Frases Clave: ${Object.values(documentos).reduce((sum, d) => sum + (d.total_frases || 0), 0)}\n\n` +
+                           `DETALLES POR DOCUMENTO:\n` +
+                           `======================\n\n` +
+                           Object.entries(documentos).map(([nombre, datos]) => 
+                               `${nombre}:\n` +
+                               `  Estado: ${datos.procesado ? 'Procesado' : 'Error'}\n` +
+                               `  Categorías: ${datos.frases_clave ? Object.keys(datos.frases_clave).length : 0}\n` +
+                               `  Frases: ${datos.total_frases || 0}\n` +
+                               `  ${datos.error ? `Error: ${datos.error}` : ''}\n`
+                           ).join('\n');
+            
+            const blob = new Blob([resumen], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'resumen_documentos.txt';
+            link.click();
+            
+            mostrarNotificacion('Resumen de documentos exportado', 'success');
         }
 
         // Función para debug de datos de frases
@@ -263,24 +1410,15 @@
                 console.error('❌ Error inicializando la aplicación');
             }
             
-            // Configurar event listeners para elementos clickeables
-            const clickableElements = document.querySelectorAll('.clickable-frase');
-            clickableElements.forEach(function(element) {
-                element.addEventListener('click', function() {
-                    const frase = this.getAttribute('data-frase');
-                    const fraseIndex = this.getAttribute('data-frase-index');
-                    
-                    if (frase && rankingGlobalData && rankingGlobalData[frase]) {
-                        const datos = rankingGlobalData[frase];
-                        console.log('Frase clickeada:', frase);
-                        console.log('Datos:', datos);
-                        mostrarNotificacion(`Frase "${frase}" clickeada - ${datos.total} apariciones`, 'info');
-                    } else {
-                        console.error('Error: No hay datos disponibles para la frase:', frase);
-                        mostrarNotificacion('Error: No hay datos disponibles para esta frase', 'danger');
-                    }
-                });
+            // Configurar event listeners para filtros
+            document.getElementById('searchFrase').addEventListener('input', function() {
+                if (this.value.length >= 2 || this.value.length === 0) {
+                    aplicarFiltros();
+                }
             });
+            
+            document.getElementById('minApariciones').addEventListener('change', aplicarFiltros);
+            document.getElementById('ordenRanking').addEventListener('change', aplicarFiltros);
         });
     </script>
 </body>
