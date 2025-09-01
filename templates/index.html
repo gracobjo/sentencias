@@ -1012,14 +1012,14 @@
                 const scriptTag = document.getElementById('rankingData');
                 if (scriptTag && scriptTag.textContent) {
                     rankingGlobalData = JSON.parse(scriptTag.textContent.trim());
-                    console.log('✅ Datos del ranking cargados correctamente:', rankingGlobalData);
+                    console.log('Datos del ranking cargados correctamente:', rankingGlobalData);
                     return true;
                 } else {
-                    console.error('❌ No se encontró el script con datos del ranking');
+                    console.error('No se encontró el script con datos del ranking');
                     return false;
                 }
             } catch (error) {
-                console.error('❌ Error cargando datos del ranking:', error);
+                console.error('Error cargando datos del ranking:', error);
                 return false;
             }
         }
@@ -1071,7 +1071,7 @@
 
         // Función para ver una aparición específica en el documento
         function verAparicionEnDocumento(documento, posicion, frase, index) {
-            console.log(`🔍 Navegando a aparición en ${documento}, posición ${posicion}, frase: ${frase}`);
+            console.log(`Navegando a aparición en ${documento}, posición ${posicion}, frase: ${frase}`);
             
             // Cerrar el modal actual
             const modal = bootstrap.Modal.getInstance(document.getElementById('fraseModal'));
@@ -1429,12 +1429,20 @@
 
         // Función para crear gráfico del ranking
         function crearGraficoRanking() {
-            const ctx = document.getElementById('rankingChart');
-            if (!ctx) return;
-            
-            // Destruir gráfico existente si hay uno
-            if (window.rankingChart) {
-                window.rankingChart.destroy();
+            const canvas = document.getElementById('rankingChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            // Destruir gráfico existente si hay uno (compatibilidad Chart.js v3/v4)
+            let existingChart = null;
+            if (typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
+                existingChart = Chart.getChart(canvas) || null;
+            } else if (window.rankingChart && typeof window.rankingChart.destroy === 'function') {
+                existingChart = window.rankingChart;
+            }
+            if (existingChart && typeof existingChart.destroy === 'function') {
+                existingChart.destroy();
+                window.rankingChart = null;
             }
             
             // Obtener top 10 frases
@@ -1880,16 +1888,52 @@
         let docsListado = [];
         let docsFiltro = '';
 
+        function setLoading(show, text) {
+            const ov = document.getElementById('globalLoading');
+            if (!ov) return;
+            const t = document.getElementById('globalLoadingText');
+            if (t && text) t.textContent = text;
+            ov.classList.toggle('d-none', !show);
+        }
+
+        async function fetchWithRetry(url, options = {}, cfg = {}) {
+            const { retries = 2, timeoutMs = 15000, retryOn = [500, 502, 503, 504], retryDelayMs = 800 } = cfg;
+            let attempt = 0;
+            while (true) {
+                attempt += 1;
+                const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                const to = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null;
+                try {
+                    const resp = await fetch(url, { ...options, signal: ctrl ? ctrl.signal : undefined });
+                    if (!resp.ok && retryOn.includes(resp.status) && attempt <= retries) {
+                        await new Promise(r => setTimeout(r, retryDelayMs * attempt));
+                        continue;
+                    }
+                    if (to) clearTimeout(to);
+                    return resp;
+                } catch (e) {
+                    if (to) clearTimeout(to);
+                    if (attempt <= retries) {
+                        await new Promise(r => setTimeout(r, retryDelayMs * attempt));
+                        continue;
+                    }
+                    throw e;
+                }
+            }
+        }
+
         function abrirGestorDocumentos() {
+            setLoading(true, 'Cargando documentos…');
             cargarDocumentos().then(() => {
                 const modal = new bootstrap.Modal(document.getElementById('gestorDocumentosModal'));
                 modal.show();
+                setLoading(false);
             });
         }
 
         async function cargarDocumentos() {
             try {
-                const res = await fetch('/api/documentos');
+                const res = await fetchWithRetry('/api/documentos');
                 const data = await res.json();
                 docsListado = data.documentos || [];
                 renderListadoDocs();
@@ -1958,22 +2002,26 @@
             const nombre = decodeURIComponent(nombreEncoded);
             if (!confirm(`¿Eliminar definitivamente "${nombre}"?`)) return;
             try {
-                const res = await fetch('/api/documentos', {
+                setLoading(true, 'Eliminando documento…');
+                const res = await fetchWithRetry('/api/documentos', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nombre_archivo: nombre })
-                });
+                }, { retries: 1, timeoutMs: 20000 });
                 if (!res.ok) {
                     let detalle = '';
                     try { const err = await res.json(); detalle = err.detail || JSON.stringify(err); } catch {}
+                    setLoading(false);
                     throw new Error(detalle || 'No se pudo eliminar');
                 }
                 // quitar de la lista y refrescar
                 docsListado = docsListado.filter(d => d.nombre !== nombre);
                 renderListadoDocs();
                 mostrarNotificacion('Documento eliminado', 'success');
+                setLoading(false);
             } catch (e) {
                 mostrarNotificacion('Error eliminando documento: ' + (e.message || e), 'danger');
+                setLoading(false);
             }
         }
 
@@ -1982,15 +2030,15 @@
             console.log('=== DEBUG: Datos de frases ===');
             
             if (!rankingGlobalData) {
-                console.error('❌ No hay datos del ranking disponibles');
+                console.error('No hay datos del ranking disponibles');
                 return;
             }
             
-            console.log('📊 Datos del ranking:', rankingGlobalData);
-            console.log(`🔑 Total de categorías: ${Object.keys(rankingGlobalData).length}`);
+            console.log('Datos del ranking:', rankingGlobalData);
+            console.log(`Total de categorías: ${Object.keys(rankingGlobalData).length}`);
             
             const elementos = document.querySelectorAll('[data-frase]');
-            console.log(`📋 Elementos encontrados: ${elementos.length}`);
+            console.log(`Elementos encontrados: ${elementos.length}`);
             
             elementos.forEach((elemento, index) => {
                 const frase = elemento.getAttribute('data-frase');
@@ -2002,11 +2050,11 @@
                 
                 if (rankingGlobalData && rankingGlobalData[frase]) {
                     const datos = rankingGlobalData[frase];
-                    console.log(`  ✅ Datos disponibles:`, datos);
-                    console.log(`  📊 Total: ${datos.total}`);
-                    console.log(`  📄 Ocurrencias: ${datos.ocurrencias ? datos.ocurrencias.length : 0}`);
+                    console.log(`  Datos disponibles:`, datos);
+                    console.log(`  Total: ${datos.total}`);
+                    console.log(`  Ocurrencias: ${datos.ocurrencias ? datos.ocurrencias.length : 0}`);
                 } else {
-                    console.error(`  ❌ No hay datos para la frase: ${frase}`);
+                    console.error(`  No hay datos para la frase: ${frase}`);
                 }
                 console.log('---');
             });
@@ -2023,10 +2071,10 @@
             try {
                 const response = await fetch('/api/analizar');
                 const data = await response.json();
-                console.log('✅ Backend responde:', data);
+                console.log('Backend responde:', data);
                 mostrarNotificacion('Backend verificado correctamente', 'success');
             } catch (error) {
-                console.error('❌ Error backend:', error);
+                console.error('Error backend:', error);
                 mostrarNotificacion('Error verificando backend', 'danger');
             }
         }
@@ -2036,17 +2084,17 @@
             try {
                 const response = await fetch('/api/analizar');
                 const datos = await response.json();
-                console.log('✅ Análisis inteligente:', datos);
+                console.log('Análisis inteligente:', datos);
                 mostrarNotificacion('Análisis inteligente ejecutado', 'success');
             } catch (error) {
-                console.error('❌ Error análisis:', error);
+                console.error('Error análisis:', error);
                 mostrarNotificacion('Error en análisis inteligente', 'danger');
             }
         }
 
         // Función para debug avanzado
         async function debugAvanzado() {
-            console.log('🚨 === DEBUG AVANZADO ===');
+            console.log('=== DEBUG AVANZADO ===');
             mostrarNotificacion('Debug avanzado ejecutado', 'info');
         }
 
@@ -2058,13 +2106,13 @@
 
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 DOM cargado, inicializando aplicación...');
+            console.log('DOM cargado, inicializando aplicación...');
             
             // Cargar datos del ranking
             if (cargarDatosRanking()) {
-                console.log('✅ Aplicación inicializada correctamente');
+                console.log('Aplicación inicializada correctamente');
             } else {
-                console.error('❌ Error inicializando la aplicación');
+                console.error('Error inicializando la aplicación');
             }
             
             // Configurar event listeners para filtros
