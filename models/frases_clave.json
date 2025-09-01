@@ -8,7 +8,8 @@
     "incapacidad permanente",
     "secuelas permanentes",
     "incapacidad del 35%",
-    "grado del 35%"
+    "grado del 35%",
+    "manguito rotados"
   ],
   "reclamacion_administrativa": [
     "reclamación administrativa previa",
@@ -71,9 +72,9 @@
   "accidente_laboral": [
     "accidente laboral",
     "accidente de trabajo",
-    "accidente laboral",
     "lesión laboral",
-    "accidente en el trabajo"
+    "accidente en el trabajo",
+    "manguito_rotador"
   ],
   "fundamentos_juridicos": [
     "fundamentos de derecho",
@@ -90,7 +91,6 @@
     "indemnización",
     "prestación",
     "derecho a la prestación"
-  ]
+  ],
+  "manguito rotador": []
 }
-
-

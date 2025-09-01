@@ -36,6 +36,9 @@ class AnalizadorLegal:
         self.vectorizador = None
         self.clasificador = None
         self.frases_clave = self._cargar_frases_clave()
+        # Componentes SBERT (si existen)
+        self.sbert_encoder = None
+        self.sbert_clf = None
         
         # Intentar cargar el modelo
         self._cargar_modelo()
@@ -95,13 +98,31 @@ class AnalizadorLegal:
                     self.modelo = modelo_data.get('modelo')
                     self.vectorizador = modelo_data.get('vectorizador')
                     self.clasificador = modelo_data.get('clasificador')
-                    logger.info("✅ Modelo de IA cargado correctamente")
+                    logger.info("✅ Modelo de IA (TF-IDF) cargado correctamente")
             else:
                 logger.warning(f"⚠️ Modelo no encontrado en {self.modelo_path}")
                 logger.info("Se usará análisis basado en reglas")
         except Exception as e:
             logger.error(f"❌ Error cargando modelo: {e}")
             logger.info("Se usará análisis basado en reglas")
+
+        # Intentar cargar modelo SBERT si existe
+        try:
+            sbert_path = Path("models/modelo_legal_sbert.pkl")
+            if sbert_path.exists():
+                with open(sbert_path, 'rb') as f:
+                    sbert_data = pickle.load(f)
+                encoder_name = sbert_data.get('encoder_name')
+                if encoder_name:
+                    try:
+                        from sentence_transformers import SentenceTransformer
+                        self.sbert_encoder = SentenceTransformer(encoder_name)
+                        self.sbert_clf = sbert_data.get('clasificador')
+                        logger.info("✅ Modelo de IA (SBERT) cargado correctamente")
+                    except Exception as e:
+                        logger.warning(f"No se pudo cargar SentenceTransformer '{encoder_name}': {e}")
+        except Exception as e:
+            logger.warning(f"No se pudo cargar modelo SBERT: {e}")
     
     def analizar_documento(self, ruta_archivo: str) -> Dict[str, Any]:
         """
@@ -122,8 +143,10 @@ class AnalizadorLegal:
             # Extraer nombre del archivo de la ruta
             nombre_archivo = Path(ruta_archivo).name
             
-            # Análisis con IA si está disponible
-            if self.modelo and self.vectorizador and self.clasificador:
+            # Análisis con IA si está disponible (priorizar SBERT si está listo)
+            if self.sbert_encoder is not None and self.sbert_clf is not None:
+                resultado = self._analisis_con_sbert(contenido, nombre_archivo)
+            elif self.modelo and self.vectorizador and self.clasificador:
                 resultado = self._analisis_con_ia(contenido, nombre_archivo)
             else:
                 resultado = self._analisis_basado_reglas(contenido, nombre_archivo)
@@ -144,6 +167,39 @@ class AnalizadorLegal:
         except Exception as e:
             logger.error(f"Error analizando documento: {e}")
             return self._crear_resultado_error(f"Error en análisis: {str(e)}")
+
+    def _analisis_con_sbert(self, contenido: str, nombre_archivo: str = None) -> Dict[str, Any]:
+        try:
+            emb = self.sbert_encoder.encode([contenido], normalize_embeddings=True)
+            proba = self.sbert_clf.predict_proba(emb)[0]
+            pred = int(proba[1] >= proba[0])
+            confianza = float(max(proba))
+            # Ajuste por FALLO/parte dispositiva
+            fallo = self._detectar_fallo(contenido)
+            if fallo is not None:
+                pred = 1 if fallo else 0
+                confianza = max(confianza, 0.85)
+            frases_encontradas = self._analizar_frases_clave(contenido, nombre_archivo)
+            argumentos = self._extraer_argumentos_avanzados(contenido)
+            insights = self._generar_insights_avanzados(bool(pred), frases_encontradas, confianza)
+            return {
+                "prediccion": {
+                    "es_favorable": bool(pred),
+                    "confianza": confianza,
+                    "interpretacion": "Favorable" if pred else "Desfavorable",
+                    "probabilidades": {"favorable": float(proba[1]), "desfavorable": float(proba[0])}
+                },
+                "argumentos": argumentos,
+                "frases_clave": frases_encontradas,
+                "resumen_inteligente": self._generar_resumen_ia(bool(pred), confianza, frases_encontradas),
+                "insights_juridicos": insights,
+                "total_frases_clave": sum(datos["total"] for datos in frases_encontradas.values()),
+                "modelo_ia": True,
+                "metodo_analisis": "Embeddings SBERT + Clasificador"
+            }
+        except Exception as e:
+            logger.error(f"Error en análisis con SBERT: {e}")
+            return self._analisis_con_ia(contenido, nombre_archivo) if (self.modelo and self.vectorizador and self.clasificador) else self._analisis_basado_reglas(contenido, nombre_archivo)
     
     def _leer_archivo(self, ruta: str) -> Optional[str]:
         """Lee el contenido de un archivo"""
@@ -208,6 +264,11 @@ class AnalizadorLegal:
             
             # Obtener confianza
             confianza = max(probabilidades)
+            # Ajuste por FALLO/parte dispositiva
+            fallo = self._detectar_fallo(contenido)
+            if fallo is not None:
+                prediccion = 1 if fallo else 0
+                confianza = max(confianza, 0.85)
             
             # Análisis de frases clave
             frases_encontradas = self._analizar_frases_clave(contenido, nombre_archivo)
@@ -281,7 +342,12 @@ class AnalizadorLegal:
             ocurrencias = []
             
             for variante in variantes:
-                patron = re.compile(re.escape(variante), re.IGNORECASE)
+                # Coincidencia flexible: espacios/guiones/underscores equivalentes
+                flexible = re.escape(variante)
+                flexible = flexible.replace("\\ ", "\\s+")
+                flexible = flexible.replace("\\_", "[\\s_\-]+")
+                flexible = flexible.replace("\\-", "[\\s_\-]+")
+                patron = re.compile(flexible, re.IGNORECASE)
                 matches = patron.finditer(texto)
                 
                 for match in matches:
@@ -495,7 +561,13 @@ class AnalizadorLegal:
         
         # Generar recomendaciones generales
         recomendaciones_generales = self._generar_recomendaciones_generales(factores, confianza, es_favorable)
-        
+        # Ajuste por FALLO/parte dispositiva
+        fallo = self._detectar_fallo(texto)
+        if fallo is not None:
+            es_favorable = bool(fallo)
+            confianza = max(confianza, 0.85)
+            interpretacion = "Muy Favorable" if es_favorable and confianza >= 0.8 else ("Favorable" if es_favorable else ("Muy Desfavorable" if confianza >= 0.8 else "Desfavorable"))
+
         return {
             "es_favorable": es_favorable,
             "confianza": round(confianza, 3),
@@ -842,6 +914,40 @@ class AnalizadorLegal:
             "total_frases_clave": 0,
             "modelo_ia": False
         }
+
+    def _detectar_fallo(self, texto: str) -> Optional[bool]:
+        """Detecta el sentido del fallo/parte dispositiva si está presente.
+        Devuelve True si claramente favorable, False si claramente desfavorable, None si ambiguo.
+        """
+        try:
+            t = texto.lower()
+            # Heurística: buscar sección de FALLO o parte dispositiva cercana
+            # Tomar ventana alrededor de palabras clave
+            claves_seccion = ["fallo", "parte dispositiva", "resolvemos", "acordamos"]
+            idxs = [t.find(k) for k in claves_seccion if k in t]
+            ventana = t
+            if idxs:
+                i = min([i for i in idxs if i >= 0])
+                ventana = t[max(0, i-800): i+1200]
+            # Patrones favorables típicos
+            fav = [
+                "estimamos", "estimando", "se estima", "procedente", "concedemos", "acogemos",
+                "reconocemos", "se reconoce", "revocamos la sentencia de instancia y declaramos",
+                "declaramos la incapacidad permanente", "declaramos procedente"
+            ]
+            # Patrones desfavorables típicos
+            des = [
+                "desestimamos", "desestimando", "se desestima", "improcedente", "no ha lugar",
+                "confirmamos la sentencia de instancia", "absolvemos", "denegamos", "rechazamos"
+            ]
+            # Contar ocurrencias en ventana (más peso) y en todo el texto
+            fav_score = sum(ventana.count(p) for p in fav) * 2 + sum(t.count(p) for p in fav)
+            des_score = sum(ventana.count(p) for p in des) * 2 + sum(t.count(p) for p in des)
+            if fav_score == 0 and des_score == 0:
+                return None
+            return fav_score >= des_score
+        except Exception:
+            return None
 
 
 # Función de conveniencia para crear instancia

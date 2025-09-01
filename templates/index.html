@@ -106,6 +106,9 @@
                 <a class="nav-link" href="/subir">
                     <i class="bi bi-upload me-1"></i>Subir Documento
                 </a>
+                <a class="nav-link" href="#" onclick="abrirGestorFrases()">
+                    <i class="bi bi-sliders me-1"></i>Frases Clave
+                </a>
             </div>
         </div>
     </nav>
@@ -126,6 +129,9 @@
                     <a href="/subir" class="btn btn-success btn-lg">
                         <i class="bi bi-upload me-2"></i>Subir Nuevo Documento
                     </a>
+                    <button class="btn btn-outline-danger btn-lg ms-2" onclick="abrirGestorDocumentos()">
+                        <i class="bi bi-trash3 me-2"></i>Eliminar Documento
+                    </button>
                 </div>
             </div>
         </div>
@@ -191,6 +197,12 @@
                                             {% endif %}
                                             <h6 class="card-title mb-0 text-truncate" title="{{ nombre_archivo }}">
                                                 {{ nombre_archivo }}
+                                                {% set n = nombre_archivo|lower %}
+                                                {% if 'tribunal supremo' in n or 'ts_' in n or ' ts ' in n or 'ts-' in n %}
+                                                    <span class="badge bg-warning text-dark ms-2" title="Tribunal Supremo">TS</span>
+                                                {% elif 'tsj' in n or 'tribunal superior' in n %}
+                                                    <span class="badge bg-warning text-dark ms-2" title="Tribunal Superior de Justicia">TSJ</span>
+                                                {% endif %}
                                             </h6>
                                         </div>
                                         
@@ -237,6 +249,11 @@
                                                     onclick="event.stopPropagation(); verDocumento('{{ nombre_archivo }}')"
                                                     title="Ver documento">
                                                 <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning btn-sm" 
+                                                    onclick="event.stopPropagation(); generarDemandaDesde('{{ nombre_archivo }}')"
+                                                    title="Demanda base desde este documento">
+                                                <i class="bi bi-file-earmark-text"></i>
                                             </button>
                                         </div>
                                     </div>
@@ -425,6 +442,107 @@
         </div>
     </div>
 
+    <!-- Modal Gestor de Frases Clave (CRUD) -->
+    <div class="modal fade" id="gestorFrasesModal" tabindex="-1" aria-labelledby="gestorFrasesLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="gestorFrasesLabel">
+                        <i class="bi bi-sliders me-2"></i>Gestor de Frases Clave
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Categorías
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-8">
+                                            <input id="buscarCategoriaInput" type="text" class="form-control" placeholder="Buscar categoría...">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="input-group">
+                                                <label class="input-group-text" for="catsPerPage">Por pág.</label>
+                                                <select id="catsPerPage" class="form-select">
+                                                    <option value="10">10</option>
+                                                    <option value="20" selected>20</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <input id="nuevaCategoriaInput" type="text" class="form-control" placeholder="Nueva categoría (ej. penal)">
+                                        <button class="btn btn-primary" onclick="crearCategoria()">Añadir</button>
+                                    </div>
+                                    <ul id="listaCategorias" class="list-group" style="max-height: 400px; overflow:auto"></ul>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div id="catsInfo" class="text-muted small"></div>
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="Paginación categorías">
+                                            <button class="btn btn-outline-secondary" onclick="cambiarPaginaCategorias(-1)">Anterior</button>
+                                            <span id="catsPaginaActual" class="btn btn-outline-secondary disabled">1/1</span>
+                                            <button class="btn btn-outline-secondary" onclick="cambiarPaginaCategorias(1)">Siguiente</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span id="tituloCategoria">Frases de: <em>—</em></span>
+                                    <button id="btnEliminarCategoria" class="btn btn-sm btn-outline-danger" onclick="eliminarCategoriaActual()" disabled>
+                                        <i class="bi bi-trash"></i> Eliminar categoría
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-2">
+                                        <input id="nuevaFraseInput" type="text" class="form-control" placeholder="Nueva frase...">
+                                        <button class="btn btn-success" onclick="agregarFrase()">Añadir frase</button>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-8">
+                                            <input id="buscarFraseInput" type="text" class="form-control" placeholder="Buscar frase en la categoría...">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="input-group">
+                                                <label class="input-group-text" for="frasesPerPage">Por pág.</label>
+                                                <select id="frasesPerPage" class="form-select">
+                                                    <option value="10">10</option>
+                                                    <option value="20" selected>20</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="listaFrases" class="mt-2" style="max-height: 400px; overflow:auto"></div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div id="frasesInfo" class="text-muted small"></div>
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="Paginación frases">
+                                            <button class="btn btn-outline-secondary" onclick="cambiarPaginaFrases(-1)">Anterior</button>
+                                            <span id="frasesPaginaActual" class="btn btn-outline-secondary disabled">1/1</span>
+                                            <button class="btn btn-outline-secondary" onclick="cambiarPaginaFrases(1)">Siguiente</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="reanalizarAnalisis()">Reanalizar ahora</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para comparación -->
     <div class="modal fade" id="comparacionModal" tabindex="-1" aria-labelledby="comparacionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -487,6 +605,46 @@
         </div>
     </div>
 
+    <!-- Modal Gestor de Documentos (Eliminar) -->
+    <div class="modal fade" id="gestorDocumentosModal" tabindex="-1" aria-labelledby="gestorDocumentosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="gestorDocumentosLabel">
+                        <i class="bi bi-trash3 me-2"></i>Eliminar Documentos
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="input-group" style="max-width: 420px;">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input id="buscarDocumentoInput" type="text" class="form-control" placeholder="Buscar por nombre...">
+                        </div>
+                        <div id="docsResumen" class="text-muted small"></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width:40%">Nombre</th>
+                                    <th style="width:15%">Carpeta</th>
+                                    <th style="width:15%">Tamaño</th>
+                                    <th style="width:20%">Modificado</th>
+                                    <th class="text-end" style="width:10%">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaDocumentosBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Script con datos del backend -->
     <script type="application/json" id="rankingData">
         {{ ranking_global|tojson|safe }}
@@ -501,7 +659,18 @@
         let rankingGlobalData = null;
         let fraseSeleccionada = null;
         let fraseComparacion = null;
+        let categoriasFrases = {};
+        let categoriaSeleccionada = null;
+        // Estado para búsqueda y paginación de frases
+        let fraseQuery = '';
+        let frasePage = 1;
+        let frasesPerPage = 20;
         
+        // Estado para búsqueda y paginación de categorías
+        let catQuery = '';
+        let catPage = 1;
+        let catsPerPage = 20;
+
         // Función para mostrar notificaciones
         function mostrarNotificacion(mensaje, tipo) {
             const notificacion = document.createElement('div');
@@ -518,6 +687,323 @@
                     notificacion.remove();
                 }
             }, 5000);
+        }
+
+        // ====== GESTOR DE FRASES CLAVE (CRUD) ======
+        function abrirGestorFrases() {
+            cargarCategorias().then(() => {
+                // Asegurar categoría seleccionada por defecto
+                if (!categoriaSeleccionada) {
+                    const claves = Object.keys(categoriasFrases || {});
+                    if (claves.length > 0) {
+                        seleccionarCategoria(claves[0]);
+                    }
+                }
+                const modal = new bootstrap.Modal(document.getElementById('gestorFrasesModal'));
+                modal.show();
+            });
+        }
+
+        async function cargarCategorias() {
+            try {
+                const res = await fetch('/api/frases');
+                const data = await res.json();
+                categoriasFrases = data.categorias || {};
+                renderCategorias();
+            } catch (e) {
+                mostrarNotificacion('No se pudieron cargar las frases clave', 'danger');
+            }
+        }
+
+        function renderCategorias() {
+            const ul = document.getElementById('listaCategorias');
+            ul.innerHTML = '';
+            const todas = Object.keys(categoriasFrases).sort();
+            const filtradas = catQuery ? todas.filter(c => c.toLowerCase().includes(catQuery.toLowerCase())) : todas;
+            const total = filtradas.length;
+            const totalPages = Math.max(1, Math.ceil(total / Math.max(1, catsPerPage)));
+            if (catPage > totalPages) catPage = totalPages;
+            if (catPage < 1) catPage = 1;
+            const start = (catPage - 1) * Math.max(1, catsPerPage);
+            const end = start + Math.max(1, catsPerPage);
+            const pageCats = filtradas.slice(start, end);
+
+            pageCats.forEach(cat => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span class="categoria-nombre" style="cursor:pointer">${cat}</span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-2" title="Renombrar"
+                                onclick="event.stopPropagation(); renombrarCategoria('${encodeURIComponent(cat)}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <span class="badge bg-primary rounded-pill">${categoriasFrases[cat].length}</span>
+                    </div>
+                `;
+                li.querySelector('.categoria-nombre').onclick = () => seleccionarCategoria(cat);
+                ul.appendChild(li);
+            });
+            if (!categoriaSeleccionada && filtradas.length) {
+                seleccionarCategoria(filtradas[0]);
+            } else if (categoriaSeleccionada) {
+                seleccionarCategoria(categoriaSeleccionada);
+            }
+            const info = document.getElementById('catsInfo');
+            const badge = document.getElementById('catsPaginaActual');
+            if (info) info.textContent = `${total} categoría(s) • mostrando ${total ? start + 1 : 0}-${Math.min(end, total)}`;
+            if (badge) badge.textContent = `${catPage}/${totalPages}`;
+        }
+
+        function seleccionarCategoria(cat) {
+            categoriaSeleccionada = cat;
+            document.getElementById('tituloCategoria').innerText = `Frases de: ${cat}`;
+            document.getElementById('btnEliminarCategoria').disabled = false;
+            // reset búsqueda/paginación al cambiar de categoría
+            fraseQuery = '';
+            frasePage = 1;
+            const buscarInput = document.getElementById('buscarFraseInput');
+            if (buscarInput) buscarInput.value = '';
+            renderFrases();
+        }
+
+        function renderFrases() {
+            const cont = document.getElementById('listaFrases');
+            cont.innerHTML = '';
+            const todas = categoriasFrases[categoriaSeleccionada] || [];
+            // Filtrado por búsqueda
+            const filtradas = fraseQuery
+                ? todas.filter(f => (f || '').toLowerCase().includes(fraseQuery.toLowerCase()))
+                : todas.slice();
+            // Paginación
+            const total = filtradas.length;
+            const totalPages = Math.max(1, Math.ceil(total / Math.max(1, frasesPerPage)));
+            if (frasePage > totalPages) frasePage = totalPages;
+            if (frasePage < 1) frasePage = 1;
+            const start = (frasePage - 1) * Math.max(1, frasesPerPage);
+            const end = start + Math.max(1, frasesPerPage);
+            const frases = filtradas.slice(start, end);
+
+            if (total === 0) {
+                cont.innerHTML = '<div class="text-muted">Sin frases en esta categoría</div>';
+                document.getElementById('frasesInfo').textContent = '';
+                document.getElementById('frasesPaginaActual').textContent = '0/0';
+                return;
+            }
+            frases.forEach(frase => {
+                const div = document.createElement('div');
+                div.className = 'd-flex align-items-center border rounded p-2 mb-2';
+                div.innerHTML = `
+                    <span class="flex-grow-1">${frase}</span>
+                    <button class="btn btn-sm btn-outline-secondary ms-2" title="Editar" onclick="editarFrase('${encodeURIComponent(frase)}')"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger ms-2" title="Eliminar" onclick="eliminarFrase('${encodeURIComponent(frase)}')"><i class="bi bi-x"></i></button>
+                `;
+                cont.appendChild(div);
+            });
+            // Actualizar info y paginación
+            document.getElementById('frasesInfo').textContent = `${total} frase(s) • mostrando ${start + 1}-${Math.min(end, total)}`;
+            document.getElementById('frasesPaginaActual').textContent = `${frasePage}/${totalPages}`;
+        }
+
+        function cambiarPaginaFrases(delta) {
+            frasePage += delta;
+            if (frasePage < 1) frasePage = 1;
+            renderFrases();
+        }
+
+        function cambiarPaginaCategorias(delta) {
+            catPage += delta;
+            if (catPage < 1) catPage = 1;
+            renderCategorias();
+        }
+
+        async function crearCategoria() {
+            const nombre = document.getElementById('nuevaCategoriaInput').value.trim();
+            if (!nombre) return;
+            try {
+                const res = await fetch('/api/frases/categoria', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, frases: [] })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                categoriasFrases[nombre] = [];
+                document.getElementById('nuevaCategoriaInput').value = '';
+                seleccionarCategoria(nombre);
+                renderCategorias();
+                mostrarNotificacion('Categoría creada', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error creando categoría', 'danger');
+            }
+        }
+
+        async function eliminarCategoriaActual() {
+            if (!categoriaSeleccionada) return;
+            if (!confirm('¿Eliminar la categoría y todas sus frases?')) return;
+            try {
+                const res = await fetch(`/api/frases/categoria/${encodeURIComponent(categoriaSeleccionada)}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(await res.text());
+                delete categoriasFrases[categoriaSeleccionada];
+                categoriaSeleccionada = null;
+                renderCategorias();
+                document.getElementById('tituloCategoria').innerHTML = 'Frases de: <em>—</em>';
+                document.getElementById('btnEliminarCategoria').disabled = true;
+                document.getElementById('listaFrases').innerHTML = '';
+                mostrarNotificacion('Categoría eliminada', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error eliminando categoría', 'danger');
+            }
+        }
+
+        async function agregarFrase() {
+            const input = document.getElementById('nuevaFraseInput');
+            const frase = (input.value || '').trim();
+            if (!categoriaSeleccionada) {
+                mostrarNotificacion('Selecciona una categoría antes de añadir frases', 'warning');
+                return;
+            }
+            if (!frase) {
+                mostrarNotificacion('Introduce una frase antes de añadir', 'warning');
+                return;
+            }
+            try {
+                const res = await fetch('/api/frases/frase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoria: categoriaSeleccionada, frase })
+                });
+                if (!res.ok) {
+                    let detalle = '';
+                    try { const err = await res.json(); detalle = err.detail || JSON.stringify(err); } catch {}
+                    throw new Error(detalle || 'Solicitud inválida');
+                }
+                categoriasFrases[categoriaSeleccionada] = categoriasFrases[categoriaSeleccionada] || [];
+                if (!categoriasFrases[categoriaSeleccionada].some(f => f.toLowerCase() === frase.toLowerCase())) {
+                    categoriasFrases[categoriaSeleccionada].push(frase);
+                }
+                input.value = '';
+                renderCategorias();
+                renderFrases();
+                mostrarNotificacion('Frase añadida', 'success');
+                // Si la frase nueva coincide con la búsqueda, permanecerá visible; si no, limpiar búsqueda
+                if (fraseQuery && !frase.toLowerCase().includes(fraseQuery.toLowerCase())) {
+                    fraseQuery = '';
+                    const buscarInput = document.getElementById('buscarFraseInput');
+                    if (buscarInput) buscarInput.value = '';
+                    renderFrases();
+                }
+            } catch (e) {
+                mostrarNotificacion('Error añadiendo frase: ' + (e.message || e), 'danger');
+            }
+        }
+
+        async function reanalizarAnalisis() {
+            try {
+                // Llama al backend para recalcular el análisis y refrescar la home al cerrarse
+                await fetch('/api/analizar');
+                mostrarNotificacion('Análisis actualizado. Recarga la página para ver el ranking actualizado.', 'info');
+            } catch {
+                mostrarNotificacion('No se pudo lanzar el reanálisis.', 'warning');
+            }
+        }
+
+        // Listeners de búsqueda y tamaño de página
+        document.addEventListener('DOMContentLoaded', () => {
+            const buscarInput = document.getElementById('buscarFraseInput');
+            if (buscarInput) {
+                buscarInput.addEventListener('input', (e) => {
+                    fraseQuery = e.target.value || '';
+                    frasePage = 1;
+                    renderFrases();
+                });
+            }
+            const perPageSel = document.getElementById('frasesPerPage');
+            if (perPageSel) {
+                perPageSel.addEventListener('change', (e) => {
+                    frasesPerPage = parseInt(e.target.value) || 20;
+                    frasePage = 1;
+                    renderFrases();
+                });
+            }
+            const buscarCatInput = document.getElementById('buscarCategoriaInput');
+            if (buscarCatInput) {
+                buscarCatInput.addEventListener('input', (e) => {
+                    catQuery = e.target.value || '';
+                    catPage = 1;
+                    renderCategorias();
+                });
+            }
+            const catsPerSel = document.getElementById('catsPerPage');
+            if (catsPerSel) {
+                catsPerSel.addEventListener('change', (e) => {
+                    catsPerPage = parseInt(e.target.value) || 20;
+                    catPage = 1;
+                    renderCategorias();
+                });
+            }
+        });
+
+        async function eliminarFrase(fraseEncoded) {
+            const frase = decodeURIComponent(fraseEncoded);
+            if (!categoriaSeleccionada) return;
+            try {
+                const res = await fetch('/api/frases/frase', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoria: categoriaSeleccionada, frase })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                categoriasFrases[categoriaSeleccionada] = (categoriasFrases[categoriaSeleccionada] || []).filter(f => f.toLowerCase() !== frase.toLowerCase());
+                renderCategorias();
+                renderFrases();
+                mostrarNotificacion('Frase eliminada', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error eliminando frase', 'danger');
+            }
+        }
+
+        async function renombrarCategoria(catEncoded) {
+            const oldName = decodeURIComponent(catEncoded);
+            const newName = prompt('Nuevo nombre para la categoría:', oldName);
+            if (!newName || newName.trim() === '' || newName === oldName) return;
+            try {
+                const res = await fetch('/api/frases/categoria', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ old_name: oldName, new_name: newName.trim() })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                categoriasFrases[newName] = categoriasFrases[oldName] || [];
+                delete categoriasFrases[oldName];
+                categoriaSeleccionada = newName;
+                renderCategorias();
+                renderFrases();
+                mostrarNotificacion('Categoría renombrada', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error renombrando categoría', 'danger');
+            }
+        }
+
+        async function editarFrase(fraseEncoded) {
+            const oldFrase = decodeURIComponent(fraseEncoded);
+            const newFrase = prompt('Editar frase:', oldFrase);
+            if (!newFrase || newFrase.trim() === '' || newFrase === oldFrase) return;
+            try {
+                const res = await fetch('/api/frases/frase', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoria: categoriaSeleccionada, old_frase: oldFrase, new_frase: newFrase.trim() })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                categoriasFrases[categoriaSeleccionada] = (categoriasFrases[categoriaSeleccionada] || [])
+                    .map(f => f.toLowerCase() === oldFrase.toLowerCase() ? newFrase.trim() : f)
+                    .filter((f, idx, arr) => arr.findIndex(x => x.toLowerCase() === f.toLowerCase()) === idx);
+                renderFrases();
+                renderCategorias();
+                mostrarNotificacion('Frase actualizada', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error actualizando frase', 'danger');
+            }
         }
 
         // Función para cargar datos del ranking
@@ -1290,9 +1776,35 @@
 
         // Función para ver el documento (descargar o abrir)
         function verDocumento(nombreArchivo) {
-            // Intentar abrir el documento en una nueva pestaña
-            const url = `/documento/${encodeURIComponent(nombreArchivo)}`;
+            // Usar la ruta directa de vista de archivo
+            const url = `/archivo/${encodeURIComponent(nombreArchivo)}`;
             window.open(url, '_blank');
+        }
+
+        async function generarDemandaDesde(nombreArchivo) {
+            try {
+                const resp = await fetch('/api/demanda-base/txt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombres_archivo: [nombreArchivo] })
+                });
+                if (!resp.ok) {
+                    mostrarNotificacion('Error generando demanda base', 'danger');
+                    return;
+                }
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `demanda_base_${nombreArchivo.replace(/[^a-zA-Z0-9_\.\-]/g,'_')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                mostrarNotificacion('Demanda base generada', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error: ' + (e.message || e), 'danger');
+            }
         }
 
         // Función para exportar lista de documentos
@@ -1362,6 +1874,107 @@
             link.click();
             
             mostrarNotificacion('Resumen de documentos exportado', 'success');
+        }
+
+        // ===== GESTOR DE DOCUMENTOS (ELIMINAR) =====
+        let docsListado = [];
+        let docsFiltro = '';
+
+        function abrirGestorDocumentos() {
+            cargarDocumentos().then(() => {
+                const modal = new bootstrap.Modal(document.getElementById('gestorDocumentosModal'));
+                modal.show();
+            });
+        }
+
+        async function cargarDocumentos() {
+            try {
+                const res = await fetch('/api/documentos');
+                const data = await res.json();
+                docsListado = data.documentos || [];
+                renderListadoDocs();
+                // Listener de búsqueda
+                const input = document.getElementById('buscarDocumentoInput');
+                if (input && !input._binded) {
+                    input.addEventListener('input', (e) => {
+                        docsFiltro = e.target.value || '';
+                        renderListadoDocs();
+                    });
+                    input._binded = true;
+                }
+            } catch (e) {
+                mostrarNotificacion('No se pudieron cargar los documentos', 'danger');
+            }
+        }
+
+        function renderListadoDocs() {
+            const tbody = document.getElementById('tablaDocumentosBody');
+            const resumen = document.getElementById('docsResumen');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const lista = docsFiltro
+                ? docsListado.filter(d => (d.nombre || '').toLowerCase().includes(docsFiltro.toLowerCase()))
+                : docsListado.slice();
+            if (resumen) resumen.textContent = `${lista.length} documento(s)`;
+            if (!lista.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Sin documentos</td></tr>';
+                return;
+            }
+            function inferirInstanciaPorNombre(nombre) {
+                const n = (nombre || '').toLowerCase();
+                if (n.includes('ts_') || n.includes('tribunal_supremo') || n.includes('ts-') || n.includes(' ts ')) return 'TS';
+                if (n.includes('tsj') || n.includes('tribunal_superior')) return 'TSJ';
+                return '';
+            }
+            lista.forEach(doc => {
+                const inst = inferirInstanciaPorNombre(doc.nombre);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td title="${doc.nombre}">${doc.nombre}</td>
+                    <td>
+                        <span class="badge ${doc.carpeta === 'sentencias' ? 'bg-primary' : 'bg-secondary'}">${doc.carpeta}</span>
+                        ${inst ? `<span class="badge bg-warning text-dark ms-1" title="Instancia">${inst}</span>` : ''}
+                    </td>
+                    <td>${formatearBytes(doc.tamaño || 0)}</td>
+                    <td>${(doc.modificado || '').replace('T',' ').slice(0,19)}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="eliminarDocumento('${encodeURIComponent(doc.nombre)}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function formatearBytes(bytes) {
+            const sizes = ['B','KB','MB','GB'];
+            if (bytes === 0) return '0 B';
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+        }
+
+        async function eliminarDocumento(nombreEncoded) {
+            const nombre = decodeURIComponent(nombreEncoded);
+            if (!confirm(`¿Eliminar definitivamente "${nombre}"?`)) return;
+            try {
+                const res = await fetch('/api/documentos', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre_archivo: nombre })
+                });
+                if (!res.ok) {
+                    let detalle = '';
+                    try { const err = await res.json(); detalle = err.detail || JSON.stringify(err); } catch {}
+                    throw new Error(detalle || 'No se pudo eliminar');
+                }
+                // quitar de la lista y refrescar
+                docsListado = docsListado.filter(d => d.nombre !== nombre);
+                renderListadoDocs();
+                mostrarNotificacion('Documento eliminado', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error eliminando documento: ' + (e.message || e), 'danger');
+            }
         }
 
         // Función para debug de datos de frases

@@ -1,3 +1,123 @@
+# Analizador de Sentencias IPP/INSS
+
+Aplicación FastAPI para análisis de resoluciones legales, gestión de frases clave (CRUD), análisis predictivo con IA (TF‑IDF y SBERT) y generación automática de borradores de demanda laboral.
+
+## Arranque
+
+1) Instalar dependencias
+```bash
+pip install -r requirements.txt
+```
+2) Ejecutar servidor
+```bash
+python app.py
+```
+Alternativa desarrollo (autoreload):
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+UI: `http://localhost:8000`  ·  Docs API: `http://localhost:8000/docs`
+
+## Funcionalidades
+
+- Gestión de documentos
+  - Subida de sentencias: página `/subir` y endpoint `POST /upload`
+  - Listado y eliminación: `GET /api/documentos`, `DELETE /api/documentos`
+  - Visualización con resaltado y búsqueda: `GET /archivo/{nombre}`
+  - Badges de instancia (TS/TSJ) inferidos por nombre en home y gestor
+
+- Frases clave (CRUD)
+  - Listar: `GET /api/frases`
+  - Reemplazar set: `POST /api/frases`
+  - Categorías: `POST /api/frases/categoria`, `DELETE /api/frases/categoria/{nombre}`, `PATCH /api/frases/categoria`
+  - Frases: `POST /api/frases/frase`, `DELETE /api/frases/frase`, `PATCH /api/frases/frase`
+  - Modal de gestión con búsqueda/paginación, edición de categorías/frases
+
+- Análisis
+  - Análisis básico (fallback) y con IA (TF‑IDF + Logistic Regression) `models/modelo_legal.pkl`
+  - Análisis con embeddings (SBERT + clasificador) `models/modelo_legal_sbert.pkl`
+  - Reentrenar TF‑IDF: `python backend/train_model.py`
+  - Reentrenar SBERT: `python backend/train_embeddings.py`
+  - Salud: `GET /health`
+  - Analizar set actual: `GET /api/analizar`
+
+- Análisis predictivo avanzado
+  - Página: `GET /analisis-predictivo`
+  - API: `GET /api/analisis-predictivo`
+  - Cálculo de riesgo (backend/analisis_predictivo.py):
+    - Agrupa categorías en alto/medio/bajo a partir de `ranking_global`
+    - Fórmula: `(alto×3 + medio×2 + bajo) × factor_instancia`
+    - `factor_instancia = 1.0 + 0.5·ratio_TS + 0.2·ratio_TSJ`
+    - Nivel: >100=alto, >50=medio, si no=bajo
+    - Interpretación y recomendaciones por nivel (texto fijo)
+
+- Generación de “Demanda base”
+  - Endpoints:
+    - `POST /api/demanda-base` → devuelve JSON con borrador
+    - `POST /api/demanda-base/txt` → descarga `.txt`
+  - Parámetros:
+    ```json
+    {
+      "nombres_archivo": ["STS_2384_2025.pdf", "..."],
+      "meta": {
+        "nombre": "",
+        "dni": "",
+        "domicilio": "",
+        "letrado": "",
+        "empresa": "",
+        "profesion": "",
+        "grado_principal": "IPT",
+        "grado_subsidiario": "IPP",
+        "base_reguladora": "",
+        "indemnizacion_parcial": "24 mensualidades",
+        "mutua": ""
+      }
+    }
+    ```
+  - Construcción del borrador:
+    - Encabezado y parte: con `meta`
+    - Hechos: narrativa propia (relación laboral, contingencia, actuaciones INSS, cuadro clínico)
+    - Jurisprudencia de apoyo: extracto breve (fallo y 1–2 fundamentos) de documentos seleccionados (fallo/“parte dispositiva” y fundamentos resumidos)
+    - Fundamentos de Derecho: LGSS 193–194, STS/TSJ de apoyo, CE 24/9.3
+    - Suplico: principal/subsidiario, unificando la base reguladora de `meta`
+    - Anexos: relación de documentos (fallos)
+
+- Extractor estructurado para demanda
+  - `POST /api/extract/demanda` body `{ "nombres_archivo": [ ... ] }`
+  - Devuelve:
+    ```json
+    {
+      "documentos": [
+        {"archivo":"...","instancia":"TS/TSJ/otra","fecha":"...","organo":"...","fallo":"...","fundamentos_resumen":["..."]}
+      ],
+      "sugerencias_meta": {"profesion":"","empresa":"","mutua":"","base_reguladora":""}
+    }
+    ```
+  - Uso en UI: el botón “Generar Demanda base” llama al extractor y pasa `meta` al generador `.txt`
+
+## Notas técnicas
+
+- IA activa si existe `models/modelo_legal.pkl` (TF‑IDF) o `models/modelo_legal_sbert.pkl` (SBERT). Si ambos, prioriza SBERT.
+- Detección flexible de frases: acepta espacios/guiones/underscores intercambiables (e.g., “manguito rotador”/“manguito_rotador”).
+- Badges TS/TSJ: inferidos por nombre; la ponderación real de instancia se hace leyendo el contenido.
+
+## Desarrollo
+
+- Estructura principal:
+  - `app.py`: API, vistas, CRUD, generador demanda y extractor
+  - `backend/analisis.py`: analizador (IA/regex)
+  - `backend/analisis_predictivo.py`: riesgo, tendencias, recomendaciones
+  - `backend/train_model.py`, `backend/train_embeddings.py`: entrenamiento
+  - `templates/*.html`: UI
+  - `models/frases_clave.json`: almacenamiento de frases
+
+## Roadmap
+
+- Formulario previo para completar `meta` antes de descargar la demanda
+- Exportación a `.docx`
+- Etiquetado asistido de BR y contingencia desde la UI
+
 # 📋 Analizador de Sentencias IPP/INSS
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)

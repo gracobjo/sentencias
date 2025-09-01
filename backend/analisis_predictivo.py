@@ -23,11 +23,11 @@ def realizar_analisis_predictivo(resultado_base: Dict[str, Any]) -> Dict[str, An
         # Análisis de correlaciones
         correlaciones = analizar_correlaciones(ranking_global)
         
-        # Predicción de resultados
+        # Predicción de resultados (ponderada por instancia)
         predicciones = predecir_resultados(ranking_global, resultados_por_archivo)
         
-        # Análisis de riesgo
-        analisis_riesgo = analizar_riesgo_legal(ranking_global)
+        # Análisis de riesgo (ajustado por instancia)
+        analisis_riesgo = analizar_riesgo_legal(ranking_global, resultados_por_archivo)
         
         return {
             "tendencias": tendencias,
@@ -140,6 +140,15 @@ def analizar_correlaciones(ranking_global: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": f"Error analizando correlaciones: {str(e)}"}
 
 
+def _inferir_instancia(texto: str) -> str:
+    t = (texto or '').lower()
+    if 'tribunal supremo' in t or 'sala de lo social del tribunal supremo' in t:
+        return 'ts'
+    if 'tribunal superior de justicia' in t or 'tsj' in t:
+        return 'tsj'
+    return 'otra'
+
+
 def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: Dict[str, Any]) -> Dict[str, Any]:
     """Predice resultados basándose en patrones históricos"""
     try:
@@ -152,25 +161,34 @@ def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: 
                 if resultado and isinstance(resultado, dict) and resultado.get("procesado") and resultado.get("prediccion"):
                     prediccion = resultado["prediccion"]
                     frases_clave = resultado.get("frases_clave", {})
+                    instancia = _inferir_instancia(resultado.get('texto_extraido', ''))
+                    peso = 1.5 if instancia == 'ts' else 1.2 if instancia == 'tsj' else 1.0
                     
                     if prediccion.get("es_favorable"):
                         patrones_favorables.append({
                             "archivo": archivo,
                             "confianza": prediccion.get("confianza", 0),
                             "frases_clave": list(frases_clave.keys()) if frases_clave else [],
-                            "total_frases": sum(datos["total"] for datos in frases_clave.values()) if frases_clave else 0
+                            "total_frases": sum(datos["total"] for datos in frases_clave.values()) if frases_clave else 0,
+                            "instancia": instancia,
+                            "peso": peso
                         })
                     else:
                         patrones_desfavorables.append({
                             "archivo": archivo,
                             "confianza": prediccion.get("confianza", 0),
                             "frases_clave": list(frases_clave.keys()) if frases_clave else [],
-                            "total_frases": sum(datos["total"] for datos in frases_clave.values()) if frases_clave else 0
+                            "total_frases": sum(datos["total"] for datos in frases_clave.values()) if frases_clave else 0,
+                            "instancia": instancia,
+                            "peso": peso
                         })
         
         # Calcular probabilidades
-        total_resoluciones = len(patrones_favorables) + len(patrones_desfavorables)
-        prob_favorable = len(patrones_favorables) / total_resoluciones if total_resoluciones > 0 else 0.5
+        # Probabilidad ponderada por instancia
+        peso_fav = sum(p.get('peso', 1.0) for p in patrones_favorables)
+        peso_des = sum(p.get('peso', 1.0) for p in patrones_desfavorables)
+        total_peso = peso_fav + peso_des
+        prob_favorable = (peso_fav / total_peso) if total_peso > 0 else 0.5
         
         # Identificar factores clave para predicción
         factores_clave_favorables = identificar_factores_clave(patrones_favorables)
@@ -185,7 +203,7 @@ def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: 
             "factores_clave_desfavorables": factores_clave_desfavorables,
             "confianza_prediccion": calcular_confianza_prediccion_especifica(patrones_favorables, patrones_desfavorables),
             "resumen": {
-                "total_resoluciones": total_resoluciones,
+                "total_resoluciones": len(patrones_favorables) + len(patrones_desfavorables),
                 "resoluciones_favorables": len(patrones_favorables),
                 "resoluciones_desfavorables": len(patrones_desfavorables),
                 "tendencia_general": "favorable" if prob_favorable > 0.6 else "desfavorable" if prob_favorable < 0.4 else "equilibrada"
@@ -234,7 +252,7 @@ def identificar_factores_clave(patrones: List[Dict[str, Any]]) -> List[Dict[str,
         return []
 
 
-def analizar_riesgo_legal(ranking_global: Dict[str, Any]) -> Dict[str, Any]:
+def analizar_riesgo_legal(ranking_global: Dict[str, Any], resultados_por_archivo: Dict[str, Any]) -> Dict[str, Any]:
     """Analiza el riesgo legal basándose en patrones de frases clave"""
     try:
         # Categorías de alto riesgo
@@ -245,6 +263,25 @@ def analizar_riesgo_legal(ranking_global: Dict[str, Any]) -> Dict[str, Any]:
         }
         
         analisis_riesgo = {}
+        # Factor de instancia: TS = 1.5, TSJ = 1.2
+        factor_instancia = 1.0
+        try:
+            if resultados_por_archivo:
+                # Si la mayoría de documentos son TS/TSJ, subir el factor
+                total = len([r for r in resultados_por_archivo.values() if isinstance(r, dict)])
+                ts = 0
+                tsj = 0
+                for r in resultados_por_archivo.values():
+                    if isinstance(r, dict):
+                        inst = _inferir_instancia(r.get('texto_extraido', ''))
+                        ts += 1 if inst == 'ts' else 0
+                        tsj += 1 if inst == 'tsj' else 0
+                if total > 0:
+                    ratio_ts = ts / total
+                    ratio_tsj = tsj / total
+                    factor_instancia = 1.0 + 0.5 * ratio_ts + 0.2 * ratio_tsj
+        except Exception:
+            factor_instancia = 1.0
         if ranking_global:
             for nivel, categorias in categorias_riesgo.items():
                 riesgo_total = 0
@@ -267,9 +304,11 @@ def analizar_riesgo_legal(ranking_global: Dict[str, Any]) -> Dict[str, Any]:
                 }
         
         # Calcular riesgo general
-        riesgo_general = analisis_riesgo.get("alto", {}).get("total_apariciones", 0) * 3 + \
-                        analisis_riesgo.get("medio", {}).get("total_apariciones", 0) * 2 + \
-                        analisis_riesgo.get("bajo", {}).get("total_apariciones", 0)
+        riesgo_general = (
+            analisis_riesgo.get("alto", {}).get("total_apariciones", 0) * 3 +
+            analisis_riesgo.get("medio", {}).get("total_apariciones", 0) * 2 +
+            analisis_riesgo.get("bajo", {}).get("total_apariciones", 0)
+        ) * factor_instancia
         
         nivel_riesgo_general = "alto" if riesgo_general > 100 else "medio" if riesgo_general > 50 else "bajo"
         

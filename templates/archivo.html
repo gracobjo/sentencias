@@ -181,6 +181,12 @@
                         <h1 class="display-6 text-primary">
                             <i class="bi bi-file-text me-3"></i>
                             {{ archivo.nombre }}
+                            {% set n = archivo.nombre|lower %}
+                            {% if 'tribunal supremo' in n or 'ts_' in n or ' ts ' in n or 'ts-' in n %}
+                                <span class="badge bg-warning text-dark ms-2" title="Tribunal Supremo">TS</span>
+                            {% elif 'tsj' in n or 'tribunal superior' in n %}
+                                <span class="badge bg-warning text-dark ms-2" title="Tribunal Superior de Justicia">TSJ</span>
+                            {% endif %}
                         </h1>
                         <p class="lead text-muted">
                             Contenido completo del archivo con frases clave resaltadas
@@ -190,6 +196,9 @@
                         <a href="/" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
                         </a>
+                        <button class="btn btn-warning ms-2" onclick="descargarDemandaBase('{{ archivo.nombre }}')">
+                            <i class="bi bi-file-earmark-text me-1"></i> Demanda base
+                        </button>
                     </div>
                 </div>
             </div>
@@ -266,9 +275,11 @@
                                 <i class="bi bi-file-text me-2"></i>Contenido del Archivo
                             </h5>
                             <div class="btn-group" role="group">
-                                <button class="btn btn-sm btn-outline-light" onclick="buscarTexto()" title="Buscar texto (Ctrl+F)">
-                                    <i class="bi bi-search"></i> Buscar
-                                </button>
+                                <div class="input-group input-group-sm me-2" style="width: 260px;">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="buscarTextoInput" class="form-control" placeholder="Buscar en documento...">
+                                    <button class="btn btn-outline-light" onclick="buscarTextoDesdeCaja()" title="Buscar">Buscar</button>
+                                </div>
                                 <button class="btn btn-sm btn-outline-light" onclick="window.print()" title="Imprimir documento">
                                     <i class="bi bi-printer"></i> Imprimir
                                 </button>
@@ -554,6 +565,43 @@
             }
         }
 
+        function buscarTextoDesdeCaja() {
+            const input = document.getElementById('buscarTextoInput');
+            if (!input) {
+                buscarTexto();
+                return;
+            }
+            const valor = (input.value || '').trim();
+            if (!valor) {
+                mostrarNotificacion('Introduce un texto para buscar', 'warning');
+                return;
+            }
+            const contenido = document.getElementById('contenidoArchivo');
+            const texto = contenido.textContent;
+            const busquedaLower = valor.toLowerCase();
+            const textoLower = texto.toLowerCase();
+            let index = textoLower.indexOf(busquedaLower);
+            if (index !== -1) {
+                const caracteresPorLinea = 80;
+                const lineaAproximada = Math.floor(index / caracteresPorLinea);
+                const alturaLinea = 20;
+                const scrollPosition = lineaAproximada * alturaLinea;
+                contenido.scrollTop = Math.max(0, scrollPosition - 100);
+                if (!contenido.dataset.textoOriginal) {
+                    contenido.dataset.textoOriginal = contenido.innerHTML;
+                }
+                const textoResaltado = texto.substring(0, index) +
+                    `<span class=\"busqueda-resaltada\" style=\"background-color: #ffeb3b; font-weight: bold; border: 2px solid #ff9800; padding: 2px 4px; border-radius: 3px; position: relative;\">${texto.substring(index, index + valor.length)}<small style=\"position: absolute; top: -8px; right: -8px; background: #ff9800; color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px;\">1</small></span>` +
+                    texto.substring(index + valor.length);
+                contenido.innerHTML = textoResaltado;
+                const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
+                if (btnLimpiar) btnLimpiar.style.display = 'inline-block';
+                mostrarNotificacion(`Texto "${valor}" encontrado`, 'success');
+            } else {
+                mostrarNotificacion(`Texto "${valor}" no encontrado`, 'warning');
+            }
+        }
+
         // Atajos de teclado
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey || e.metaKey) {
@@ -706,14 +754,12 @@
         }
 
         // Función para limpiar HTML mal formado
+        function limpiarHTMLMalformado(texto) {
             if (typeof texto !== 'string') return texto;
-            
             // Eliminar todas las etiquetas HTML y su contenido
             texto = texto.replace(/<[^>]*>/g, '');
-            
             // Eliminar caracteres de escape HTML
             texto = texto.replace(/&[a-zA-Z0-9#]+;/g, ' ');
-            
             // Limpiar caracteres extraños y fragmentos de etiquetas
             texto = texto.replace(/[>]+/g, '');
             texto = texto.replace(/[<]+/g, '');
@@ -721,10 +767,8 @@
             texto = texto.replace(/onclick="[^"]*"/g, '');
             texto = texto.replace(/title="[^"]*"/g, '');
             texto = texto.replace(/resaltada/g, '');
-            
             // Limpiar espacios múltiples y normalizar
             texto = texto.replace(/\s+/g, ' ');
-            
             return texto.trim();
         }
         
@@ -958,6 +1002,32 @@
                 console.log(`Botón ${index + 1}:`, onclick);
             });
         });
+
+        async function descargarDemandaBase(nombreArchivo) {
+            try {
+                const resp = await fetch('/api/demanda-base/txt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombres_archivo: [nombreArchivo] })
+                });
+                if (!resp.ok) {
+                    mostrarNotificacion('Error generando demanda base', 'danger');
+                    return;
+                }
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `demanda_base_${nombreArchivo.replace(/[^a-zA-Z0-9_\.\-]/g,'_')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                mostrarNotificacion('Demanda base generada', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error: ' + (e.message || e), 'danger');
+            }
+        }
     </script>
 </body>
 </html>
