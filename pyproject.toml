@@ -76,11 +76,11 @@ Repository = "https://github.com/tu-usuario/analizador-sentencias-ipp"
 "Changelog" = "https://github.com/tu-usuario/analizador-sentencias-ipp/releases"
 
 [project.scripts]
-analizador-sentencias = "app:main"
+analizador-sentencias = "sentencias_app.main:app"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["app*", "backend*"]
+include = ["sentencias_app*"]
 exclude = ["tests*", "docs*"]
 
 [tool.black]
@@ -142,7 +142,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["app", "backend"]
+source = ["sentencias_app"]
 omit = [
     "*/tests/*",
     "*/test_*",
