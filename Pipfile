@@ -4,36 +4,65 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = "==0.116.1"
-jinja2 = "==3.1.6"
-aiofiles = "==24.1.0"
-python-multipart = "==0.0.20"
-python-docx = "==1.2.0"
-pypdf2 = "==3.0.1"
-scikit-learn = "==1.7.1"
-numpy = "==2.3.2"
-pandas = "==2.3.2"
-nltk = "==3.9.1"
-spacy = "==3.8.7"
-python-dotenv = "==1.1.1"
-pydantic = "==2.11.7"
-pydantic-settings = "==2.10.1"
-structlog = "==25.4.0"
-pytest = "==8.4.1"
-pytest-asyncio = "==1.1.0"
-httpx = "==0.28.1"
-black = "==25.1.0"
-flake8 = "==7.3.0"
-mypy = "==1.17.1"
-redis = "==6.4.0"
-sqlalchemy = "==2.0.43"
-alembic = "==1.16.5"
-prometheus-client = "==0.22.1"
+# Core web framework
+fastapi = "*"
 uvicorn = {extras = ["standard"]}
-python-jose = "==3.5.0"
-passlib = "==1.7.4"
+jinja2 = "*"
+aiofiles = "*"
+python-multipart = "*"
+
+# File processing
+python-docx = "*"
+pypdf2 = "*"
+
+# Machine Learning (pre-compiled versions)
+numpy = "*"
+scipy = "*"
+scikit-learn = "*"
+pandas = "*"
+
+# NLP
+nltk = "*"
+
+# Utilities
+python-dotenv = "*"
+pydantic = "*"
+pydantic-settings = "*"
+
+# Logging and monitoring
+structlog = "*"
+prometheus-client = "*"
+
+# Security
+python-jose = {extras = ["cryptography"]}
+passlib = {extras = ["bcrypt"]}
+
+# File validation
+python-magic = "*"
+
+# Cache
+redis = "*"
+
+# Database (optional)
+sqlalchemy = "*"
+alembic = "*"
 
 [dev-packages]
+# Testing
+pytest = "*"
+pytest-asyncio = "*"
+pytest-cov = "*"
+httpx = "*"
+
+# Code quality
+black = "*"
+flake8 = "*"
+mypy = "*"
+pre-commit = "*"
+
+# Security scanning
+bandit = "*"
+safety = "*"
 
 [requires]
-python_version = "3.11"
+python_version = "3.8"
