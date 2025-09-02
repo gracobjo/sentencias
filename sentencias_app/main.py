@@ -23,8 +23,14 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Plai
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Importar módulo de seguridad
+# Importar módulos de seguridad y observabilidad
 from .security import validate_and_save_file, FileSecurityError
+from .observability import (
+    get_observability_manager, 
+    log_request_middleware, 
+    setup_observability_routes,
+    log_info, log_warning, log_error, log_security
+)
 
 # Configurar logging
 logging.basicConfig(
@@ -50,6 +56,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Configurar middleware de observabilidad
+app.middleware("http")(log_request_middleware)
+
+# Configurar rutas de observabilidad
+setup_observability_routes(app)
 
 # Configurar templates y archivos estáticos
 templates = Jinja2Templates(directory="templates")
@@ -641,7 +653,10 @@ async def subir_documento(
         # Usar el archivo guardado de forma segura
         ruta_archivo = Path(secure_path)
         
-        logger.info(f"Archivo subido de forma segura: {secure_filename}")
+        log_info("Archivo subido de forma segura", 
+                filename=secure_filename, 
+                original_filename=file.filename,
+                file_size=len(content) if hasattr(file, 'content') else 0)
         
         # Analizar documento
         if ANALIZADOR_IA_DISPONIBLE:
