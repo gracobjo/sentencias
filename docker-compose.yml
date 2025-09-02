@@ -19,8 +19,6 @@ services:
       - ./uploads:/app/uploads
       - ./models:/app/models
       - ./logs:/app/logs
-      - ./static:/app/static
-      - ./templates:/app/templates
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
