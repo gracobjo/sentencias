@@ -23,6 +23,9 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Plai
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+# Importar módulo de seguridad
+from .security import validate_and_save_file, FileSecurityError
+
 # Configurar logging
 logging.basicConfig(
     level=logging.INFO,
@@ -625,25 +628,20 @@ async def subir_documento(
     extract_entities: bool = Form(True),
     analyze_arguments: bool = Form(True)
 ):
-    """Procesa la subida de un documento"""
+    """Procesa la subida de un documento con validación de seguridad"""
     try:
-        # Validar archivo
-        validacion = validar_archivo(file)
-        if not validacion["valido"]:
-            raise HTTPException(status_code=400, detail="; ".join(validacion["errores"]))
+        # Validar y guardar archivo de forma segura
+        try:
+            secure_filename, secure_path = validate_and_save_file(file)
+            logger.info(f"Archivo validado y guardado de forma segura: {secure_filename}")
+        except FileSecurityError as e:
+            logger.warning(f"Error de seguridad en upload: {e}")
+            raise HTTPException(status_code=400, detail=f"Error de seguridad: {str(e)}")
         
-        # Generar nombre único
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        unique_id = str(uuid.uuid4())[:8]
-        extension = Path(file.filename).suffix
-        nuevo_nombre = f"{document_type}_{timestamp}_{unique_id}{extension}"
+        # Usar el archivo guardado de forma segura
+        ruta_archivo = Path(secure_path)
         
-        # Guardar archivo
-        ruta_archivo = UPLOADS_DIR / nuevo_nombre
-        with open(ruta_archivo, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        logger.info(f"Archivo subido: {nuevo_nombre}")
+        logger.info(f"Archivo subido de forma segura: {secure_filename}")
         
         # Analizar documento
         if ANALIZADOR_IA_DISPONIBLE:
@@ -654,16 +652,16 @@ async def subir_documento(
                 logger.info("Análisis con IA completado")
             except Exception as e:
                 logger.warning(f"Fallback a análisis básico: {e}")
-                resultado = analizador_basico.analizar_documento(str(ruta_archivo), file.filename)
+                resultado = analizador_basico.analizar_documento(str(ruta_archivo), secure_filename)
                 resultado["modelo_ia"] = False
         else:
-            resultado = analizador_basico.analizar_documento(str(ruta_archivo), file.filename)
+            resultado = analizador_basico.analizar_documento(str(ruta_archivo), secure_filename)
             resultado["modelo_ia"] = False
         
         # Agregar metadatos
         resultado.update({
-            "nombre_archivo": file.filename,
-            "archivo_id": nuevo_nombre,
+            "nombre_archivo": file.filename,  # Nombre original
+            "archivo_id": secure_filename,    # Nombre seguro
             "tipo_documento": document_type,
             "extract_entities": extract_entities,
             "analyze_arguments": analyze_arguments,
