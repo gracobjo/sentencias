@@ -10,8 +10,15 @@ import mimetypes
 from pathlib import Path
 from typing import List, Optional, Tuple
 from fastapi import HTTPException, UploadFile
-import magic
 import logging
+
+# Import condicional de magic
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
+    magic = None
 
 logger = logging.getLogger(__name__)
 
@@ -107,8 +114,15 @@ class FileValidator:
             content = file.file.read(1024)
             file.file.seek(0)  # Resetear posición
             
-            # Detectar MIME type real
-            mime_type = magic.from_buffer(content, mime=True)
+            if MAGIC_AVAILABLE:
+                # Detectar MIME type real usando python-magic
+                mime_type = magic.from_buffer(content, mime=True)
+            else:
+                # Fallback a detección básica por extensión
+                mime_type = mimetypes.guess_type(file.filename)[0]
+                if not mime_type:
+                    mime_type = "application/octet-stream"
+                logger.warning("python-magic no disponible, usando detección básica")
             
             if mime_type not in ALLOWED_MIME_TYPES:
                 raise FileSecurityError(
@@ -117,7 +131,7 @@ class FileValidator:
             
             # Verificar que el MIME coincida con la extensión
             expected_mime = mimetypes.guess_type(file.filename)[0]
-            if expected_mime and expected_mime != mime_type:
+            if expected_mime and expected_mime != mime_type and MAGIC_AVAILABLE:
                 logger.warning(f"MIME mismatch: expected {expected_mime}, got {mime_type}")
             
             return True
