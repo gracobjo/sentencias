@@ -57,7 +57,7 @@ redis==5.0.1
 
 # Base de datos (opcional)
 sqlalchemy==2.0.23
-alembic==1.12.1
+alembic==1.16.5
 
 # Monitoreo y métricas
 prometheus-client==0.22.1
