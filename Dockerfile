@@ -2,7 +2,7 @@
 # Aplicación FastAPI robusta para análisis de documentos legales
 
 # Usar imagen base de Python oficial
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Metadatos de la imagen
 LABEL maintainer="Equipo de Desarrollo IPP/INSS"
