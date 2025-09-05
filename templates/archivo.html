@@ -390,49 +390,129 @@
         }
         // Función para buscar argumentos en el texto
         function buscarArgumentoEnTexto(textoBusqueda) {
-            const contenido = document.getElementById('contenidoArchivo');
-            const texto = contenido.textContent;
+            try {
+                const contenido = document.getElementById('contenidoArchivo');
+                if (!contenido) {
+                    console.error('Elemento contenidoArchivo no encontrado');
+                    mostrarNotificacion('Error: No se puede acceder al contenido del archivo', 'error');
+                    return;
+                }
+                
+                const texto = contenido.textContent || contenido.innerText || '';
+                
+                console.log('Buscando argumento:', textoBusqueda);
+                console.log('Longitud del texto:', texto.length);
+                
+                if (!textoBusqueda || !textoBusqueda.trim()) {
+                    mostrarNotificacion('Texto de búsqueda vacío', 'warning');
+                    return;
+                }
+                
+                // Limpiar el texto de búsqueda
+                const textoLimpio = textoBusqueda.trim().replace(/['"]/g, '');
+                
+                // Crear una versión más flexible de búsqueda
+                const textoBusquedaFlexible = textoLimpio
+                    .replace(/\s+/g, ' ')  // Normalizar espacios
+                    .replace(/[.,;:!?]/g, '')  // Remover puntuación
+                    .trim();
+                
+                const textoFlexible = texto
+                    .replace(/\s+/g, ' ')  // Normalizar espacios
+                    .replace(/[.,;:!?]/g, '')  // Remover puntuación
+                    .toLowerCase();
+                
+                // Buscar el texto en el contenido (insensible a mayúsculas y puntuación)
+                let index = textoFlexible.indexOf(textoBusquedaFlexible.toLowerCase());
+                
+                // Si no se encuentra con la versión flexible, intentar con el texto original
+                if (index === -1) {
+                    index = texto.toLowerCase().indexOf(textoLimpio.toLowerCase());
+                }
+                
+                // Si aún no se encuentra, intentar con una búsqueda parcial (primeras 20 palabras)
+                if (index === -1) {
+                    const palabrasBusqueda = textoBusquedaFlexible.split(' ').slice(0, 20).join(' ');
+                    index = textoFlexible.indexOf(palabrasBusqueda.toLowerCase());
+                }
             
-            console.log('Buscando argumento:', textoBusqueda);
-            console.log('Longitud del texto:', texto.length);
-            
-            // Buscar el texto en el contenido (insensible a mayúsculas)
-            const index = texto.toLowerCase().indexOf(textoBusqueda.toLowerCase());
-            
-            if (index !== -1) {
-                console.log('Argumento encontrado en posición:', index);
-                
-                // Calcular posición de scroll más precisa
-                const caracteresPorLinea = 80; // Aproximación
-                const lineaAproximada = Math.floor(index / caracteresPorLinea);
-                const alturaLinea = 20; // Aproximación en píxeles
-                const scrollPosition = lineaAproximada * alturaLinea;
-                
-                // Hacer scroll a la posición
-                contenido.scrollTop = Math.max(0, scrollPosition - 100); // 100px de margen superior
-                
-                // Guardar el texto original para restaurarlo después
-                const textoOriginal = contenido.innerHTML;
-                
-                // Resaltar temporalmente el texto encontrado
-                const textoResaltado = texto.substring(0, index) + 
-                                    `<span style="background-color: #ffeb3b; font-weight: bold; border: 2px solid #ff9800; padding: 2px 4px; border-radius: 3px;">${texto.substring(index, index + textoBusqueda.length)}</span>` + 
-                                    texto.substring(index + textoBusqueda.length);
-                
-                // Aplicar el resaltado
-                contenido.innerHTML = textoResaltado;
-                
-                // Mostrar notificación
-                mostrarNotificacion(`Argumento encontrado en la posición ${index}`, 'success');
-                
-                // Restaurar el texto original después de 5 segundos
-                setTimeout(() => {
-                    contenido.innerHTML = textoOriginal;
-                }, 5000);
-                
-            } else {
-                console.log('Argumento no encontrado');
-                mostrarNotificacion('Argumento no encontrado en el texto', 'warning');
+                if (index !== -1) {
+                    console.log('Argumento encontrado en posición:', index);
+                    
+                    // Crear un elemento temporal para calcular la posición exacta
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.position = 'absolute';
+                    tempDiv.style.visibility = 'hidden';
+                    tempDiv.style.whiteSpace = 'pre-wrap';
+                    tempDiv.style.fontFamily = getComputedStyle(contenido).fontFamily;
+                    tempDiv.style.fontSize = getComputedStyle(contenido).fontSize;
+                    tempDiv.style.lineHeight = getComputedStyle(contenido).lineHeight;
+                    tempDiv.style.width = getComputedStyle(contenido).width;
+                    tempDiv.style.padding = getComputedStyle(contenido).padding;
+                    tempDiv.textContent = texto.substring(0, index);
+                    
+                    document.body.appendChild(tempDiv);
+                    const alturaHastaTexto = tempDiv.offsetHeight;
+                    document.body.removeChild(tempDiv);
+                    
+                    // Calcular posición de scroll más precisa
+                    const scrollPosition = alturaHastaTexto - 200; // 200px de margen superior
+                    
+                    // Hacer scroll suave a la posición
+                    contenido.scrollTo({
+                        top: Math.max(0, scrollPosition),
+                        behavior: 'smooth'
+                    });
+                    
+                    // Guardar el texto original para restaurarlo después
+                    const textoOriginal = contenido.innerHTML;
+                    
+                    // Resaltar temporalmente el texto encontrado con mejor estilo
+                    const textoResaltado = texto.substring(0, index) + 
+                                        `<span id="argumento-resaltado" style="background-color: #ffeb3b; font-weight: bold; border: 3px solid #ff9800; padding: 4px 8px; border-radius: 5px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); animation: pulse 1s ease-in-out;">${texto.substring(index, index + textoLimpio.length)}</span>` + 
+                                        texto.substring(index + textoLimpio.length);
+                    
+                    // Aplicar el resaltado
+                    contenido.innerHTML = textoResaltado;
+                    
+                    // Agregar animación CSS si no existe
+                    if (!document.getElementById('search-animation-style')) {
+                        const style = document.createElement('style');
+                        style.id = 'search-animation-style';
+                        style.textContent = `
+                            @keyframes pulse {
+                                0% { transform: scale(1); }
+                                50% { transform: scale(1.05); }
+                                100% { transform: scale(1); }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                    
+                    // Mostrar notificación más informativa
+                    mostrarNotificacion(`✅ Argumento encontrado y resaltado en posición ${index}`, 'success');
+                    
+                    // Restaurar el texto original después de 8 segundos (más tiempo para ver el resaltado)
+                    setTimeout(() => {
+                        try {
+                            contenido.innerHTML = textoOriginal;
+                            // Hacer scroll de vuelta a la posición encontrada para mantener el contexto
+                            contenido.scrollTo({
+                                top: Math.max(0, scrollPosition),
+                                behavior: 'smooth'
+                            });
+                        } catch (e) {
+                            console.error('Error restaurando texto original:', e);
+                        }
+                    }, 8000);
+                    
+                } else {
+                    console.log('Argumento no encontrado');
+                    mostrarNotificacion(`Argumento "${textoLimpio}" no encontrado en el texto`, 'warning');
+                }
+            } catch (error) {
+                console.error('Error en buscarArgumentoEnTexto:', error);
+                mostrarNotificacion('Error al buscar el argumento: ' + error.message, 'error');
             }
         }
         

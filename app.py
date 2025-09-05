@@ -55,6 +55,16 @@ app.add_middleware(
 
 # Configurar templates y archivos estáticos
 templates = Jinja2Templates(directory="templates")
+
+# Configurar archivos estáticos con tipos MIME correctos
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import mimetypes
+
+# Configurar tipos MIME para archivos PDF
+mimetypes.add_type('application/pdf', '.pdf')
+
+# Montar archivos estáticos con configuración personalizada
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Configuración de directorios
@@ -1718,6 +1728,59 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
             "ranking_global": {}
         }
 
+
+# Middleware para asegurar Content-Type correcto para archivos estáticos
+@app.middleware("http")
+async def fix_content_type_middleware(request: Request, call_next):
+    """Middleware para corregir Content-Type de archivos estáticos"""
+    response = await call_next(request)
+    
+    # Si es un archivo PDF, asegurar Content-Type correcto
+    if request.url.path.endswith('.pdf'):
+        response.headers["Content-Type"] = "application/pdf"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+    
+    return response
+
+# Ruta específica para servir archivos desde sentencias/ con Content-Type correcto
+@app.get("/sentencias/{nombre_archivo}")
+async def servir_archivo_sentencias(nombre_archivo: str):
+    """Sirve archivos desde el directorio sentencias/ con Content-Type correcto"""
+    try:
+        archivo_path = SENTENCIAS_DIR / nombre_archivo
+        
+        if not archivo_path.exists():
+            raise HTTPException(status_code=404, detail="Archivo no encontrado")
+        
+        # Determinar el tipo MIME basado en la extensión
+        if archivo_path.suffix.lower() == '.pdf':
+            media_type = "application/pdf"
+        elif archivo_path.suffix.lower() == '.txt':
+            media_type = "text/plain; charset=utf-8"
+        else:
+            media_type = "application/octet-stream"
+        
+        # Configurar headers específicos
+        headers = {
+            "Content-Type": media_type,
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+        
+        return FileResponse(
+            path=str(archivo_path),
+            media_type=media_type,
+            filename=nombre_archivo,
+            headers=headers
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sirviendo archivo {nombre_archivo}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
