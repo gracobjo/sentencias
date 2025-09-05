@@ -67,6 +67,23 @@ mimetypes.add_type('application/pdf', '.pdf')
 # Montar archivos estáticos con configuración personalizada
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Montar directorio de sentencias con configuración específica para PDFs
+class PDFStaticFiles(StaticFiles):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def get_response(self, path: str, scope):
+        response = super().get_response(path, scope)
+        if path.endswith('.pdf'):
+            response.headers["Content-Type"] = "application/pdf"
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
+app.mount("/sentencias", PDFStaticFiles(directory="sentencias"), name="sentencias")
+
 # Configuración de directorios
 BASE_DIR = Path(__file__).parent
 SENTENCIAS_DIR = BASE_DIR / "sentencias"

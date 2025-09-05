@@ -435,6 +435,24 @@
                     const palabrasBusqueda = textoBusquedaFlexible.split(' ').slice(0, 20).join(' ');
                     index = textoFlexible.indexOf(palabrasBusqueda.toLowerCase());
                 }
+                
+                // Si aún no se encuentra, intentar con palabras clave individuales
+                if (index === -1) {
+                    const palabrasClave = textoBusquedaFlexible.split(' ').filter(p => p.length > 3);
+                    for (const palabra of palabrasClave) {
+                        index = textoFlexible.indexOf(palabra.toLowerCase());
+                        if (index !== -1) {
+                            console.log(`Encontrado por palabra clave: "${palabra}"`);
+                            break;
+                        }
+                    }
+                }
+                
+                // Debug: mostrar información de búsqueda
+                console.log('Texto de búsqueda original:', textoBusqueda);
+                console.log('Texto de búsqueda limpio:', textoLimpio);
+                console.log('Texto de búsqueda flexible:', textoBusquedaFlexible);
+                console.log('Posición encontrada:', index);
             
                 if (index !== -1) {
                     console.log('Argumento encontrado en posición:', index);
@@ -508,7 +526,29 @@
                     
                 } else {
                     console.log('Argumento no encontrado');
-                    mostrarNotificacion(`Argumento "${textoLimpio}" no encontrado en el texto`, 'warning');
+                    
+                    // Debug adicional: mostrar fragmentos del texto para ayudar a identificar el problema
+                    console.log('=== DEBUG: Información de búsqueda fallida ===');
+                    console.log('Texto de búsqueda original:', textoBusqueda);
+                    console.log('Texto de búsqueda limpio:', textoLimpio);
+                    console.log('Texto de búsqueda flexible:', textoBusquedaFlexible);
+                    console.log('Longitud del texto completo:', texto.length);
+                    
+                    // Mostrar fragmentos del texto que podrían contener el argumento
+                    const fragmentos = texto.split('.').filter(f => 
+                        f.toLowerCase().includes('ley') || 
+                        f.toLowerCase().includes('limitación') || 
+                        f.toLowerCase().includes('susceptible')
+                    );
+                    
+                    if (fragmentos.length > 0) {
+                        console.log('Fragmentos relacionados encontrados:');
+                        fragmentos.slice(0, 3).forEach((frag, i) => {
+                            console.log(`Fragmento ${i + 1}:`, frag.trim().substring(0, 100) + '...');
+                        });
+                    }
+                    
+                    mostrarNotificacion(`Argumento "${textoLimpio}" no encontrado en el texto. Revisa la consola para más detalles.`, 'warning');
                 }
             } catch (error) {
                 console.error('Error en buscarArgumentoEnTexto:', error);
