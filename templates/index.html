@@ -244,8 +244,8 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <small class="text-muted">
                                                 {% if resultado.get('procesado') %}
-                                                    <i class="bi bi-clock me-1"></i>
-                                                    {{ resultado.get('tiempo_procesamiento', 'N/A') }}
+                                                                                                    <i class="bi bi-clock me-1"></i>
+                                                {{ resultado.get('timestamp', 'N/A') }}
                                                 {% endif %}
                                             </small>
                                             <button class="btn btn-outline-primary btn-sm" 
@@ -1045,7 +1045,7 @@
                         <table class="table table-sm">
                             <tr><td><strong>Frase:</strong></td><td>${frase}</td></tr>
                             <tr><td><strong>Total Apariciones:</strong></td><td><span class="badge bg-primary">${datos.total}</span></td></tr>
-                            <tr><td><strong>Porcentaje:</strong></td><td>${((datos.total / {{ total_apariciones }}) * 100).toFixed(1)}%</td></tr>
+                            <tr><td><strong>Porcentaje:</strong></td><td>${((datos.total / {{ total_apariciones|default(1) }}) * 100).toFixed(1)}%</td></tr>
                             <tr><td><strong>Posición Ranking:</strong></td><td>${obtenerPosicionRanking(frase)}</td></tr>
                         </table>
                     </div>
@@ -1076,18 +1076,33 @@
         function verAparicionEnDocumento(documento, posicion, frase, index) {
             console.log(`Navegando a aparición en ${documento}, posición ${posicion}, frase: ${frase}`);
             
-            // Cerrar el modal actual
-            const modal = bootstrap.Modal.getInstance(document.getElementById('fraseModal'));
-            if (modal) {
-                modal.hide();
+            try {
+                // Cerrar el modal actual
+                const modal = bootstrap.Modal.getInstance(document.getElementById('fraseModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Mostrar notificación de navegación
+                mostrarNotificacion(`Navegando a "${frase}" en ${documento}...`, 'info');
+                
+                // Construir URL de forma segura
+                const url = `/archivo/${encodeURIComponent(documento)}?highlight=${encodeURIComponent(frase)}&pos=${posicion}&index=${index}`;
+                console.log(`URL generada: ${url}`);
+                
+                // Crear un enlace temporal y hacer clic en él
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                    
+            } catch (error) {
+                console.error('Error en verAparicionEnDocumento:', error);
+                mostrarNotificacion(`Error al abrir el documento: ${error.message}`, 'danger');
             }
-            
-            // Mostrar notificación de navegación
-            mostrarNotificacion(`Navegando a "${frase}" en ${documento}...`, 'info');
-            
-            // Navegar al documento con parámetros para resaltar la aparición
-            const url = `/archivo/${encodeURIComponent(documento)}?highlight=${encodeURIComponent(frase)}&pos=${posicion}&index=${index}`;
-            window.open(url, '_blank');
         }
 
         // Función para generar tabla de ocurrencias
@@ -1206,7 +1221,7 @@
                             </li>
                             <li class="list-group-item d-flex justify-content-between">
                                 <span>Porcentaje:</span>
-                                <span>${((datos.total / {{ total_apariciones }}) * 100).toFixed(1)}%</span>
+                                <span>${((datos.total / {{ total_apariciones|default(1) }}) * 100).toFixed(1)}%</span>
                             </li>
                             <li class="list-group-item d-flex justify-content-between">
                                 <span>Posición:</span>
@@ -1226,7 +1241,7 @@
                                         <tr>
                                             <td>${f}</td>
                                             <td><span class="badge bg-secondary">${d.total}</span></td>
-                                            <td>${((d.total / {{ total_apariciones }}) * 100).toFixed(1)}%</td>
+                                            <td>${((d.total / {{ total_apariciones|default(1) }}) * 100).toFixed(1)}%</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1534,7 +1549,7 @@
             const datos = rankingGlobalData[fraseSeleccionada];
             const contenido = `Detalles de Frase Clave: ${fraseSeleccionada}\n\n` +
                             `Total Apariciones: ${datos.total}\n` +
-                            `Porcentaje: ${((datos.total / {{ total_apariciones }}) * 100).toFixed(1)}%\n` +
+                            `Porcentaje: ${((datos.total / {{ total_apariciones|default(1) }}) * 100).toFixed(1)}%\n` +
                             `Posición en Ranking: ${obtenerPosicionRanking(fraseSeleccionada)}\n\n` +
                             `Ocurrencias:\n${JSON.stringify(datos.ocurrencias || [], null, 2)}`;
             

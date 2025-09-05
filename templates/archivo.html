@@ -37,6 +37,16 @@
         .frase-limpieza { background-color: #f3e5f5; border-color: #9c27b0; }
         .frase-lesiones { background-color: #fce4ec; border-color: #e91e63; }
         
+        /* Estilo para resaltado permanente */
+        .resaltado-permanente {
+            background-color: #ff6b6b !important;
+            border: 2px solid #e74c3c !important;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5) !important;
+            transform: scale(1.1) !important;
+            z-index: 1000 !important;
+            transition: all 0.3s ease !important;
+        }
+        
         .contenido-archivo {
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -283,8 +293,11 @@
                                 <button class="btn btn-sm btn-outline-light" onclick="window.print()" title="Imprimir documento">
                                     <i class="bi bi-printer"></i> Imprimir
                                 </button>
-                                <button class="btn btn-sm btn-outline-warning" onclick="limpiarYRestaurarContenido()" title="Limpiar y restaurar contenido">
+                                <button class="btn btn-sm btn-outline-warning" onclick="restaurarYResaltar()" title="Restaurar contenido limpio y reactivar resaltado">
                                     <i class="bi bi-arrow-clockwise"></i> Limpiar
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="limpiarTodosLosResaltados()" title="Limpiar resaltados específicos">
+                                    <i class="bi bi-x-circle"></i> Limpiar Resaltados
                                 </button>
                                 <button class="btn btn-sm btn-outline-info" onclick="activarResaltado()" title="Activar resaltado de frases clave">
                                     <i class="bi bi-highlighter"></i> Resaltar
@@ -852,8 +865,15 @@
                 
                 // Si hay información de highlight específico, resaltar esa aparición
                 const highlightInfo = {{ archivo.highlight_info|tojson|safe }};
+                console.log('🔍 Highlight info recibido:', highlightInfo);
                 if (highlightInfo && highlightInfo.frase) {
-                    resaltarAparicionEspecifica(highlightInfo.frase, highlightInfo.posicion, highlightInfo.index);
+                    console.log('🎯 Llamando a resaltarAparicionEspecifica con:', highlightInfo);
+                    // Usar setTimeout para asegurar que el DOM esté completamente renderizado
+                    setTimeout(() => {
+                        resaltarAparicionEspecifica(highlightInfo.frase, highlightInfo.posicion, highlightInfo.index);
+                    }, 100);
+                } else {
+                    console.log('⚠️ No hay información de highlight específico');
                 }
             } catch (error) {
                 console.error('❌ Error aplicando resaltado:', error);
@@ -864,22 +884,42 @@
             }
         }
         
+        // Variable global para mantener el resaltado actual
+        let resaltadoActual = null;
+        
         // Función para resaltar una aparición específica
         function resaltarAparicionEspecifica(frase, posicion, index) {
             console.log(`🎯 Resaltando aparición específica: "${frase}" en posición ${posicion}, índice ${index}`);
             
             const contenido = document.getElementById('contenidoArchivo');
-            if (!contenido) return;
+            if (!contenido) {
+                console.error('❌ Elemento contenidoArchivo no encontrado');
+                return;
+            }
+            
+            // Limpiar resaltado anterior si existe
+            if (resaltadoActual) {
+                console.log('🧹 Limpiando resaltado anterior');
+                limpiarResaltadoAnterior();
+            }
             
             // Buscar la frase en el contenido HTML
             const spans = contenido.querySelectorAll('.frase-resaltada');
+            console.log(`🔍 Buscando en ${spans.length} elementos resaltados`);
+            
             let aparicionEncontrada = null;
             let contador = 0;
             
             for (const span of spans) {
-                if (span.textContent.toLowerCase().includes(frase.toLowerCase())) {
+                const textoSpan = span.textContent.toLowerCase();
+                const fraseBusqueda = frase.toLowerCase();
+                console.log(`🔍 Comparando: "${textoSpan}" con "${fraseBusqueda}"`);
+                
+                if (textoSpan.includes(fraseBusqueda)) {
+                    console.log(`✅ Encontrada coincidencia ${contador}: "${textoSpan}"`);
                     if (contador === index) {
                         aparicionEncontrada = span;
+                        console.log(`🎯 Seleccionada aparición ${index}: "${textoSpan}"`);
                         break;
                     }
                     contador++;
@@ -887,12 +927,31 @@
             }
             
             if (aparicionEncontrada) {
-                // Resaltar la aparición específica con un estilo especial
+                console.log('🎨 Aplicando resaltado permanente');
+                
+                // Guardar referencia al elemento resaltado
+                resaltadoActual = {
+                    elemento: aparicionEncontrada,
+                    frase: frase,
+                    estilosOriginales: {
+                        backgroundColor: aparicionEncontrada.style.backgroundColor || '',
+                        border: aparicionEncontrada.style.border || '',
+                        boxShadow: aparicionEncontrada.style.boxShadow || '',
+                        transform: aparicionEncontrada.style.transform || '',
+                        zIndex: aparicionEncontrada.style.zIndex || ''
+                    }
+                };
+                
+                // Resaltar la aparición específica con un estilo especial y permanente
                 aparicionEncontrada.style.backgroundColor = '#ff6b6b';
                 aparicionEncontrada.style.border = '2px solid #e74c3c';
                 aparicionEncontrada.style.boxShadow = '0 0 10px rgba(231, 76, 60, 0.5)';
                 aparicionEncontrada.style.transform = 'scale(1.1)';
                 aparicionEncontrada.style.zIndex = '1000';
+                aparicionEncontrada.style.transition = 'all 0.3s ease';
+                
+                // Agregar clase CSS para identificar el resaltado permanente
+                aparicionEncontrada.classList.add('resaltado-permanente');
                 
                 // Hacer scroll a la aparición
                 aparicionEncontrada.scrollIntoView({
@@ -901,21 +960,86 @@
                 });
                 
                 // Mostrar notificación
-                mostrarNotificacion(`Aparición resaltada: "${frase}"`, 'success');
+                mostrarNotificacion(`✅ "${frase}" resaltada permanentemente - Selecciona otra palabra para cambiar`, 'success');
                 
-                // Restaurar estilo después de 5 segundos
-                setTimeout(() => {
-                    aparicionEncontrada.style.backgroundColor = '';
-                    aparicionEncontrada.style.border = '';
-                    aparicionEncontrada.style.boxShadow = '';
-                    aparicionEncontrada.style.transform = '';
-                    aparicionEncontrada.style.zIndex = '';
-                }, 5000);
-                
-                console.log('✅ Aparición específica resaltada y centrada');
+                console.log('✅ Aparición específica resaltada y centrada - Resaltado PERMANENTE aplicado');
             } else {
-                console.warn('⚠️ No se encontró la aparición específica para resaltar');
+                console.warn(`⚠️ No se encontró la aparición específica para resaltar: "${frase}" (índice ${index})`);
+                mostrarNotificacion(`No se encontró la aparición "${frase}" en el documento`, 'warning');
             }
+        }
+        
+        // Función para limpiar el resaltado anterior
+        function limpiarResaltadoAnterior() {
+            if (resaltadoActual && resaltadoActual.elemento) {
+                const elemento = resaltadoActual.elemento;
+                const estilosOriginales = resaltadoActual.estilosOriginales;
+                
+                // Remover clase CSS de resaltado permanente
+                elemento.classList.remove('resaltado-permanente');
+                
+                // Restaurar estilos originales
+                elemento.style.backgroundColor = estilosOriginales.backgroundColor;
+                elemento.style.border = estilosOriginales.border;
+                elemento.style.boxShadow = estilosOriginales.boxShadow;
+                elemento.style.transform = estilosOriginales.transform;
+                elemento.style.zIndex = estilosOriginales.zIndex;
+                elemento.style.transition = '';
+                
+                console.log(`🧹 Resaltado anterior limpiado: "${resaltadoActual.frase}"`);
+            }
+            
+            resaltadoActual = null;
+        }
+        
+        // Función para limpiar todos los resaltados específicos
+        function limpiarTodosLosResaltados() {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) return;
+            
+            // Limpiar resaltado actual
+            limpiarResaltadoAnterior();
+            
+            // Limpiar cualquier otro resaltado específico que pueda existir
+            const spans = contenido.querySelectorAll('.frase-resaltada');
+            spans.forEach(span => {
+                span.classList.remove('resaltado-permanente');
+                span.style.backgroundColor = '';
+                span.style.border = '';
+                span.style.boxShadow = '';
+                span.style.transform = '';
+                span.style.zIndex = '';
+                span.style.transition = '';
+            });
+            
+            console.log('🧹 Todos los resaltados específicos limpiados');
+            mostrarNotificacion('✅ Resaltados específicos limpiados - Usa "Resaltar" para reactivar', 'info');
+        }
+        
+        // Función para restaurar contenido original y reactivar resaltado
+        function restaurarYResaltar() {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) return;
+            
+            // Limpiar resaltado actual
+            limpiarResaltadoAnterior();
+            
+            // Obtener el texto original limpio del backend
+            const textoOriginal = {{ archivo.contenido|tojson|safe }};
+            
+            // Limpiar completamente el HTML malformado
+            const textoLimpio = limpiarHTMLMalformado(textoOriginal);
+            
+            // Establecer el contenido limpio
+            contenido.innerHTML = textoLimpio;
+            
+            console.log('🔄 Contenido restaurado a texto limpio desde backend');
+            mostrarNotificacion('✅ Contenido restaurado - Aplicando resaltado de frases clave...', 'info');
+            
+            // Reactivar resaltado después de un breve delay
+            setTimeout(() => {
+                resaltarFrasesClave();
+            }, 200);
         }
 
         // Agregar event listener para manejar clicks en frases resaltadas
@@ -932,6 +1056,8 @@
         // Función para limpiar HTML mal formado
         function limpiarHTMLMalformado(texto) {
             if (typeof texto !== 'string') return texto;
+            
+            console.log('🧹 Limpiando HTML malformado, texto original:', texto.substring(0, 200) + '...');
             
             // Eliminar todas las etiquetas HTML y su contenido
             texto = texto.replace(/<[^>]*>/g, '');
@@ -958,10 +1084,33 @@
             texto = texto.replace(/\\"/g, '"');
             texto = texto.replace(/\\'/g, "'");
             
+            // Limpiar fragmentos específicos que aparecen en el código malformado
+            texto = texto.replace(/esaltada frase-[a-zA-Z]+"/g, '');
+            texto = texto.replace(/lesionesass=/g, '');
+            texto = texto.replace(/frase-[a-zA-Z]+" data-categoria=/g, '');
+            texto = texto.replace(/Click para ver detalles de/g, '');
+            texto = texto.replace(/frase-resaltada frase-[a-zA-Z]+/g, '');
+            
+            // Limpiar fragmentos específicos del texto que proporcionaste
+            texto = texto.replace(/accidente de trabajoesaltada frase-accidente" data-categoria="accidente_laboral" title="Click para ver detalles de accidente_laboral">accidente de trabajo/g, 'accidente de trabajo');
+            texto = texto.replace(/INSSn class="frase-resaltada frase-inss" data-categoria="inss" title="Click para ver detalles de inss">INSS/g, 'INSS');
+            texto = texto.replace(/lesionesass="frase-resaltada frase-lesiones" data-categoria="lesiones_permanentes" title="Click para ver detalles de lesiones_permanentes">lesiones/g, 'lesiones');
+            texto = texto.replace(/reclamación="frase-resaltada frase-reclamacion" data-categoria="reclamacion_administrativa" title="Click para ver detalles de reclamacion_administrativa">reclamación/g, 'reclamación');
+            texto = texto.replace(/EVIan class="frase-resaltada frase-inss" data-categoria="inss" title="Click para ver detalles de inss">EVI/g, 'EVI');
+            texto = texto.replace(/indemnizaciónfrase-resaltada frase-prestaciones" data-categoria="prestaciones" title="Click para ver detalles de prestaciones">indemnización/g, 'indemnización');
+            texto = texto.replace(/fundamento jurídicoresaltada frase-fundamentos" data-categoria="fundamentos_juridicos" title="Click para ver detalles de fundamentos_juridicos">fundamento jurídico/g, 'fundamento jurídico');
+            texto = texto.replace(/Seguridad Socialse-resaltada frase-inss" data-categoria="inss" title="Click para ver detalles de inss">Seguridad Social/g, 'Seguridad Social');
+            texto = texto.replace(/Instituto Nacional-resaltada frase-inss" data-categoria="inss" title="Click para ver detalles de inss">Instituto Nacional/g, 'Instituto Nacional');
+            texto = texto.replace(/Instituto Nacional de la Seguridad Socialdata-categoria="inss" title="Click para ver detalles de inss">Instituto Nacional de la Seguridad Social/g, 'Instituto Nacional de la Seguridad Social');
+            texto = texto.replace(/estimamosss="frase-resaltada frase-procedimiento" data-categoria="procedimiento_legal" title="Click para ver detalles de procedimiento_legal">estimamos/g, 'estimamos');
+            
             // Limpiar espacios múltiples y normalizar
             texto = texto.replace(/\s+/g, ' ');
             
-            return texto.trim();
+            const textoLimpio = texto.trim();
+            console.log('✅ Texto limpio:', textoLimpio.substring(0, 200) + '...');
+            
+            return textoLimpio;
         }
         
         // Función para limpiar y restaurar contenido
@@ -1074,7 +1223,20 @@
                         contenido.dataset.textoOriginal = contenido.innerHTML;
                     }
                     
-                    // Resaltar la frase encontrada
+                    // Verificar si ya hay un resaltado permanente activo
+                    if (resaltadoActual && resaltadoActual.elemento) {
+                        console.log('⚠️ Ya hay un resaltado permanente activo, no sobrescribiendo HTML');
+                        // Solo hacer scroll sin cambiar el HTML
+                        const caracteresPorLinea = 80;
+                        const lineaAproximada = Math.floor(index / caracteresPorLinea);
+                        const alturaLinea = 20;
+                        const scrollPosition = lineaAproximada * alturaLinea;
+                        contenido.scrollTop = Math.max(0, scrollPosition - 100);
+                        mostrarNotificacion(`Frase encontrada pero ya hay un resaltado permanente activo`, 'info');
+                        return;
+                    }
+                    
+                    // Resaltar la frase encontrada solo si no hay resaltado permanente
                     const textoResaltado = texto.substring(0, index) + 
                                         `<span class="busqueda-resaltada" style="background-color: #ffeb3b; font-weight: bold; border: 2px solid #ff9800; padding: 2px 4px; border-radius: 3px; position: relative;">${texto.substring(index, index + frase.length)}<small style="position: absolute; top: -8px; right: -8px; background: #ff9800; color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px;">1</small></span>` + 
                                         texto.substring(index + frase.length);
@@ -1148,9 +1310,14 @@
             }
             
             try {
-                // Limpiar primero el contenido
-                const textoLimpio = limpiarHTMLMalformado(contenido.textContent);
-                contenido.textContent = textoLimpio;
+                // Obtener el texto original limpio del backend
+                const textoOriginal = {{ archivo.contenido|tojson|safe }};
+                
+                // Limpiar completamente el HTML malformado
+                const textoLimpio = limpiarHTMLMalformado(textoOriginal);
+                
+                // Establecer el contenido limpio
+                contenido.innerHTML = textoLimpio;
                 
                 // Activar el resaltado
                 resaltarFrasesClave();
@@ -1164,6 +1331,15 @@
         
         // Resaltar frases clave al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si el resaltado está deshabilitado
+            const resaltadoDeshabilitado = {{ archivo.resaltado_deshabilitado|default(false)|tojson|safe }};
+            
+            if (resaltadoDeshabilitado) {
+                console.log('🚫 Resaltado automático deshabilitado - Solo texto limpio');
+                mostrarNotificacion('📄 Modo texto limpio activado - Sin resaltado automático', 'info');
+                return;
+            }
+            
             // Limpiar contenido antes de resaltar
             const contenido = document.getElementById('contenidoArchivo');
             if (contenido) {
@@ -1183,9 +1359,17 @@
             
             if (highlight) {
                 console.log(`Resaltando automáticamente: "${highlight}"`);
-                // Buscar y resaltar la frase específica
+                // Buscar y resaltar la frase específica usando la nueva función
                 setTimeout(() => {
-                    buscarYResaltarFrase(highlight, position);
+                    // Usar la nueva función de resaltado específico en lugar de la antigua
+                    const highlightInfo = {{ archivo.highlight_info|tojson|safe }};
+                    if (highlightInfo && highlightInfo.frase) {
+                        console.log('🎯 Usando resaltado específico automático:', highlightInfo);
+                        resaltarAparicionEspecifica(highlightInfo.frase, highlightInfo.posicion, highlightInfo.index);
+                    } else {
+                        console.log('⚠️ No hay información de highlight específico, usando búsqueda básica');
+                        buscarYResaltarFrase(highlight, position);
+                    }
                 }, 1000);
             }
             

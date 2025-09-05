@@ -773,11 +773,17 @@ async def mostrar_resultados(request: Request, archivo_id: str):
 async def ver_archivo(request: Request, archivo_id: str, highlight: str = None, pos: int = None, index: int = None):
     """Muestra el contenido completo de un archivo con frases clave resaltadas y opcionalmente resalta una aparición específica"""
     try:
+        logger.info(f"🔍 Procesando solicitud para archivo: {archivo_id}")
+        logger.info(f"📋 Parámetros: highlight={highlight}, pos={pos}, index={index}")
+        
         # Buscar el archivo en la carpeta de sentencias
         archivo_path = SENTENCIAS_DIR / archivo_id
         
         if not archivo_path.exists():
+            logger.error(f"❌ Archivo no encontrado: {archivo_path}")
             raise HTTPException(status_code=404, detail=f"Archivo '{archivo_id}' no encontrado")
+        
+        logger.info(f"✅ Archivo encontrado: {archivo_path}")
         
         # Analizar el archivo para obtener frases clave
         if ANALIZADOR_IA_DISPONIBLE:
@@ -799,14 +805,37 @@ async def ver_archivo(request: Request, archivo_id: str, highlight: str = None, 
             if not texto:
                 return ""
             
-            # Eliminar todas las etiquetas HTML y su contenido
             import re
+            
+            # PRIMERA PASADA: Eliminar completamente todos los fragmentos HTML malformados
+            # Patrones específicos que aparecen en el texto
+            patrones_malformados = [
+                r'categoria="lesiones_permanentes" title="Click para ver detalles de lesiones_permanentes">lesionesass="frase-resaltada frase-lesiones" data-',
+                r'lesionesass="frase-resaltada frase-lesiones" data-categoria="lesiones_permanentes" title="Click para ver detalles de lesiones_permanentes">lesiones',
+                r'frase-resaltada frase-lesiones"',
+                r'Click para ver detalles de lesiones_permanentes',
+                r'indemnizaciónfrase-resaltada frase-prestaciones" data-categoria="prestaciones" title="Click para ver detalles de prestaciones">indemnización',
+                r'accidente de trabajoesaltada frase-accidente" data-categoria="accidente_laboral" title="Click para ver detalles de accidente_laboral">accidente de trabajo',
+                r'INSSn class="frase-resaltada frase-inss" data-categoria="inss" title="Click para ver detalles de inss">INSS',
+                r'reclamación="frase-resaltada frase-reclamacion" data-categoria="reclamacion_administrativa" title="Click para ver detalles de reclamacion_administrativa">reclamación',
+                r'EVIan class="frase-resaltada frase-inss" data-categoria="inss" title="Click para ver detalles de inss">EVI',
+                r'fundamento jurídicoresaltada frase-fundamentos" data-categoria="fundamentos_juridicos" title="Click para ver detalles de fundamentos_juridicos">fundamento jurídico',
+                r'Seguridad Socialse-resaltada frase-inss" data-categoria="inss" title="Click para ver detalles de inss">Seguridad Social',
+                r'Instituto Nacional-resaltada frase-inss" data-categoria="inss" title="Click para ver detalles de inss">Instituto Nacional',
+                r'Instituto Nacional de la Seguridad Socialdata-categoria="inss" title="Click para ver detalles de inss">Instituto Nacional de la Seguridad Social',
+                r'estimamosss="frase-resaltada frase-procedimiento" data-categoria="procedimiento_legal" title="Click para ver detalles de procedimiento_legal">estimamos'
+            ]
+            
+            for patron in patrones_malformados:
+                texto = re.sub(patron, '', texto, flags=re.IGNORECASE)
+            
+            # SEGUNDA PASADA: Eliminar todas las etiquetas HTML restantes
             texto = re.sub(r'<[^>]*>', '', texto)
             
-            # Eliminar caracteres de escape HTML
+            # TERCERA PASADA: Eliminar caracteres de escape HTML
             texto = re.sub(r'&[a-zA-Z0-9#]+;', ' ', texto)
             
-            # Limpiar caracteres extraños y fragmentos de etiquetas
+            # CUARTA PASADA: Limpiar caracteres extraños y fragmentos de etiquetas
             texto = re.sub(r'[>]+', '', texto)
             texto = re.sub(r'[<]+', '', texto)
             texto = re.sub(r'frase-[a-zA-Z]+"', '', texto)
@@ -817,20 +846,40 @@ async def ver_archivo(request: Request, archivo_id: str, highlight: str = None, 
             texto = re.sub(r'class="[^"]*"', '', texto)
             texto = re.sub(r'style="[^"]*"', '', texto)
             
-            # Limpiar espacios múltiples y normalizar
+            # QUINTA PASADA: Limpiar fragmentos adicionales comunes
+            texto = re.sub(r'esaltada frase-[a-zA-Z]+"', '', texto)
+            texto = re.sub(r'lesionesass=', '', texto)
+            texto = re.sub(r'frase-[a-zA-Z]+" data-categoria=', '', texto)
+            texto = re.sub(r'Click para ver detalles de', '', texto)
+            texto = re.sub(r'frase-resaltada frase-[a-zA-Z]+', '', texto)
+            
+            # SEXTA PASADA: Limpiar espacios múltiples y normalizar
             texto = re.sub(r'\s+', ' ', texto)
             
             return texto.strip()
         
-        # Limpiar el contenido antes de pasarlo al template
-        contenido_limpio = limpiar_contenido_html(resultado.get("texto_extraido", ""))
+        # Obtener el texto original SIN procesamiento de resaltado
+        texto_original = resultado.get("texto_extraido", "")
         
-        # Preparar datos para el template
+        # Limpiar completamente el contenido - SOLO TEXTO PLANO
+        contenido_limpio = limpiar_contenido_html(texto_original)
+        
+        # Limpieza adicional más agresiva para eliminar cualquier resto de HTML
+        import re
+        contenido_limpio = re.sub(r'<[^>]*>', '', contenido_limpio)  # Eliminar cualquier etiqueta HTML restante
+        contenido_limpio = re.sub(r'&[a-zA-Z0-9#]+;', ' ', contenido_limpio)  # Eliminar entidades HTML
+        contenido_limpio = re.sub(r'[<>]', '', contenido_limpio)  # Eliminar caracteres < y >
+        contenido_limpio = re.sub(r'\s+', ' ', contenido_limpio)  # Normalizar espacios
+        contenido_limpio = contenido_limpio.strip()
+        
+        logger.info(f"🧹 Contenido limpio (backend, primeros 500 chars): {contenido_limpio[:500]}...")
+        
+        # Preparar datos para el template - SIN resaltado automático
         datos_archivo = {
             "nombre": archivo_id,
             "contenido": contenido_limpio,
             "longitud": resultado.get("longitud_texto", 0),
-            "frases_clave": resultado.get("frases_clave", {}),
+            "frases_clave": {},  # DESHABILITAR resaltado automático
             "prediccion": resultado.get("prediccion", {}),
             "argumentos": resultado.get("argumentos", []),
             "insights": resultado.get("insights_juridicos", []),
@@ -839,8 +888,12 @@ async def ver_archivo(request: Request, archivo_id: str, highlight: str = None, 
                 "frase": highlight,
                 "posicion": pos,
                 "index": index
-            } if highlight else None
+            } if highlight else None,
+            "resaltado_deshabilitado": True  # Flag para indicar que el resaltado está deshabilitado
         }
+        
+        logger.info(f"📄 Devolviendo template archivo.html para {archivo_id}")
+        logger.info(f"📊 Datos del archivo: procesado={datos_archivo.get('procesado')}, frases_clave={len(datos_archivo.get('frases_clave', {}))}")
         
         return templates.TemplateResponse("archivo.html", {
             "request": request,
@@ -1636,6 +1689,7 @@ async def redirigir_documento(nombre_archivo: str):
     return RedirectResponse(url=f"/archivo/{nombre_archivo}")
 
 
+
 def analizar_sentencias_existentes() -> Dict[str, Any]:
     """Analiza las sentencias existentes en la carpeta"""
     try:
@@ -1693,11 +1747,19 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
                 logger.info(f"📊 Resultado para {archivo.name}: procesado={resultado.get('procesado')}")
                 
                 if resultado.get("procesado"):
+                    # Calcular total de frases clave
+                    frases_clave = resultado.get("frases_clave", {})
+                    total_frases = sum(datos.get("total", 0) for datos in frases_clave.values())
+                    
+                    # Agregar campos adicionales al resultado
+                    resultado["total_frases"] = total_frases
+                    resultado["timestamp"] = tiempo_inicio.strftime("%Y-%m-%d %H:%M:%S")
+                    resultado["categorias_encontradas"] = len(frases_clave)
+                    
                     resultados_por_archivo[archivo.name] = resultado
                     
-                    # Procesar frases clave encontradas
-                    frases_clave = resultado.get("frases_clave", {})
                     logger.info(f"🔑 Frases clave encontradas en {archivo.name}: {list(frases_clave.keys())}")
+                    logger.info(f"📊 Total frases en {archivo.name}: {total_frases}")
                     
                     for categoria, datos in frases_clave.items():
                         if categoria in ranking_global:
@@ -1752,8 +1814,8 @@ async def fix_content_type_middleware(request: Request, call_next):
     """Middleware para corregir Content-Type de archivos estáticos"""
     response = await call_next(request)
     
-    # Si es un archivo PDF, asegurar Content-Type correcto
-    if request.url.path.endswith('.pdf'):
+    # Solo aplicar a rutas de archivos estáticos, NO a rutas de la aplicación
+    if request.url.path.startswith('/sentencias/') and request.url.path.endswith('.pdf'):
         response.headers["Content-Type"] = "application/pdf"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
