@@ -1756,8 +1756,46 @@ async def fix_content_type_middleware(request: Request, call_next):
     if request.url.path.endswith('.pdf'):
         response.headers["Content-Type"] = "application/pdf"
         response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        # Agregar header adicional para evitar interpretación como JavaScript
+        response.headers["Content-Disposition"] = "inline"
     
     return response
+
+# Ruta específica para interceptar DEMANDA.pdf directamente
+@app.get("/DEMANDA.pdf")
+async def servir_demanda_pdf():
+    """Sirve específicamente el archivo DEMANDA.pdf con Content-Type correcto"""
+    try:
+        archivo_path = SENTENCIAS_DIR / "DEMANDA.pdf"
+        
+        if not archivo_path.exists():
+            raise HTTPException(status_code=404, detail="Archivo DEMANDA.pdf no encontrado")
+        
+        # Headers específicos para evitar interpretación como JavaScript
+        headers = {
+            "Content-Type": "application/pdf",
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "Content-Disposition": "inline; filename=DEMANDA.pdf"
+        }
+        
+        return FileResponse(
+            path=str(archivo_path),
+            media_type="application/pdf",
+            filename="DEMANDA.pdf",
+            headers=headers
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sirviendo DEMANDA.pdf: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
 # Ruta específica para servir archivos desde sentencias/ con Content-Type correcto
 @app.get("/sentencias/{nombre_archivo}")
