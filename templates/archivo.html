@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ archivo.nombre }} - Analizador IPP/INSS</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/static/style.css" rel="stylesheet">
+    
+    <style>
+        .frase-resaltada {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 3px;
+            padding: 2px 4px;
+            margin: 1px;
+            display: inline-block;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .frase-resaltada:hover {
+            background-color: #ffeaa7;
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .frase-ipp { background-color: #ffebee; border-color: #ef5350; }
+        .frase-rap { background-color: #fff3e0; border-color: #ff9800; }
+        .frase-inss { background-color: #e3f2fd; border-color: #2196f3; }
+        .frase-lpni { background-color: #e8f5e8; border-color: #4caf50; }
+        .frase-limpieza { background-color: #f3e5f5; border-color: #9c27b0; }
+        .frase-lesiones { background-color: #fce4ec; border-color: #e91e63; }
+        
+        .contenido-archivo {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 800px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .contenido-archivo .frase-resaltada {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 3px;
+            padding: 2px 4px;
+            margin: 1px;
+            display: inline-block;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .contenido-archivo .frase-resaltada:hover {
+            background-color: #ffeaa7;
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .stats-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .navegacion-frases {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 1000;
+            border-bottom: 2px solid #dee2e6;
+            padding: 15px 0;
+        }
+        
+        .frase-navegacion {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .frase-navegacion:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Estilos para notificaciones */
+        .alert {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: none;
+            border-radius: 8px;
+        }
+        
+        /* Estilos para botones de acción */
+        .btn-outline-light:hover {
+            background-color: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        /* Mejoras para el contenido del archivo */
+        .contenido-archivo::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .contenido-archivo::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .contenido-archivo::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .contenido-archivo::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Estilos para resaltado de búsqueda */
+        .busqueda-resaltada {
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px rgba(255, 152, 0, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 152, 0, 0.8); }
+            100% { box-shadow: 0 0 10px rgba(255, 152, 0, 0.5); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check me-2"></i>
+                Analizador IPP/INSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house me-1"></i>Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/subir">
+                            <i class="bi bi-upload me-1"></i>Subir Documento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/analizar">
+                            <i class="bi bi-graph-up me-1"></i>Análisis
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <!-- Header del archivo -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 text-primary">
+                            <i class="bi bi-file-text me-3"></i>
+                            {{ archivo.nombre }}
+                            {% set n = archivo.nombre|lower %}
+                            {% if 'tribunal supremo' in n or 'ts_' in n or ' ts ' in n or 'ts-' in n %}
+                                <span class="badge bg-warning text-dark ms-2" title="Tribunal Supremo">TS</span>
+                            {% elif 'tsj' in n or 'tribunal superior' in n %}
+                                <span class="badge bg-warning text-dark ms-2" title="Tribunal Superior de Justicia">TSJ</span>
+                            {% endif %}
+                        </h1>
+                        <p class="lead text-muted">
+                            Contenido completo del archivo con frases clave resaltadas
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
+                        </a>
+                        <button class="btn btn-warning ms-2" onclick="descargarDemandaBase('{{ archivo.nombre }}')">
+                            <i class="bi bi-file-earmark-text me-1"></i> Demanda base
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas del archivo -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">{{ archivo.longitud }}</h5>
+                        <p class="card-text">Caracteres</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">{{ archivo.total_frases }}</h5>
+                        <p class="card-text">Frases Clave</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">{{ archivo.argumentos|length }}</h5>
+                        <p class="card-text">Argumentos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title {% if archivo.prediccion.es_favorable %}text-success{% else %}text-danger{% endif %}">
+                            {% if archivo.prediccion.es_favorable %}Favorable{% else %}Desfavorable{% endif %}
+                        </h5>
+                        <p class="card-text">Predicción</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navegación de frases clave -->
+        {% if archivo.frases_clave %}
+        <div class="navegacion-frases mb-4">
+            <h5 class="text-primary mb-3">
+                <i class="bi bi-tags me-2"></i>Frases Clave Encontradas
+            </h5>
+            <div class="row">
+                {% for categoria, datos in archivo.frases_clave.items() %}
+                <div class="col-md-4 mb-2">
+                    <div class="card frase-navegacion" data-categoria="{{ categoria }}" style="cursor: pointer;">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">{{ datos.total }}</span>
+                                <small class="text-muted">{{ categoria|title }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Contenido del archivo -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-file-text me-2"></i>Contenido del Archivo
+                            </h5>
+                            <div class="btn-group" role="group">
+                                <div class="input-group input-group-sm me-2" style="width: 260px;">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="buscarTextoInput" class="form-control" placeholder="Buscar en documento...">
+                                    <button class="btn btn-outline-light" onclick="buscarTextoDesdeCaja()" title="Buscar">Buscar</button>
+                                </div>
+                                <button class="btn btn-sm btn-outline-light" onclick="window.print()" title="Imprimir documento">
+                                    <i class="bi bi-printer"></i> Imprimir
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="limpiarYRestaurarContenido()" title="Limpiar y restaurar contenido">
+                                    <i class="bi bi-arrow-clockwise"></i> Limpiar
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="activarResaltado()" title="Activar resaltado de frases clave">
+                                    <i class="bi bi-highlighter"></i> Resaltar
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="limpiarBusqueda()" title="Limpiar resaltado de búsqueda" id="btnLimpiarBusqueda" style="display: none;">
+                                    <i class="bi bi-eraser"></i> Limpiar Búsqueda
+                                </button>
+                                <button class="btn btn-sm btn-outline-dark" onclick="debugContenido()" title="Debug del contenido">
+                                    <i class="bi bi-bug"></i> Debug
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="contenido-archivo" id="contenidoArchivo">
+                            {{ archivo.contenido }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights y argumentos -->
+        {% if archivo.insights or archivo.argumentos %}
+        <div class="row mt-4">
+            {% if archivo.insights %}
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-lightbulb me-2"></i>Insights Jurídicos
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            {% for insight in archivo.insights %}
+                            <li class="mb-2">
+                                <i class="bi bi-arrow-right text-info me-2"></i>
+                                {{ insight }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if archivo.argumentos %}
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="bi bi-chat-quote me-2"></i>Argumentos Identificados
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            {% for argumento in archivo.argumentos %}
+                            <li class="mb-3 p-2 border rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <i class="bi bi-arrow-right text-warning me-2"></i>
+                                        <strong>Argumento {{ loop.index }}:</strong><br>
+                                        <span class="text-muted">{{ argumento.texto[:150] }}{% if argumento.texto|length > 150 %}...{% endif %}</span>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-warning ms-2" 
+                                            onclick="buscarArgumentoEnTexto('{{ argumento.texto[:50]|replace("'", "\\'")|replace('"', '\\"') }}')"
+                                            title="Buscar en el texto">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">
+                <i class="bi bi-c-circle me-1"></i>
+                2024 Analizador IPP/INSS - Desarrollado para el sector legal
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function setLoading(show, text) {
+            const ov = document.getElementById('globalLoading');
+            if (!ov) return;
+            const t = document.getElementById('globalLoadingText');
+            if (t && text) t.textContent = text;
+            ov.classList.toggle('d-none', !show);
+        }
+        // Función para buscar argumentos en el texto
+        function buscarArgumentoEnTexto(textoBusqueda) {
+            const contenido = document.getElementById('contenidoArchivo');
+            const texto = contenido.textContent;
+            
+            console.log('Buscando argumento:', textoBusqueda);
+            console.log('Longitud del texto:', texto.length);
+            
+            // Buscar el texto en el contenido (insensible a mayúsculas)
+            const index = texto.toLowerCase().indexOf(textoBusqueda.toLowerCase());
+            
+            if (index !== -1) {
+                console.log('Argumento encontrado en posición:', index);
+                
+                // Calcular posición de scroll más precisa
+                const caracteresPorLinea = 80; // Aproximación
+                const lineaAproximada = Math.floor(index / caracteresPorLinea);
+                const alturaLinea = 20; // Aproximación en píxeles
+                const scrollPosition = lineaAproximada * alturaLinea;
+                
+                // Hacer scroll a la posición
+                contenido.scrollTop = Math.max(0, scrollPosition - 100); // 100px de margen superior
+                
+                // Guardar el texto original para restaurarlo después
+                const textoOriginal = contenido.innerHTML;
+                
+                // Resaltar temporalmente el texto encontrado
+                const textoResaltado = texto.substring(0, index) + 
+                                    `<span style="background-color: #ffeb3b; font-weight: bold; border: 2px solid #ff9800; padding: 2px 4px; border-radius: 3px;">${texto.substring(index, index + textoBusqueda.length)}</span>` + 
+                                    texto.substring(index + textoBusqueda.length);
+                
+                // Aplicar el resaltado
+                contenido.innerHTML = textoResaltado;
+                
+                // Mostrar notificación
+                mostrarNotificacion(`Argumento encontrado en la posición ${index}`, 'success');
+                
+                // Restaurar el texto original después de 5 segundos
+                setTimeout(() => {
+                    contenido.innerHTML = textoOriginal;
+                }, 5000);
+                
+            } else {
+                console.log('Argumento no encontrado');
+                mostrarNotificacion('Argumento no encontrado en el texto', 'warning');
+            }
+        }
+        
+        // Función para navegar a una frase específica
+        function navegarAFrase(categoria) {
+            const contenido = document.getElementById('contenidoArchivo');
+            const texto = contenido.textContent;
+            
+            // Buscar la primera ocurrencia de la categoría
+            const frases = {{ archivo.frases_clave|tojson|safe }};
+            if (frases[categoria] && frases[categoria].ocurrencias.length > 0) {
+                const primeraOcurrencia = frases[categoria].ocurrencias[0];
+                const frase = primeraOcurrencia.frase;
+                
+                // Buscar en el contenido
+                const index = texto.indexOf(frase);
+                if (index !== -1) {
+                    // Calcular posición de scroll más precisa
+                    const caracteresPorLinea = 80; // Aproximación
+                    const lineaAproximada = Math.floor(index / caracteresPorLinea);
+                    const alturaLinea = 20; // Aproximación en píxeles
+                    const scrollPosition = lineaAproximada * alturaLinea;
+                    
+                    // Hacer scroll a la posición
+                    contenido.scrollTop = Math.max(0, scrollPosition - 100); // 100px de margen superior
+                    
+                    // Guardar el texto original
+                    const textoOriginal = contenido.innerHTML;
+                    
+                    // Resaltar temporalmente
+                    const textoResaltado = texto.substring(0, index) + 
+                                        `<span style="background-color: #ffeb3b; font-weight: bold; border: 2px solid #ff9800; padding: 2px 4px; border-radius: 3px;">${frase}</span>` + 
+                                        texto.substring(index + frase.length);
+                    
+                    contenido.innerHTML = textoResaltado;
+                    
+                    // Mostrar notificación
+                    mostrarNotificacion(`Frase "${frase}" encontrada en la posición ${index}`, 'success');
+                    
+                    // Restaurar el texto original después de 5 segundos
+                    setTimeout(() => {
+                        contenido.innerHTML = textoOriginal;
+                    }, 5000);
+                } else {
+                    mostrarNotificacion(`Frase "${frase}" no encontrada en el texto`, 'warning');
+                }
+            } else {
+                mostrarNotificacion('No se encontraron ocurrencias para esta categoría', 'info');
+            }
+        }
+
+        // Función para manejar clicks en frases resaltadas (event delegation)
+        function manejarClickFrase(event) {
+            // Manejar clicks en frases resaltadas dentro del contenido
+            if (event.target.classList.contains('frase-resaltada')) {
+                const categoria = event.target.getAttribute('data-categoria');
+                if (categoria) {
+                    navegarAFrase(categoria);
+                }
+            }
+            // Manejar clicks en las tarjetas de navegación
+            else if (event.target.closest('.frase-navegacion')) {
+                const categoria = event.target.closest('.frase-navegacion').getAttribute('data-categoria');
+                if (categoria) {
+                    navegarAFrase(categoria);
+                }
+            }
+        }
+        
+        // Función para mostrar notificaciones
+        function mostrarNotificacion(mensaje, tipo) {
+            const notificacion = document.createElement('div');
+            notificacion.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+            notificacion.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notificacion.innerHTML = `
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notificacion);
+            
+            // Auto-ocultar después de 5 segundos
+            setTimeout(() => {
+                if (notificacion.parentNode) {
+                    notificacion.remove();
+                }
+            }, 5000);
+        }
+
+        // Función para buscar texto
+        function buscarTexto() {
+            const busqueda = prompt('Introduce el texto a buscar:');
+            if (busqueda && busqueda.trim()) {
+                const contenido = document.getElementById('contenidoArchivo');
+                const texto = contenido.textContent;
+                const busquedaLower = busqueda.toLowerCase().trim();
+                const textoLower = texto.toLowerCase();
+                
+                let index = textoLower.indexOf(busquedaLower);
+                let contador = 0;
+                const posiciones = [];
+                
+                // Encontrar todas las ocurrencias
+                while (index !== -1) {
+                    posiciones.push(index);
+                    contador++;
+                    index = textoLower.indexOf(busquedaLower, index + 1);
+                }
+                
+                if (posiciones.length > 0) {
+                    // Ir a la primera ocurrencia con scroll mejorado
+                    const primeraPosicion = posiciones[0];
+                    
+                    // Calcular posición de scroll más precisa
+                    const caracteresPorLinea = 80; // Aproximación
+                    const lineaAproximada = Math.floor(primeraPosicion / caracteresPorLinea);
+                    const alturaLinea = 20; // Aproximación en píxeles
+                    const scrollPosition = lineaAproximada * alturaLinea;
+                    
+                    // Hacer scroll a la posición
+                    contenido.scrollTop = Math.max(0, scrollPosition - 100); // 100px de margen superior
+                    
+                    // Guardar el texto original para restaurarlo después
+                    if (!contenido.dataset.textoOriginal) {
+                        contenido.dataset.textoOriginal = contenido.innerHTML;
+                    }
+                    
+                    // Resaltar todas las ocurrencias con estilo permanente
+                    let textoResaltado = texto;
+                    let offset = 0;
+                    
+                    for (let i = posiciones.length - 1; i >= 0; i--) {
+                        const pos = posiciones[i];
+                        const antes = textoResaltado.substring(0, pos + offset);
+                        const resaltado = `<span class="busqueda-resaltada" style="background-color: #ffeb3b; font-weight: bold; border: 2px solid #ff9800; padding: 2px 4px; border-radius: 3px; position: relative;">${texto.substring(pos, pos + busqueda.length)}<small style="position: absolute; top: -8px; right: -8px; background: #ff9800; color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px;">${contador > 1 ? '1' : ''}</small></span>`;
+                        const despues = textoResaltado.substring(pos + busqueda.length + offset);
+                        textoResaltado = antes + resaltado + despues;
+                        offset += resaltado.length - busqueda.length;
+                    }
+                    
+                    contenido.innerHTML = textoResaltado;
+                    
+                    // Mostrar notificación con contador
+                    const mensaje = contador === 1 
+                        ? `Texto "${busqueda}" encontrado 1 vez. Usa "Limpiar Búsqueda" para quitar el resaltado.` 
+                        : `Texto "${busqueda}" encontrado ${contador} veces. Usa "Limpiar Búsqueda" para quitar el resaltado.`;
+                    mostrarNotificacion(mensaje, 'success');
+                    
+                    // Mostrar botón de limpiar búsqueda
+                    document.getElementById('btnLimpiarBusqueda').style.display = 'inline-block';
+                    
+                    // NO restaurar automáticamente - el resaltado es permanente
+                } else {
+                    mostrarNotificacion(`Texto "${busqueda}" no encontrado`, 'warning');
+                }
+            }
+        }
+
+        function buscarTextoDesdeCaja() {
+            const input = document.getElementById('buscarTextoInput');
+            if (!input) {
+                buscarTexto();
+                return;
+            }
+            const valor = (input.value || '').trim();
+            if (!valor) {
+                mostrarNotificacion('Introduce un texto para buscar', 'warning');
+                return;
+            }
+            const contenido = document.getElementById('contenidoArchivo');
+            const texto = contenido.textContent;
+            const busquedaLower = valor.toLowerCase();
+            const textoLower = texto.toLowerCase();
+            let index = textoLower.indexOf(busquedaLower);
+            if (index !== -1) {
+                const caracteresPorLinea = 80;
+                const lineaAproximada = Math.floor(index / caracteresPorLinea);
+                const alturaLinea = 20;
+                const scrollPosition = lineaAproximada * alturaLinea;
+                contenido.scrollTop = Math.max(0, scrollPosition - 100);
+                if (!contenido.dataset.textoOriginal) {
+                    contenido.dataset.textoOriginal = contenido.innerHTML;
+                }
+                const textoResaltado = texto.substring(0, index) +
+                    `<span class=\"busqueda-resaltada\" style=\"background-color: #ffeb3b; font-weight: bold; border: 2px solid #ff9800; padding: 2px 4px; border-radius: 3px; position: relative;\">${texto.substring(index, index + valor.length)}<small style=\"position: absolute; top: -8px; right: -8px; background: #ff9800; color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px;\">1</small></span>` +
+                    texto.substring(index + valor.length);
+                contenido.innerHTML = textoResaltado;
+                const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
+                if (btnLimpiar) btnLimpiar.style.display = 'inline-block';
+                mostrarNotificacion(`Texto "${valor}" encontrado`, 'success');
+            } else {
+                mostrarNotificacion(`Texto "${valor}" no encontrado`, 'warning');
+            }
+        }
+
+        // Atajos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'f':
+                        e.preventDefault();
+                        buscarTexto();
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        window.location.href = '/';
+                        break;
+                }
+            }
+        });
+
+        // Botón de búsqueda flotante
+        const botonBusqueda = document.createElement('button');
+        botonBusqueda.innerHTML = '<i class="bi bi-search"></i>';
+        botonBusqueda.className = 'btn btn-primary position-fixed';
+        botonBusqueda.style.cssText = 'bottom: 20px; right: 20px; z-index: 1000; border-radius: 50%; width: 60px; height: 60px;';
+        botonBusqueda.onclick = buscarTexto;
+        botonBusqueda.title = 'Buscar texto (Ctrl+F)';
+        document.body.appendChild(botonBusqueda);
+        
+        // Función para resaltar frases clave en el contenido
+        function resaltarFrasesClave() {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) {
+                console.warn('Elemento contenidoArchivo no encontrado');
+                return;
+            }
+            
+            // Guardar el texto original
+            const textoOriginal = contenido.textContent;
+            let textoResaltado = textoOriginal;
+            
+            const frases = {{ archivo.frases_clave|tojson|safe }};
+            console.log('Frases a resaltar:', frases);
+            
+            // Crear un array de posiciones para evitar conflictos
+            const posiciones = [];
+            
+            // Recorrer todas las categorías de frases
+            for (const [categoria, info] of Object.entries(frases)) {
+                if (info.ocurrencias && info.ocurrencias.length > 0) {
+                    console.log(`Procesando categoría: ${categoria} con ${info.ocurrencias.length} ocurrencias`);
+                    
+                    for (const ocurrencia of info.ocurrencias) {
+                        const frase = ocurrencia.frase;
+                        if (!frase || typeof frase !== 'string') {
+                            console.warn('Frase inválida:', ocurrencia);
+                            continue;
+                        }
+                        
+                        console.log(`Buscando frase: "${frase}" en texto de longitud: ${textoResaltado.length}`);
+                        
+                        // Buscar todas las ocurrencias de esta frase
+                        let index = 0;
+                        let encontradas = 0;
+                        while ((index = textoResaltado.toLowerCase().indexOf(frase.toLowerCase(), index)) !== -1) {
+                            posiciones.push({
+                                index: index,
+                                frase: frase,
+                                categoria: categoria,
+                                ocurrencia: ocurrencia
+                            });
+                            encontradas++;
+                            index += frase.length; // Avanzar después de la frase encontrada
+                        }
+                        
+                        console.log(`Encontradas ${encontradas} ocurrencias de "${frase}"`);
+                    }
+                } else {
+                    console.log(`Categoría ${categoria} no tiene ocurrencias`);
+                }
+            }
+            
+            console.log(`Total de posiciones a resaltar: ${posiciones.length}`);
+            
+            if (posiciones.length === 0) {
+                console.warn('⚠️ No se encontraron frases para resaltar');
+                mostrarNotificacion('No se encontraron frases clave para resaltar en el texto', 'warning');
+                return;
+            }
+            
+            // Ordenar posiciones de mayor a menor para evitar conflictos de offset
+            posiciones.sort((a, b) => b.index - a.index);
+            
+            // Aplicar resaltado desde el final hacia el principio
+            for (const pos of posiciones) {
+                const antes = textoResaltado.substring(0, pos.index);
+                const resaltado = `<span class="frase-resaltada frase-${pos.categoria.split('_')[0]}" data-categoria="${pos.categoria}" title="Click para ver detalles de ${pos.categoria}">${pos.frase}</span>`;
+                const despues = textoResaltado.substring(pos.index + pos.frase.length);
+                textoResaltado = antes + resaltado + despues;
+            }
+            
+            // Aplicar el HTML resaltado
+            try {
+                contenido.innerHTML = textoResaltado;
+                console.log(`✅ Resaltadas ${posiciones.length} frases clave`);
+                mostrarNotificacion(`Resaltadas ${posiciones.length} frases clave en el documento`, 'success');
+                
+                // Si hay información de highlight específico, resaltar esa aparición
+                const highlightInfo = {{ archivo.highlight_info|tojson|safe }};
+                if (highlightInfo && highlightInfo.frase) {
+                    resaltarAparicionEspecifica(highlightInfo.frase, highlightInfo.posicion, highlightInfo.index);
+                }
+            } catch (error) {
+                console.error('❌ Error aplicando resaltado:', error);
+                console.error('Texto resaltado problemático:', textoResaltado);
+                // Restaurar texto original en caso de error
+                contenido.innerHTML = textoOriginal;
+                mostrarNotificacion('Error al aplicar el resaltado de frases clave', 'error');
+            }
+        }
+        
+        // Función para resaltar una aparición específica
+        function resaltarAparicionEspecifica(frase, posicion, index) {
+            console.log(`🎯 Resaltando aparición específica: "${frase}" en posición ${posicion}, índice ${index}`);
+            
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) return;
+            
+            // Buscar la frase en el contenido HTML
+            const spans = contenido.querySelectorAll('.frase-resaltada');
+            let aparicionEncontrada = null;
+            let contador = 0;
+            
+            for (const span of spans) {
+                if (span.textContent.toLowerCase().includes(frase.toLowerCase())) {
+                    if (contador === index) {
+                        aparicionEncontrada = span;
+                        break;
+                    }
+                    contador++;
+                }
+            }
+            
+            if (aparicionEncontrada) {
+                // Resaltar la aparición específica con un estilo especial
+                aparicionEncontrada.style.backgroundColor = '#ff6b6b';
+                aparicionEncontrada.style.border = '2px solid #e74c3c';
+                aparicionEncontrada.style.boxShadow = '0 0 10px rgba(231, 76, 60, 0.5)';
+                aparicionEncontrada.style.transform = 'scale(1.1)';
+                aparicionEncontrada.style.zIndex = '1000';
+                
+                // Hacer scroll a la aparición
+                aparicionEncontrada.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                
+                // Mostrar notificación
+                mostrarNotificacion(`Aparición resaltada: "${frase}"`, 'success');
+                
+                // Restaurar estilo después de 5 segundos
+                setTimeout(() => {
+                    aparicionEncontrada.style.backgroundColor = '';
+                    aparicionEncontrada.style.border = '';
+                    aparicionEncontrada.style.boxShadow = '';
+                    aparicionEncontrada.style.transform = '';
+                    aparicionEncontrada.style.zIndex = '';
+                }, 5000);
+                
+                console.log('✅ Aparición específica resaltada y centrada');
+            } else {
+                console.warn('⚠️ No se encontró la aparición específica para resaltar');
+            }
+        }
+
+        // Agregar event listener para manejar clicks en frases resaltadas
+        document.addEventListener('DOMContentLoaded', function() {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (contenido) {
+                contenido.addEventListener('click', manejarClickFrase);
+            }
+            
+            // Agregar event listener para las tarjetas de navegación
+            document.addEventListener('click', manejarClickFrase);
+        });
+
+        // Función para limpiar HTML mal formado
+        function limpiarHTMLMalformado(texto) {
+            if (typeof texto !== 'string') return texto;
+            
+            // Eliminar todas las etiquetas HTML y su contenido
+            texto = texto.replace(/<[^>]*>/g, '');
+            
+            // Eliminar caracteres de escape HTML
+            texto = texto.replace(/&[a-zA-Z0-9#]+;/g, ' ');
+            
+            // Limpiar caracteres extraños y fragmentos de etiquetas
+            texto = texto.replace(/[>]+/g, '');
+            texto = texto.replace(/[<]+/g, '');
+            texto = texto.replace(/frase-[a-zA-Z]+"/g, '');
+            texto = texto.replace(/onclick="[^"]*"/g, '');
+            texto = texto.replace(/title="[^"]*"/g, '');
+            texto = texto.replace(/resaltada/g, '');
+            texto = texto.replace(/data-categoria="[^"]*"/g, '');
+            texto = texto.replace(/class="[^"]*"/g, '');
+            texto = texto.replace(/style="[^"]*"/g, '');
+            texto = texto.replace(/span/g, '');
+            texto = texto.replace(/div/g, '');
+            texto = texto.replace(/p/g, '');
+            texto = texto.replace(/br/g, ' ');
+            texto = texto.replace(/\\n/g, '\n');
+            texto = texto.replace(/\\t/g, '\t');
+            texto = texto.replace(/\\"/g, '"');
+            texto = texto.replace(/\\'/g, "'");
+            
+            // Limpiar espacios múltiples y normalizar
+            texto = texto.replace(/\s+/g, ' ');
+            
+            return texto.trim();
+        }
+        
+        // Función para limpiar y restaurar contenido
+        function limpiarYRestaurarContenido() {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) {
+                mostrarNotificacion('Elemento de contenido no encontrado', 'error');
+                return;
+            }
+            
+            try {
+                // Obtener el contenido original del servidor
+                const contenidoOriginal = `{{ archivo.contenido|safe }}`;
+                
+                // Limpiar el contenido original
+                const contenidoLimpio = limpiarHTMLMalformado(contenidoOriginal);
+                
+                // Restaurar el contenido limpio
+                contenido.textContent = contenidoLimpio;
+                
+                // Mostrar notificación
+                mostrarNotificacion('Contenido limpiado y restaurado correctamente. El resaltado se ha desactivado.', 'success');
+                
+                // NO volver a resaltar automáticamente para evitar el problema
+                // El usuario puede activar el resaltado manualmente si lo desea
+                
+            } catch (error) {
+                console.error('Error limpiando contenido:', error);
+                mostrarNotificacion('Error al limpiar el contenido', 'error');
+            }
+        }
+        
+        // Función para limpiar solo el resaltado de búsqueda
+        function limpiarBusqueda() {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) {
+                mostrarNotificacion('Elemento de contenido no encontrado', 'error');
+                return;
+            }
+            
+            try {
+                // Restaurar el texto original guardado
+                if (contenido.dataset.textoOriginal) {
+                    contenido.innerHTML = contenido.dataset.textoOriginal;
+                    delete contenido.dataset.textoOriginal;
+                    
+                    // Ocultar botón de limpiar búsqueda
+                    document.getElementById('btnLimpiarBusqueda').style.display = 'none';
+                    
+                    mostrarNotificacion('Resaltado de búsqueda limpiado', 'success');
+                } else {
+                    // Si no hay texto original guardado, limpiar HTML mal formado
+                    const textoLimpio = limpiarHTMLMalformado(contenido.textContent);
+                    contenido.textContent = textoLimpio;
+                    
+                    // Ocultar botón de limpiar búsqueda
+                    document.getElementById('btnLimpiarBusqueda').style.display = 'none';
+                    
+                    mostrarNotificacion('Contenido limpiado', 'success');
+                }
+            } catch (error) {
+                console.error('Error limpiando búsqueda:', error);
+                mostrarNotificacion('Error al limpiar la búsqueda', 'error');
+            }
+        }
+        
+        // Función para buscar y resaltar una frase específica (llamada desde dashboard)
+        function buscarYResaltarFrase(frase, position) {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) {
+                mostrarNotificacion('Elemento de contenido no encontrado', 'error');
+                return;
+            }
+            
+            try {
+                // Intentar obtener el texto del contenido
+                let texto = contenido.textContent || contenido.innerText || '';
+                
+                // Si no hay texto, intentar obtenerlo del dataset
+                if (!texto && contenido.dataset.textoOriginal) {
+                    // Crear un elemento temporal para extraer el texto
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = contenido.dataset.textoOriginal;
+                    texto = tempDiv.textContent || tempDiv.innerText || '';
+                }
+                
+                console.log(`Buscando frase: "${frase}" en texto de longitud: ${texto.length}`);
+                console.log(`Primeros 200 caracteres: "${texto.substring(0, 200)}..."`);
+                
+                if (!texto || texto.length < 10) {
+                    mostrarNotificacion('No se pudo obtener el texto del documento. Intenta recargar la página.', 'warning');
+                    return;
+                }
+                
+                const index = texto.toLowerCase().indexOf(frase.toLowerCase());
+                console.log(`Frase encontrada en posición: ${index}`);
+                
+                if (index !== -1) {
+                    // Calcular posición de scroll más precisa
+                    const caracteresPorLinea = 80; // Aproximación
+                    const lineaAproximada = Math.floor(index / caracteresPorLinea);
+                    const alturaLinea = 20; // Aproximación en píxeles
+                    const scrollPosition = lineaAproximada * alturaLinea;
+                    
+                    // Hacer scroll a la posición
+                    contenido.scrollTop = Math.max(0, scrollPosition - 100); // 100px de margen superior
+                    
+                    // Guardar el texto original para restaurarlo después
+                    if (!contenido.dataset.textoOriginal) {
+                        contenido.dataset.textoOriginal = contenido.innerHTML;
+                    }
+                    
+                    // Resaltar la frase encontrada
+                    const textoResaltado = texto.substring(0, index) + 
+                                        `<span class="busqueda-resaltada" style="background-color: #ffeb3b; font-weight: bold; border: 2px solid #ff9800; padding: 2px 4px; border-radius: 3px; position: relative;">${texto.substring(index, index + frase.length)}<small style="position: absolute; top: -8px; right: -8px; background: #ff9800; color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px;">1</small></span>` + 
+                                        texto.substring(index + frase.length);
+                    
+                    contenido.innerHTML = textoResaltado;
+                    
+                    // Mostrar notificación
+                    mostrarNotificacion(`Frase "${frase}" encontrada y resaltada en posición ${index}`, 'success');
+                    
+                    // Mostrar botón de limpiar búsqueda
+                    const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
+                    if (btnLimpiar) {
+                        btnLimpiar.style.display = 'inline-block';
+                    }
+                    
+                } else {
+                    // Si no se encuentra, mostrar información de debug
+                    console.log(`Frase no encontrada. Texto disponible: "${texto.substring(0, 500)}..."`);
+                    mostrarNotificacion(`Frase "${frase}" no encontrada en el texto. Verifica que el documento se haya cargado completamente.`, 'warning');
+                }
+            } catch (error) {
+                console.error('Error buscando frase:', error);
+                mostrarNotificacion('Error al buscar la frase: ' + error.message, 'error');
+            }
+        }
+
+        // Función para debug del contenido
+        function debugContenido() {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) {
+                mostrarNotificacion('Elemento de contenido no encontrado', 'error');
+                return;
+            }
+            
+            try {
+                const texto = contenido.textContent || contenido.innerText || '';
+                const html = contenido.innerHTML;
+                const dataset = contenido.dataset;
+                
+                console.log('=== DEBUG DEL CONTENIDO ===');
+                console.log('Longitud del texto:', texto.length);
+                console.log('Primeros 500 caracteres:', texto.substring(0, 500));
+                console.log('Últimos 500 caracteres:', texto.substring(Math.max(0, texto.length - 500)));
+                console.log('HTML interno:', html.substring(0, 500));
+                console.log('Dataset:', dataset);
+                
+                // Mostrar información en pantalla
+                const info = `
+                    <strong>Información del Contenido:</strong><br>
+                    • Longitud del texto: ${texto.length} caracteres<br>
+                    • Primeros 200 chars: "${texto.substring(0, 200)}..."<br>
+                    • Últimos 200 chars: "...${texto.substring(Math.max(0, texto.length - 200))}"<br>
+                    • Dataset disponible: ${Object.keys(dataset).length} elementos<br>
+                    • Elementos dataset: ${Object.keys(dataset).join(', ')}
+                `;
+                
+                mostrarNotificacion(info, 'info');
+                
+            } catch (error) {
+                console.error('Error en debug:', error);
+                mostrarNotificacion('Error en debug: ' + error.message, 'error');
+            }
+        }
+        
+        // Función para activar resaltado manualmente
+        function activarResaltado() {
+            const contenido = document.getElementById('contenidoArchivo');
+            if (!contenido) {
+                mostrarNotificacion('Elemento de contenido no encontrado', 'error');
+                return;
+            }
+            
+            try {
+                // Limpiar primero el contenido
+                const textoLimpio = limpiarHTMLMalformado(contenido.textContent);
+                contenido.textContent = textoLimpio;
+                
+                // Activar el resaltado
+                resaltarFrasesClave();
+                
+                mostrarNotificacion('Resaltado de frases clave activado', 'success');
+            } catch (error) {
+                console.error('Error activando resaltado:', error);
+                mostrarNotificacion('Error al activar el resaltado', 'error');
+            }
+        }
+        
+        // Resaltar frases clave al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Limpiar contenido antes de resaltar
+            const contenido = document.getElementById('contenidoArchivo');
+            if (contenido) {
+                const textoLimpio = limpiarHTMLMalformado(contenido.textContent);
+                contenido.textContent = textoLimpio;
+            }
+            
+            // Resaltar frases clave automáticamente al cargar la página
+            setTimeout(() => {
+                resaltarFrasesClave();
+            }, 500);
+            
+            // Verificar si hay parámetros de URL para resaltar automáticamente
+            const urlParams = new URLSearchParams(window.location.search);
+            const highlight = urlParams.get('highlight');
+            const position = urlParams.get('position');
+            
+            if (highlight) {
+                console.log(`Resaltando automáticamente: "${highlight}"`);
+                // Buscar y resaltar la frase específica
+                setTimeout(() => {
+                    buscarYResaltarFrase(highlight, position);
+                }, 1000);
+            }
+            
+            // Debug: Verificar que los botones de argumentos estén funcionando
+            console.log('=== DEBUG: Verificando botones de argumentos ===');
+            const botonesArgumentos = document.querySelectorAll('[onclick*="buscarArgumentoEnTexto"]');
+            console.log(`Encontrados ${botonesArgumentos.length} botones de argumentos`);
+            
+            botonesArgumentos.forEach((boton, index) => {
+                const onclick = boton.getAttribute('onclick');
+                console.log(`Botón ${index + 1}:`, onclick);
+            });
+        });
+
+        async function descargarDemandaBase(nombreArchivo) {
+            try {
+                setLoading(true, 'Generando borrador de demanda…');
+                const resp = await fetch('/api/demanda-base/txt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombres_archivo: [nombreArchivo] })
+                });
+                if (!resp.ok) {
+                    mostrarNotificacion('Error generando demanda base', 'danger');
+                    setLoading(false);
+                    return;
+                }
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `demanda_base_${nombreArchivo.replace(/[^a-zA-Z0-9_\.\-]/g,'_')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                mostrarNotificacion('Demanda base generada', 'success');
+                setLoading(false);
+            } catch (e) {
+                mostrarNotificacion('Error: ' + (e.message || e), 'danger');
+                setLoading(false);
+            }
+        }
+    </script>
+</body>
+</html>

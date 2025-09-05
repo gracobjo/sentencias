@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados del Análisis - Analizador IPP/INSS</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/static/style.css" rel="stylesheet">
+    
+    <!-- Custom CSS is now in /static/style.css -->
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check me-2"></i>
+                Analizador IPP/INSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house me-1"></i>Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/subir">
+                            <i class="bi bi-upload me-1"></i>Subir Documento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/analizar">
+                            <i class="bi bi-graph-up me-1"></i>Análisis
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="text-center">
+                    <h1 class="display-5 fw-bold text-primary mb-3">
+                        <i class="bi bi-search-circle me-3"></i>
+                        Resultados del Análisis
+                    </h1>
+                    <p class="lead text-muted">
+                        Análisis inteligente del documento: <strong>{{ resultado.nombre_archivo }}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Result Card -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="card-title mb-3">
+                                    <i class="bi bi-robot me-2"></i>
+                                    Predicción del Caso
+                                </h3>
+                                <p class="card-text">
+                                    {{ resultado.resumen_inteligente }}
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                {% if resultado.prediccion.es_favorable %}
+                                    <span class="badge bg-success prediction-badge">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        CASO FAVORABLE
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger prediction-badge">
+                                        <i class="bi bi-x-circle me-2"></i>
+                                        CASO DESFAVORABLE
+                                    </span>
+                                {% endif %}
+                                
+                                <div class="mt-3">
+                                    <small class="text-muted">Confianza del análisis</small>
+                                    <div class="confidence-meter mt-2">
+                                        <div class="confidence-indicator" data-confidence="{{ resultado.prediccion.confianza }}"></div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <strong>{{ "%.1f"|format(resultado.prediccion.confianza * 100) }}%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Row -->
+        <div class="row mb-5">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ resultado.longitud_texto }}</div>
+                    <div class="stats-label">Caracteres</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ resultado.argumentos|length }}</div>
+                    <div class="stats-label">Argumentos</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ resultado.frases_clave|length }}</div>
+                    <div class="stats-label">Categorías</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ resultado.total_frases_clave }}</div>
+                    <div class="stats-label">Frases Clave</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arguments Section -->
+        {% if resultado.argumentos %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Argumentos Legales Identificados
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for argumento in resultado.argumentos %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card argument-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-primary">{{ argumento.tipo|title }}</span>
+                                            <small class="text-muted">{{ "%.1f"|format(argumento.confianza * 100) }}% confianza</small>
+                                        </div>
+                                        <p class="card-text mb-2">{{ argumento.texto }}</p>
+                                        {% if argumento.categoria %}
+                                        <span class="badge bg-secondary">{{ argumento.categoria }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Key Phrases Section -->
+        {% if resultado.frases_clave %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-key me-2"></i>
+                            Frases Clave Encontradas
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% for categoria, datos in resultado.frases_clave.items() %}
+                        <div class="mb-4">
+                            <h5 class="text-success mb-3">
+                                <i class="bi bi-tag me-2"></i>
+                                {{ categoria|title }}
+                                <span class="badge bg-success ms-2">{{ datos.total }} ocurrencias</span>
+                            </h5>
+                            
+                            {% for ocurrencia in datos.ocurrencias %}
+                            <div class="phrase-occurrence">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <strong>Línea {{ ocurrencia.linea }}</strong>
+                                    <small class="text-muted">Archivo: {{ ocurrencia.archivo }}</small>
+                                </div>
+                                <div class="context-text">
+                                    {{ ocurrencia.contexto }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Legal Insights Section -->
+        {% if resultado.insights_juridicos %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Insights Jurídicos
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% for insight in resultado.insights_juridicos %}
+                        <div class="insight-item 
+                            {% if 'favorable' in insight.lower() %}favorable
+                            {% elif 'desfavorable' in insight.lower() %}unfavorable
+                            {% else %}neutral{% endif %}">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            {{ insight }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions Row -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <div class="d-grid gap-3 d-md-block">
+                    <a href="/subir" class="btn btn-primary btn-lg me-md-2">
+                        <i class="bi bi-upload me-2"></i>
+                        Analizar Otro Documento
+                    </a>
+                    <a href="/" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-house me-2"></i>
+                        Volver al Inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Details (Collapsible) -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <button class="btn btn-link text-decoration-none" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#technicalDetails" 
+                                    aria-expanded="false" aria-controls="technicalDetails">
+                                <i class="bi bi-gear me-2"></i>
+                                Detalles Técnicos
+                                <i class="bi bi-chevron-down ms-2"></i>
+                            </button>
+                        </h5>
+                    </div>
+                    <div class="collapse" id="technicalDetails">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Información del Archivo</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Nombre:</strong> {{ resultado.nombre_archivo }}</li>
+                                        <li><strong>Procesado:</strong> {{ "Sí" if resultado.procesado else "No" }}</li>
+                                        <li><strong>Longitud del texto:</strong> {{ resultado.longitud_texto }} caracteres</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Configuración del Análisis</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Modelo IA:</strong> {{ "Disponible" if resultado.modelo_ia else "No disponible" }}</li>
+                                        <li><strong>Extracción de entidades:</strong> {{ "Activada" if resultado.extract_entities else "Desactivada" }}</li>
+                                        <li><strong>Análisis de argumentos:</strong> {{ "Activado" if resultado.analyze_arguments else "Desactivado" }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            {% if resultado.texto_extraido %}
+                            <div class="mt-3">
+                                <h6>Texto Extraído (Primeros 500 caracteres)</h6>
+                                <div class="bg-light p-3 rounded">
+                                    <pre class="mb-0 pre-wrap-text">{{ resultado.texto_extraido }}</pre>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">
+                <i class="bi bi-c-circle me-1"></i>
+                2024 Analizador IPP/INSS - Desarrollado para el sector legal
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Animate confidence meter on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const confidenceIndicator = document.querySelector('.confidence-indicator');
+            if (confidenceIndicator) {
+                // Get confidence value from data attribute
+                const confidence = parseFloat(confidenceIndicator.dataset.confidence);
+                const confidencePercentage = (confidence * 100).toFixed(1);
+                
+                // Set CSS custom property for width
+                document.documentElement.style.setProperty('--confidence-width', confidencePercentage + '%');
+                
+                // Animate the transition
+                setTimeout(() => {
+                    confidenceIndicator.style.transition = 'width 1.5s ease-out';
+                }, 500);
+            }
+        });
+
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add copy functionality for context text
+        document.querySelectorAll('.context-text').forEach(context => {
+            context.style.cursor = 'pointer';
+            context.title = 'Haz clic para copiar';
+            
+            context.addEventListener('click', function() {
+                const text = this.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    // Show temporary feedback
+                    const originalBg = this.style.background;
+                    this.style.background = '#d4edda';
+                    this.style.borderLeftColor = '#28a745';
+                    
+                    setTimeout(() => {
+                        this.style.background = originalBg;
+                        this.style.borderLeftColor = '#0d6efd';
+                    }, 1000);
+                });
+            });
+        });
+
+        // Add print functionality
+        function printResults() {
+            window.print();
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'p':
+                        e.preventDefault();
+                        printResults();
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        window.location.href = '/';
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        window.location.href = '/subir';
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

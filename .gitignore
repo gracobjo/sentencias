@@ -1,0 +1,34 @@
+# Bytecode y caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+
+# Entornos virtuales
+.venv/
+venv/
+
+# OS / editores
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs y subidas
+logs/
+uploads/
+
+# Modelos pesados
+models/*.pkl
+
+# No subir contenido de sentencias
+sentencias/**
+!sentencias/.gitkeep
+
+# Node
+node_modules/
+
+# Variables de entorno
+.env

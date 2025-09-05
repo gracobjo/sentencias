@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔮 Análisis Predictivo - Analizador de Sentencias IPP/INSS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            border: none;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        .metric-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .prediction-card {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 15px;
+            border: none;
+        }
+        .risk-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-radius: 15px;
+            border: none;
+        }
+        .insight-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-radius: 15px;
+            border: none;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        .progress-custom {
+            height: 25px;
+            border-radius: 15px;
+        }
+        .badge-custom {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="bi bi-graph-up-arrow"></i> Análisis Predictivo Inteligente
+                    </h1>
+                    <p class="lead mb-4">
+                        Descubre patrones ocultos, predice resultados y toma decisiones informadas 
+                        basándote en el análisis inteligente de resoluciones legales.
+                    </p>
+                    <button class="btn btn-light btn-custom me-3" onclick="cargarAnalisis()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar Análisis
+                    </button>
+                                         <a href="#" class="btn btn-warning btn-custom me-3" onclick="abrirDemandaBase()">
+                         <i class="bi bi-file-earmark-text"></i> Generar Demanda
+                     </a>
+                    <a href="/" class="btn btn-outline-light btn-custom">
+                        <i class="bi bi-house"></i> Volver al Inicio
+                    </a>
+                    <div class="mt-3 small text-white-50">
+                        Nota: Las predicciones y el riesgo ponderan más las resoluciones de última instancia
+                        <span class="badge bg-warning text-dark ms-1">TS</span> (x1.5) y
+                        <span class="badge bg-warning text-dark ms-1">TSJ</span> (x1.2).
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <i class="bi bi-brain" style="font-size: 8rem; opacity: 0.8;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner text-center py-5" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-3 text-muted">Analizando datos y generando predicciones...</p>
+    </div>
+
+    <!-- Banner de progreso global -->
+    <div id="taskProgress" class="position-fixed top-0 start-50 translate-middle-x d-none" style="z-index: 2000; width: 90%; max-width: 720px;">
+        <div class="alert alert-info alert-custom py-2 px-3 shadow-sm mb-0 d-flex align-items-center">
+            <i class="bi bi-hourglass-split me-2"></i>
+            <div class="flex-grow-1">
+                <div id="taskProgressText">Procesando…</div>
+                <div class="progress progress-custom mt-2" style="height: 4px;">
+                    <div id="taskProgressBar" class="progress-bar bg-info" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-5" id="mainContent" style="display: none;">
+        <!-- Resumen Ejecutivo -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="mb-4">
+                    <i class="bi bi-clipboard-data"></i> Resumen Ejecutivo
+                </h2>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card metric-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="metric-icon text-primary">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <h3 class="card-title" id="totalDocumentos">-</h3>
+                        <p class="card-text text-muted">Documentos Analizados</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card metric-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="metric-icon text-success">
+                            <i class="bi bi-key"></i>
+                        </div>
+                        <h3 class="card-title" id="totalFrasesClave">-</h3>
+                        <p class="card-text text-muted">Frases Clave Identificadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card metric-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="metric-icon text-info">
+                            <i class="bi bi-tags"></i>
+                        </div>
+                        <h3 class="card-title" id="categoriasIdentificadas">-</h3>
+                        <p class="card-text text-muted">Categorías Identificadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card metric-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="metric-icon text-warning">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h3 class="card-title" id="confianzaAnalisis">-</h3>
+                        <p class="card-text text-muted">Confianza del Análisis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predicciones y Riesgo -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="card prediction-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-crystal-ball"></i> Predicciones de Resultados
+                        </h4>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Probabilidad Favorable</span>
+                                <span id="probabilidadFavorable">-</span>
+                            </div>
+                            <div class="progress progress-custom">
+                                <div class="progress-bar bg-success" id="barraFavorable" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Probabilidad Desfavorable</span>
+                                <span id="probabilidadDesfavorable">-</span>
+                            </div>
+                            <div class="progress progress-custom">
+                                <div class="progress-bar bg-danger" id="barraDesfavorable" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <span class="badge badge-custom bg-primary" id="tendenciaGeneral">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card risk-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-exclamation-triangle"></i> Análisis de Riesgo
+                        </h4>
+                        <div class="mb-3">
+                            <strong>Nivel de Riesgo:</strong>
+                            <span class="badge badge-custom" id="nivelRiesgo">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Valor de Riesgo:</strong>
+                            <span id="valorRiesgo">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Interpretación:</strong>
+                            <p class="mt-2" id="interpretacionRiesgo">-</p>
+                        </div>
+                        <div id="recomendacionesRiesgo">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3">
+                        <i class="bi bi-bar-chart"></i> Top Categorías por Frecuencia
+                    </h5>
+                    <canvas id="chartCategorias"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3">
+                        <i class="bi bi-pie-chart"></i> Distribución de Probabilidades
+                    </h5>
+                    <canvas id="chartProbabilidades"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights y Recomendaciones -->
+        <div class="row mb-5">
+            <div class="col-lg-8 mb-4">
+                <div class="card insight-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-lightbulb"></i> Insights Jurídicos
+                        </h4>
+                        <div id="insightsContainer">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="card metric-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-list-check"></i> Recomendaciones
+                        </h4>
+                        <div id="recomendacionesContainer">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Factores Clave -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-target"></i> Factores Clave Identificados
+                        </h4>
+                        <div id="factoresClaveContainer">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir formulario de metadatos -->
+    {% include 'formulario_metadatos.html' %}
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function setLoading(show, text) {
+            let ov = document.getElementById('globalLoading');
+            if (!ov) return;
+            const t = document.getElementById('globalLoadingText');
+            if (text && t) t.textContent = text;
+            ov.classList.toggle('d-none', !show);
+        }
+
+        function showProgress(step, total, text) {
+            const cont = document.getElementById('taskProgress');
+            const bar = document.getElementById('taskProgressBar');
+            const label = document.getElementById('taskProgressText');
+            if (!cont || !bar || !label) return;
+            const pct = Math.max(0, Math.min(100, Math.round((step / Math.max(1,total)) * 100)));
+            bar.style.width = pct + '%';
+            label.textContent = `${text} (${step}/${total})`;
+            cont.classList.remove('d-none');
+        }
+
+        function hideProgress() {
+            const cont = document.getElementById('taskProgress');
+            if (cont) cont.classList.add('d-none');
+        }
+
+        async function fetchWithRetry(url, options = {}, cfg = {}) {
+            const { retries = 2, timeoutMs = 15000, retryOn = [500, 502, 503, 504], retryDelayMs = 800 } = cfg;
+            let attempt = 0;
+            while (true) {
+                attempt += 1;
+                const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                const to = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null;
+                try {
+                    const resp = await fetch(url, { ...options, signal: ctrl ? ctrl.signal : undefined });
+                    if (!resp.ok && retryOn.includes(resp.status) && attempt <= retries) {
+                        await new Promise(r => setTimeout(r, retryDelayMs * attempt));
+                        continue;
+                    }
+                    if (to) clearTimeout(to);
+                    return resp;
+                } catch (e) {
+                    if (to) clearTimeout(to);
+                    if (attempt <= retries) {
+                        await new Promise(r => setTimeout(r, retryDelayMs * attempt));
+                        continue;
+                    }
+                    throw e;
+                }
+            }
+        }
+
+        async function abrirDemandaBase() {
+            try {
+                // Obtener documentos disponibles
+                const res = await fetchWithRetry('/api/documentos');
+                const data = await res.json();
+                const documentos = data.documentos || [];
+                
+                if (!documentos.length) {
+                    alert('No hay documentos para generar la demanda base.');
+                    return;
+                }
+
+                // Cargar documentos en el modal de selección
+                cargarDocumentosEnModal(documentos);
+                
+                // Mostrar modal de selección de documentos
+                const modal = new bootstrap.Modal(document.getElementById('seleccionDocumentosModal'));
+                modal.show();
+                
+            } catch (e) {
+                alert('Error cargando documentos: ' + (e.message || e));
+            }
+        }
+
+        function cargarDocumentosEnModal(documentos) {
+            const container = document.getElementById('listaDocumentos');
+            container.innerHTML = '';
+            
+            documentos.forEach(doc => {
+                const instancia = detectarInstancia(doc.nombre);
+                const badgeClass = instancia === 'TS' ? 'bg-danger' : 
+                                 instancia === 'TSJ' ? 'bg-warning' : 'bg-secondary';
+                
+                const card = document.createElement('div');
+                card.className = 'col-md-6 mb-3';
+                card.innerHTML = `
+                    <div class="card documento-card" onclick="toggleDocumento(this, '${doc.nombre}')">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h6 class="card-title mb-1">${doc.nombre}</h6>
+                                <span class="badge ${badgeClass} badge-instancia">${instancia}</span>
+                            </div>
+                            <p class="card-text small text-muted mb-2">
+                                <i class="bi bi-calendar"></i> ${doc.fecha_modificacion || 'Fecha no disponible'}
+                            </p>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="${doc.nombre}" name="documento">
+                                <label class="form-check-label small">
+                                    Incluir en demanda
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function detectarInstancia(nombre) {
+            if (nombre.includes('STS_') || nombre.includes('TS_')) return 'TS';
+            if (nombre.includes('TSJ_') || nombre.includes('TSJ')) return 'TSJ';
+            return 'Otro';
+        }
+
+        function toggleDocumento(card, nombre) {
+            const checkbox = card.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        }
+
+        function confirmarSeleccionDocumentos() {
+            const checkboxes = document.querySelectorAll('input[name="documento"]:checked');
+            const documentosSeleccionados = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (documentosSeleccionados.length === 0) {
+                alert('Por favor, selecciona al menos un documento.');
+                return;
+            }
+
+            // Cerrar modal de selección
+            const modalSeleccion = bootstrap.Modal.getInstance(document.getElementById('seleccionDocumentosModal'));
+            modalSeleccion.hide();
+
+            // Mostrar documentos seleccionados en el formulario
+            mostrarDocumentosSeleccionados(documentosSeleccionados);
+            
+            // Cargar sugerencias de metadatos
+            cargarSugerenciasMetadatos(documentosSeleccionados);
+            
+            // Mostrar modal de metadatos
+            const modalMetadatos = new bootstrap.Modal(document.getElementById('metadatosModal'));
+            modalMetadatos.show();
+        }
+
+        function mostrarDocumentosSeleccionados(documentos) {
+            const container = document.getElementById('documentosSeleccionados');
+            let html = '<i class="bi bi-check-circle text-success"></i> <strong>Documentos seleccionados:</strong><ul class="mb-0 mt-2">';
+            
+            documentos.forEach(doc => {
+                const instancia = detectarInstancia(doc);
+                const badgeClass = instancia === 'TS' ? 'bg-danger' : 
+                                 instancia === 'TSJ' ? 'bg-warning' : 'bg-secondary';
+                html += `<li>${doc} <span class="badge ${badgeClass} badge-instancia">${instancia}</span></li>`;
+            });
+            
+            html += '</ul>';
+            container.innerHTML = html;
+        }
+
+        async function cargarSugerenciasMetadatos(documentos) {
+            try {
+                const response = await fetchWithRetry('/api/extract/demanda', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombres_archivo: documentos })
+                });
+                
+                const data = await response.json();
+                const sugerencias = data.sugerencias_meta || {};
+                
+                // Mostrar sugerencias si existen
+                if (Object.keys(sugerencias).length > 0) {
+                    mostrarSugerencias(sugerencias);
+                }
+                
+            } catch (e) {
+                console.warn('No se pudieron cargar sugerencias:', e);
+            }
+        }
+
+        function mostrarSugerencias(sugerencias) {
+            const container = document.getElementById('sugerenciasContainer');
+            const content = document.getElementById('sugerenciasContent');
+            
+            let html = '<div class="row">';
+            
+            Object.entries(sugerencias).forEach(([campo, valor]) => {
+                if (valor && valor.trim()) {
+                    html += `
+                        <div class="col-md-6 mb-2">
+                            <strong>${campo.replace('_', ' ').toUpperCase()}:</strong> ${valor}
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            
+            if (html.includes('<strong>')) {
+                content.innerHTML = html;
+                container.style.display = 'block';
+            }
+        }
+
+        async function generarDemandaConMetadatos() {
+            try {
+                // Validar formulario
+                const form = document.getElementById('metadatosForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                // Obtener datos del formulario
+                const formData = new FormData(form);
+                const meta = {};
+                
+                // Campos obligatorios
+                meta.nombre = formData.get('nombre');
+                meta.dni = formData.get('dni');
+                meta.domicilio = formData.get('domicilio');
+                meta.grado_principal = formData.get('grado_principal');
+                
+                // Campos de HECHOS (obligatorios)
+                meta.relacion_laboral = formData.get('relacion_laboral');
+                meta.contingencia_evolucion = formData.get('contingencia_evolucion');
+                meta.actuaciones_administrativas = formData.get('actuaciones_administrativas');
+                meta.cuadro_clinico = formData.get('cuadro_clinico');
+                
+                // Campos opcionales
+                meta.empresa = formData.get('empresa') || '';
+                meta.profesion = formData.get('profesion') || '';
+                meta.mutua = formData.get('mutua') || '';
+                meta.grado_subsidiario = formData.get('grado_subsidiario') || '';
+                meta.base_reguladora = formData.get('base_reguladora') || '';
+                meta.indemnizacion_parcial = formData.get('indemnizacion_parcial') || '24 mensualidades';
+                meta.letrado = formData.get('letrado') || '';
+
+                // Obtener documentos seleccionados
+                const checkboxes = document.querySelectorAll('input[name="documento"]:checked');
+                const nombres_archivo = Array.from(checkboxes).map(cb => cb.value);
+
+                if (nombres_archivo.length === 0) {
+                    alert('Por favor, selecciona al menos un documento.');
+                    return;
+                }
+
+                // Mostrar loading
+                setLoading(true, 'Generando demanda TXT con metadatos personalizados...');
+                showProgress(1, 2, 'Procesando metadatos');
+
+                // Generar demanda
+                showProgress(2, 2, 'Generando documento TXT');
+                const response = await fetchWithRetry('/api/demanda-base/txt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        nombres_archivo: nombres_archivo, 
+                        meta: meta 
+                    })
+                }, { retries: 2, timeoutMs: 30000 });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || response.statusText);
+                }
+
+                // Descargar archivo
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `demanda_${meta.nombre.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                // Cerrar modal y limpiar
+                const modal = bootstrap.Modal.getInstance(document.getElementById('metadatosModal'));
+                modal.hide();
+                form.reset();
+                form.classList.remove('was-validated');
+
+                setLoading(false);
+                hideProgress();
+
+                // Mostrar mensaje de éxito
+                mostrarMensajeExito('Demanda TXT generada exitosamente');
+
+            } catch (error) {
+                setLoading(false);
+                hideProgress();
+                alert('Error generando demanda TXT: ' + error.message);
+            }
+        }
+
+        async function generarDemandaDOCX() {
+            try {
+                // Validar formulario
+                const form = document.getElementById('metadatosForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                // Obtener datos del formulario
+                const formData = new FormData(form);
+                const meta = {};
+                
+                // Campos obligatorios
+                meta.nombre = formData.get('nombre');
+                meta.dni = formData.get('dni');
+                meta.domicilio = formData.get('domicilio');
+                meta.grado_principal = formData.get('grado_principal');
+                
+                // Campos de HECHOS (obligatorios)
+                meta.relacion_laboral = formData.get('relacion_laboral');
+                meta.contingencia_evolucion = formData.get('contingencia_evolucion');
+                meta.actuaciones_administrativas = formData.get('actuaciones_administrativas');
+                meta.cuadro_clinico = formData.get('cuadro_clinico');
+                
+                // Campos opcionales
+                meta.empresa = formData.get('empresa') || '';
+                meta.profesion = formData.get('profesion') || '';
+                meta.mutua = formData.get('mutua') || '';
+                meta.grado_subsidiario = formData.get('grado_subsidiario') || '';
+                meta.base_reguladora = formData.get('base_reguladora') || '';
+                meta.indemnizacion_parcial = formData.get('indemnizacion_parcial') || '24 mensualidades';
+                meta.letrado = formData.get('letrado') || '';
+
+                // Obtener documentos seleccionados
+                const checkboxes = document.querySelectorAll('input[name="documento"]:checked');
+                const nombres_archivo = Array.from(checkboxes).map(cb => cb.value);
+
+                if (nombres_archivo.length === 0) {
+                    alert('Por favor, selecciona al menos un documento.');
+                    return;
+                }
+
+                // Mostrar loading
+                setLoading(true, 'Generando demanda DOCX con formato profesional...');
+                showProgress(1, 3, 'Procesando metadatos');
+                showProgress(2, 3, 'Aplicando formato profesional');
+                showProgress(3, 3, 'Generando documento Word');
+
+                // Generar demanda DOCX
+                const response = await fetchWithRetry('/api/demanda-base/docx', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        nombres_archivo: nombres_archivo, 
+                        meta: meta 
+                    })
+                }, { retries: 2, timeoutMs: 45000 });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || response.statusText);
+                }
+
+                // Descargar archivo DOCX
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `demanda_${meta.nombre.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.docx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                // Cerrar modal y limpiar
+                const modal = bootstrap.Modal.getInstance(document.getElementById('metadatosModal'));
+                modal.hide();
+                form.reset();
+                form.classList.remove('was-validated');
+
+                setLoading(false);
+                hideProgress();
+
+                // Mostrar mensaje de éxito
+                mostrarMensajeExito('Demanda DOCX generada exitosamente con formato profesional');
+
+            } catch (error) {
+                setLoading(false);
+                hideProgress();
+                alert('Error generando demanda DOCX: ' + error.message);
+            }
+        }
+
+        function mostrarMensajeExito(mensaje) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-custom position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="bi bi-check-circle"></i>
+                <strong>Éxito:</strong> ${mensaje}
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Event listeners para el formulario
+        document.addEventListener('DOMContentLoaded', function() {
+            // Seleccionar todos los documentos
+            document.getElementById('seleccionarTodos').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('input[name="documento"]');
+                const cards = document.querySelectorAll('.documento-card');
+                
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                
+                cards.forEach(card => {
+                    if (this.checked) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+            });
+
+            // Validación en tiempo real del formulario
+            const form = document.getElementById('metadatosForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.checkValidity()) {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    } else {
+                        this.classList.remove('is-valid');
+                        this.classList.add('is-invalid');
+                    }
+                });
+            });
+        });
+
+        let chartCategorias, chartProbabilidades;
+
+        // Cargar análisis al iniciar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarAnalisis();
+        });
+
+        async function cargarAnalisis() {
+            mostrarLoading(true);
+            
+            try {
+                const response = await fetch('/api/analisis-predictivo');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarDatos(data);
+                    crearGraficos(data);
+                } else {
+                    mostrarError('Error al cargar el análisis: ' + data.error);
+                }
+            } catch (error) {
+                mostrarError('Error de conexión: ' + error.message);
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        function mostrarLoading(mostrar) {
+            document.getElementById('loadingSpinner').style.display = mostrar ? 'block' : 'none';
+            document.getElementById('mainContent').style.display = mostrar ? 'none' : 'block';
+        }
+
+        function mostrarError(mensaje) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-custom';
+            alertDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Error:</strong> ${mensaje}
+            `;
+            
+            const container = document.querySelector('.container-fluid');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        function mostrarDatos(data) {
+            // Resumen ejecutivo
+            document.getElementById('totalDocumentos').textContent = data.resumen_ejecutivo.total_documentos;
+            document.getElementById('totalFrasesClave').textContent = data.resumen_ejecutivo.total_frases_clave;
+            document.getElementById('categoriasIdentificadas').textContent = data.resumen_ejecutivo.categorias_identificadas;
+            document.getElementById('confianzaAnalisis').textContent = (data.resumen_ejecutivo.confianza_analisis * 100).toFixed(0) + '%';
+
+            // Predicciones
+            const probFavorable = data.analisis_predictivo.predicciones.probabilidad_favorable;
+            const probDesfavorable = data.analisis_predictivo.predicciones.probabilidad_desfavorable;
+            
+            document.getElementById('probabilidadFavorable').textContent = probFavorable + '%';
+            document.getElementById('probabilidadDesfavorable').textContent = probDesfavorable + '%';
+            
+            document.getElementById('barraFavorable').style.width = probFavorable + '%';
+            document.getElementById('barraDesfavorable').style.width = probDesfavorable + '%';
+            
+            document.getElementById('tendenciaGeneral').textContent = data.analisis_predictivo.predicciones.resumen.tendencia_general;
+
+            // Análisis de riesgo
+            const riesgo = data.analisis_predictivo.analisis_riesgo.riesgo_general;
+            document.getElementById('nivelRiesgo').textContent = riesgo.nivel;
+            document.getElementById('valorRiesgo').textContent = riesgo.valor;
+            document.getElementById('interpretacionRiesgo').textContent = riesgo.interpretacion;
+
+            // Mostrar recomendaciones de riesgo
+            mostrarRecomendacionesRiesgo(data.analisis_predictivo.analisis_riesgo.recomendaciones_riesgo);
+
+            // Mostrar insights
+            mostrarInsights(data.insights_juridicos);
+
+            // Mostrar recomendaciones
+            mostrarRecomendaciones(data.recomendaciones);
+
+            // Mostrar factores clave
+            mostrarFactoresClave(data.factores_clave);
+        }
+
+        function mostrarRecomendacionesRiesgo(recomendaciones) {
+            const container = document.getElementById('recomendacionesRiesgo');
+            container.innerHTML = '<strong>Acciones Recomendadas:</strong><ul class="mt-2">';
+            
+            recomendaciones.forEach(rec => {
+                container.innerHTML += `<li>${rec}</li>`;
+            });
+            
+            container.innerHTML += '</ul>';
+        }
+
+        function mostrarInsights(insights) {
+            const container = document.getElementById('insightsContainer');
+            let html = '';
+
+            // Patrones identificados
+            if (insights.patrones_identificados.length > 0) {
+                html += '<div class="mb-3"><strong>🔍 Patrones Identificados:</strong><ul>';
+                insights.patrones_identificados.forEach(patron => {
+                    html += `<li>${patron.descripcion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            // Tendencias emergentes
+            if (insights.tendencias_emergentes.length > 0) {
+                html += '<div class="mb-3"><strong>📈 Tendencias Emergentes:</strong><ul>';
+                insights.tendencias_emergentes.forEach(tendencia => {
+                    html += `<li>${tendencia.descripcion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            // Alertas
+            if (insights.alertas.length > 0) {
+                html += '<div class="mb-3"><strong>⚠️ Alertas:</strong><ul>';
+                insights.alertas.forEach(alerta => {
+                    html += `<li>${alerta.descripcion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            // Oportunidades
+            if (insights.oportunidades.length > 0) {
+                html += '<div class="mb-3"><strong>💡 Oportunidades:</strong><ul>';
+                insights.oportunidades.forEach(oportunidad => {
+                    html += `<li>${oportunidad.descripcion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function mostrarRecomendaciones(recomendaciones) {
+            const container = document.getElementById('recomendacionesContainer');
+            let html = '';
+
+            recomendaciones.forEach(rec => {
+                const badgeClass = rec.prioridad === 'crítica' ? 'bg-danger' : 
+                                 rec.prioridad === 'alta' ? 'bg-warning' : 'bg-info';
+                
+                html += `
+                    <div class="mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge ${badgeClass}">${rec.prioridad}</span>
+                            <small class="text-muted">${rec.tipo}</small>
+                        </div>
+                        <h6>${rec.titulo}</h6>
+                        <p class="small mb-2">${rec.descripcion}</p>
+                        <ul class="small">
+                            ${rec.acciones.map(accion => `<li>${accion}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function mostrarFactoresClave(factores) {
+            const container = document.getElementById('factoresClaveContainer');
+            let html = '<div class="row">';
+
+            factores.forEach(factor => {
+                const impactoClass = factor.impacto === 'alto' ? 'bg-danger' : 
+                                   factor.impacto === 'medio' ? 'bg-warning' : 'bg-success';
+                
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="card-title mb-0">${factor.categoria}</h6>
+                                    <span class="badge ${impactoClass}">${factor.impacto}</span>
+                                </div>
+                                <p class="small text-muted mb-2">${factor.descripcion}</p>
+                                <div class="mb-2">
+                                    <strong>Total apariciones:</strong> ${factor.total_apariciones}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Recomendaciones:</strong>
+                                    <ul class="small">
+                                        ${factor.recomendaciones.map(rec => `<li>${rec}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function crearGraficos(data) {
+            // Gráfico de categorías
+            const ctxCategorias = document.getElementById('chartCategorias').getContext('2d');
+            if (chartCategorias) chartCategorias.destroy();
+            
+            const categoriasData = data.analisis_predictivo.tendencias.categorias_dominantes;
+            chartCategorias = new Chart(ctxCategorias, {
+                type: 'bar',
+                data: {
+                    labels: categoriasData.map(cat => cat.categoria),
+                    datasets: [{
+                        label: 'Total Apariciones',
+                        data: categoriasData.map(cat => cat.total),
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de probabilidades
+            const ctxProbabilidades = document.getElementById('chartProbabilidades').getContext('2d');
+            if (chartProbabilidades) chartProbabilidades.destroy();
+            
+            const predicciones = data.analisis_predictivo.predicciones;
+            chartProbabilidades = new Chart(ctxProbabilidades, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Favorable', 'Desfavorable'],
+                    datasets: [{
+                        data: [predicciones.probabilidad_favorable, predicciones.probabilidad_desfavorable],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(255, 99, 132, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

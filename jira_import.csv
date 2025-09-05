@@ -1,0 +1,75 @@
+Issue Type,Summary,Description,Epic Link,Priority,Story Points
+Epic,Sprint 1: Optimización del Sistema IA,Mejorar y estabilizar el sistema de IA implementado,,High,
+Epic,Sprint 2: Mejoras en la Interfaz de Usuario,Mejorar la experiencia de usuario y usabilidad,,High,
+Epic,Sprint 3: Funcionalidades Avanzadas de Demanda,Expandir las capacidades de generación de demandas,,Medium,
+Epic,Sprint 4: Integración y APIs,Mejorar la integración con sistemas externos,,Medium,
+Epic,Sprint 5: Escalabilidad y Rendimiento,Preparar el sistema para mayor carga de usuarios,,Low,
+Epic,Sprint 6: Testing y Calidad,Asegurar la calidad y estabilidad del sistema,,High,
+Epic,Sprint 7: Documentación y Entrenamiento,Documentar completamente el sistema y preparar para producción,,Medium,
+Story,Optimizar modelo SBERT para mejorar precisión,Como desarrollador quiero optimizar el modelo SBERT para mejorar la precisión del análisis de documentos legales,Sprint 1: Optimización del Sistema IA,High,8
+Story,Añadir más documentos de entrenamiento,Implementar sistema para agregar automáticamente nuevos documentos al corpus de entrenamiento,Sprint 1: Optimización del Sistema IA,High,5
+Story,Implementar cross-validation,Implementar validación cruzada para evaluar la robustez del modelo,Sprint 1: Optimización del Sistema IA,Medium,3
+Story,Optimizar hiperparámetros del clasificador,Usar técnicas de optimización automática para encontrar los mejores hiperparámetros,Sprint 1: Optimización del Sistema IA,Medium,5
+Story,Implementar cache de embeddings,Como usuario quiero que el análisis sea más rápido implementando cache de embeddings,Sprint 1: Optimización del Sistema IA,High,8
+Story,Optimizar procesamiento de documentos,Mejorar la velocidad de procesamiento de documentos PDF y TXT,Sprint 1: Optimización del Sistema IA,Medium,5
+Story,Implementar drag & drop para subir documentos,Como usuario quiero una interfaz más intuitiva para subir documentos con drag & drop,Sprint 2: Mejoras en la Interfaz de Usuario,High,5
+Story,Añadir preview de documentos,Mostrar una vista previa del documento antes de procesarlo,Sprint 2: Mejoras en la Interfaz de Usuario,Medium,3
+Story,Mostrar progreso de carga,Implementar barra de progreso durante la carga y procesamiento de documentos,Sprint 2: Mejoras en la Interfaz de Usuario,Medium,2
+Story,Validación de formatos de archivo,Validar automáticamente los formatos de archivo soportados,Sprint 2: Mejoras en la Interfaz de Usuario,Medium,3
+Story,Crear gráficos interactivos para resultados,Como usuario quiero ver resultados de análisis más visuales con gráficos interactivos,Sprint 2: Mejoras en la Interfaz de Usuario,High,8
+Story,Implementar heatmaps de confianza,Mostrar visualmente las áreas de mayor y menor confianza en el análisis,Sprint 2: Mejoras en la Interfaz de Usuario,Medium,5
+Story,Añadir comparación de documentos,Permitir comparar múltiples documentos lado a lado,Sprint 2: Mejoras en la Interfaz de Usuario,Medium,8
+Story,Crear reportes exportables,Generar reportes en PDF y Excel con los resultados del análisis,Sprint 2: Mejoras en la Interfaz de Usuario,Medium,5
+Story,Implementar CRUD de frases clave,Como usuario quiero poder gestionar frases clave fácilmente con operaciones CRUD,Sprint 2: Mejoras en la Interfaz de Usuario,High,8
+Story,Añadir categorización automática de frases,Categorizar automáticamente las frases clave según su contexto,Sprint 2: Mejoras en la Interfaz de Usuario,Medium,5
+Story,Generar demandas en diferentes formatos,Como abogado quiero generar demandas en diferentes formatos (PDF, DOCX, TXT),Sprint 3: Funcionalidades Avanzadas de Demanda,High,8
+Story,Implementar exportación a PDF,Convertir las demandas generadas a formato PDF profesional,Sprint 3: Funcionalidades Avanzadas de Demanda,High,5
+Story,Añadir plantillas personalizables,Permitir crear y personalizar plantillas de demanda,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,8
+Story,Crear generador de anexos,Generar automáticamente anexos con la documentación de apoyo,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,5
+Story,Implementar firma digital,Permitir firmar digitalmente las demandas generadas,Sprint 3: Funcionalidades Avanzadas de Demanda,Low,8
+Story,Crear editor de plantillas,Como abogado quiero personalizar las demandas más fácilmente con un editor visual,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,13
+Story,Implementar variables dinámicas,Usar variables dinámicas en las plantillas para personalización automática,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,5
+Story,Añadir validación de contenido,Validar automáticamente el contenido de las demandas generadas,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,5
+Story,Crear sistema de versiones,Mantener un historial de versiones de las demandas generadas,Sprint 3: Funcionalidades Avanzadas de Demanda,Low,8
+Story,Implementar análisis de calidad de demandas,Como abogado quiero ver sugerencias de mejora en las demandas,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,8
+Story,Añadir sugerencias de argumentos,Sugerir argumentos legales basados en el análisis de casos similares,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,8
+Story,Crear checklist de verificación,Generar checklist automático para verificar la completitud de la demanda,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,3
+Story,Implementar comparación con casos similares,Comparar la demanda actual con casos similares para sugerir mejoras,Sprint 3: Funcionalidades Avanzadas de Demanda,Medium,8
+Story,Implementar autenticación JWT,Como desarrollador quiero APIs más robustas con autenticación JWT,Sprint 4: Integración y APIs,High,8
+Story,Añadir rate limiting,Implementar límites de tasa para proteger las APIs,Sprint 4: Integración y APIs,High,5
+Story,Crear documentación OpenAPI,Generar documentación automática de las APIs,Sprint 4: Integración y APIs,Medium,5
+Story,Implementar webhooks,Permitir notificaciones automáticas a sistemas externos,Sprint 4: Integración y APIs,Medium,8
+Story,Conectar con bases de datos jurídicas,Como usuario quiero integrar con sistemas externos de bases de datos jurídicas,Sprint 4: Integración y APIs,Medium,13
+Story,Implementar sincronización con calendarios,Sincronizar fechas importantes con calendarios externos,Sprint 4: Integración y APIs,Medium,8
+Story,Añadir integración con gestores documentales,Integrar con sistemas de gestión documental,Sprint 4: Integración y APIs,Medium,8
+Story,Implementar logging estructurado,Como administrador quiero monitorear el sistema con logging estructurado,Sprint 4: Integración y APIs,High,5
+Story,Añadir métricas de rendimiento,Implementar métricas detalladas de rendimiento del sistema,Sprint 4: Integración y APIs,High,8
+Story,Crear dashboard de monitoreo,Dashboard en tiempo real para monitorear el sistema,Sprint 4: Integración y APIs,Medium,8
+Story,Implementar alertas automáticas,Sistema de alertas para problemas del sistema,Sprint 4: Integración y APIs,Medium,5
+Story,Implementar microservicios,Como administrador quiero que el sistema sea escalable con microservicios,Sprint 5: Escalabilidad y Rendimiento,High,21
+Story,Añadir balanceador de carga,Implementar balanceo de carga para distribuir el tráfico,Sprint 5: Escalabilidad y Rendimiento,High,13
+Story,Configurar base de datos distribuida,Configurar base de datos distribuida para mayor escalabilidad,Sprint 5: Escalabilidad y Rendimiento,High,13
+Story,Implementar cache distribuido,Implementar cache distribuido para mejorar el rendimiento,Sprint 5: Escalabilidad y Rendimiento,Medium,8
+Story,Optimizar consultas de base de datos,Como usuario quiero que el sistema sea más rápido optimizando consultas,Sprint 5: Escalabilidad y Rendimiento,High,8
+Story,Implementar CDN para archivos estáticos,Usar CDN para servir archivos estáticos más rápido,Sprint 5: Escalabilidad y Rendimiento,Medium,5
+Story,Añadir compresión de respuestas,Comprimir respuestas HTTP para reducir el ancho de banda,Sprint 5: Escalabilidad y Rendimiento,Medium,3
+Story,Optimizar carga de modelos IA,Optimizar la carga y uso de modelos de IA,Sprint 5: Escalabilidad y Rendimiento,High,8
+Story,Configurar Docker containers,Como desarrollador quiero deployment automatizado con Docker,Sprint 5: Escalabilidad y Rendimiento,High,8
+Story,Implementar Kubernetes,Orquestar containers con Kubernetes,Sprint 5: Escalabilidad y Rendimiento,High,13
+Story,Añadir health checks,Implementar verificaciones de salud del sistema,Sprint 5: Escalabilidad y Rendimiento,Medium,3
+Story,Implementar tests unitarios,Como desarrollador quiero tests automatizados completos con 90% coverage,Sprint 6: Testing y Calidad,High,13
+Story,Añadir tests de integración,Implementar tests de integración para validar componentes,Sprint 6: Testing y Calidad,High,8
+Story,Crear tests de rendimiento,Tests para validar el rendimiento del sistema,Sprint 6: Testing y Calidad,Medium,8
+Story,Implementar tests de seguridad,Tests para validar la seguridad del sistema,Sprint 6: Testing y Calidad,High,8
+Story,Implementar manejo de errores robusto,Como usuario quiero que el sistema sea estable con manejo robusto de errores,Sprint 6: Testing y Calidad,High,8
+Story,Añadir recuperación automática,Sistema de recuperación automática ante fallos,Sprint 6: Testing y Calidad,Medium,8
+Story,Crear sistema de rollback,Sistema para revertir cambios problemáticos,Sprint 6: Testing y Calidad,Medium,5
+Story,Implementar circuit breakers,Circuit breakers para prevenir fallos en cascada,Sprint 6: Testing y Calidad,Medium,5
+Story,Crear manual de usuario,Como usuario quiero documentación completa con manual de usuario,Sprint 7: Documentación y Entrenamiento,High,8
+Story,Añadir tutoriales interactivos,Tutoriales paso a paso para usar el sistema,Sprint 7: Documentación y Entrenamiento,Medium,8
+Story,Implementar sistema de ayuda contextual,Ayuda contextual integrada en la interfaz,Sprint 7: Documentación y Entrenamiento,Medium,8
+Story,Crear videos de entrenamiento,Videos tutoriales para diferentes funcionalidades,Sprint 7: Documentación y Entrenamiento,Medium,13
+Story,Documentar arquitectura del sistema,Como desarrollador quiero documentación técnica de la arquitectura,Sprint 7: Documentación y Entrenamiento,High,8
+Story,Crear guías de desarrollo,Guías para desarrolladores que trabajen en el proyecto,Sprint 7: Documentación y Entrenamiento,High,5
+Story,Añadir diagramas de flujo,Diagramas visuales de los flujos del sistema,Sprint 7: Documentación y Entrenamiento,Medium,5
+Story,Implementar documentación de APIs,Documentación completa de todas las APIs,Sprint 7: Documentación y Entrenamiento,High,8

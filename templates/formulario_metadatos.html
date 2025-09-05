@@ -1,0 +1,289 @@
+<!-- Modal de Formulario de Metadatos para Demandas -->
+<div class="modal fade" id="metadatosModal" tabindex="-1" aria-labelledby="metadatosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="metadatosModalLabel">
+                    <i class="bi bi-file-earmark-text"></i> Configurar Metadatos de la Demanda
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="metadatosForm" novalidate>
+                    <!-- Información del Demandante -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">
+                                <i class="bi bi-person"></i> Información del Demandante
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label">Nombre Completo *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                            <div class="invalid-feedback">
+                                Por favor, ingresa el nombre completo del demandante.
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="dni" class="form-label">DNI/NIE *</label>
+                            <input type="text" class="form-control" id="dni" name="dni" required>
+                            <div class="invalid-feedback">
+                                Por favor, ingresa un DNI o NIE válido.
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="domicilio" class="form-label">Domicilio Completo *</label>
+                            <textarea class="form-control" id="domicilio" name="domicilio" rows="2" required></textarea>
+                            <div class="invalid-feedback">
+                                Por favor, ingresa el domicilio completo.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información Laboral -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">
+                                <i class="bi bi-briefcase"></i> Información Laboral
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="empresa" class="form-label">Empresa/Entidad</label>
+                            <input type="text" class="form-control" id="empresa" name="empresa">
+                            <div class="form-text">Dejar vacío si no se conoce</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="profesion" class="form-label">Profesión/Categoría</label>
+                            <input type="text" class="form-control" id="profesion" name="profesion">
+                            <div class="form-text">Ej: Personal de limpieza, administrativo, etc.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="mutua" class="form-label">Mutua de Accidentes</label>
+                            <input type="text" class="form-control" id="mutua" name="mutua">
+                            <div class="form-text">Si aplica</div>
+                        </div>
+                    </div>
+
+                    <!-- HECHOS - Información para los Hechos de la Demanda -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-warning border-bottom pb-2">
+                                <i class="bi bi-list-check"></i> HECHOS - Información para los Hechos de la Demanda
+                            </h6>
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Esta información se utilizará para completar los HECHOS de la demanda.
+                            </div>
+                        </div>
+                        
+                        <!-- 1. Relación Laboral -->
+                        <div class="col-12 mb-3">
+                            <label for="relacion_laboral" class="form-label">1. Relación Laboral *</label>
+                            <textarea class="form-control" id="relacion_laboral" name="relacion_laboral" rows="3" required 
+                                placeholder="Ej: La demandante presta servicios como Limpiadora para la empresa SENIOR SERVICIOS INTEGRALES, S.A. con domicilio en 47009 VALLADOLID, calle Ducado nº 9."></textarea>
+                            <div class="invalid-feedback">
+                                Por favor, describe la relación laboral del demandante.
+                            </div>
+                            <div class="form-text">Describe el puesto de trabajo, empresa y domicilio de la empresa</div>
+                        </div>
+
+                        <!-- 2. Contingencia y Evolución -->
+                        <div class="col-12 mb-3">
+                            <label for="contingencia_evolucion" class="form-label">2. Contingencia y Evolución *</label>
+                            <textarea class="form-control" id="contingencia_evolucion" name="contingencia_evolucion" rows="3" required
+                                placeholder="Ej: Accidente de trabajo / enfermedad común, con periodos de IT y secuelas actuales."></textarea>
+                            <div class="invalid-feedback">
+                                Por favor, describe la contingencia y su evolución.
+                            </div>
+                            <div class="form-text">Especifica si es accidente de trabajo o enfermedad común, periodos de IT y secuelas</div>
+                        </div>
+
+                        <!-- 3. Actuaciones Administrativas -->
+                        <div class="col-12 mb-3">
+                            <label for="actuaciones_administrativas" class="form-label">3. Actuaciones Administrativas *</label>
+                            <textarea class="form-control" id="actuaciones_administrativas" name="actuaciones_administrativas" rows="3" required
+                                placeholder="Ej: EVI, inicio IP, audiencia, resolución del INSS y Reclamación Previa."></textarea>
+                            <div class="invalid-feedback">
+                                Por favor, describe las actuaciones administrativas realizadas.
+                            </div>
+                            <div class="form-text">Lista las actuaciones: EVI, inicio IP, audiencia, resolución del INSS, Reclamación Previa</div>
+                        </div>
+
+                        <!-- 4. Cuadro Clínico y Limitaciones -->
+                        <div class="col-12 mb-3">
+                            <label for="cuadro_clinico" class="form-label">4. Cuadro Clínico y Limitaciones *</label>
+                            <textarea class="form-control" id="cuadro_clinico" name="cuadro_clinico" rows="4" required
+                                placeholder="Ej: Describir secuelas relevantes y su impacto en las tareas fundamentales."></textarea>
+                            <div class="invalid-feedback">
+                                Por favor, describe el cuadro clínico y las limitaciones.
+                            </div>
+                            <div class="form-text">Describe las secuelas relevantes y su impacto en las tareas fundamentales del trabajo</div>
+                        </div>
+                    </div>
+
+                    <!-- Información de la Demanda -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">
+                                <i class="bi bi-gavel"></i> Información de la Demanda
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="grado_principal" class="form-label">Grado Principal *</label>
+                            <select class="form-select" id="grado_principal" name="grado_principal" required>
+                                <option value="">Seleccionar grado...</option>
+                                <option value="IPT">IPT - Incapacidad Permanente Total</option>
+                                <option value="IPP">IPP - Incapacidad Permanente Parcial</option>
+                                <option value="IPAB">IPAB - Incapacidad Permanente Absoluta</option>
+                                <option value="GCI">GCI - Gran Invalidez</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Por favor, selecciona el grado principal.
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="grado_subsidiario" class="form-label">Grado Subsidiario</label>
+                            <select class="form-select" id="grado_subsidiario" name="grado_subsidiario">
+                                <option value="">Seleccionar grado subsidiario...</option>
+                                <option value="IPT">IPT - Incapacidad Permanente Total</option>
+                                <option value="IPP">IPP - Incapacidad Permanente Parcial</option>
+                                <option value="IPAB">IPAB - Incapacidad Permanente Absoluta</option>
+                                <option value="GCI">GCI - Gran Invalidez</option>
+                            </select>
+                            <div class="form-text">Opcional: grado alternativo</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="base_reguladora" class="form-label">Base Reguladora</label>
+                            <input type="text" class="form-control" id="base_reguladora" name="base_reguladora">
+                            <div class="form-text">Ej: 1.200,00 €</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="indemnizacion_parcial" class="form-label">Indemnización Parcial</label>
+                            <select class="form-select" id="indemnizacion_parcial" name="indemnizacion_parcial">
+                                <option value="24 mensualidades">24 mensualidades</option>
+                                <option value="30 mensualidades">30 mensualidades</option>
+                                <option value="36 mensualidades">36 mensualidades</option>
+                                <option value="42 mensualidades">42 mensualidades</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Información del Letrado -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">
+                                <i class="bi bi-person-badge"></i> Información del Letrado
+                            </h6>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="letrado" class="form-label">Letrado/Abogado</label>
+                            <input type="text" class="form-control" id="letrado" name="letrado">
+                            <div class="form-text">Nombre del letrado que representa al demandante</div>
+                        </div>
+                    </div>
+
+                    <!-- Documentos Seleccionados -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">
+                                <i class="bi bi-files"></i> Documentos Seleccionados
+                            </h6>
+                        </div>
+                        <div class="col-12">
+                            <div id="documentosSeleccionados" class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Los documentos se seleccionarán en el siguiente paso.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sugerencias del Sistema -->
+                    <div class="row mb-4" id="sugerenciasContainer" style="display: none;">
+                        <div class="col-12">
+                            <h6 class="text-success border-bottom pb-2">
+                                <i class="bi bi-lightbulb"></i> Sugerencias del Sistema
+                            </h6>
+                            <div id="sugerenciasContent" class="alert alert-success">
+                                <!-- Se llenará dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="generarDemandaDOCX()">
+                    <i class="bi bi-file-earmark-word"></i> Generar DOCX
+                </button>
+                <button type="button" class="btn btn-primary" onclick="generarDemandaConMetadatos()">
+                    <i class="bi bi-file-earmark-text"></i> Generar TXT
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Selección de Documentos -->
+<div class="modal fade" id="seleccionDocumentosModal" tabindex="-1" aria-labelledby="seleccionDocumentosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="seleccionDocumentosModalLabel">
+                    <i class="bi bi-files"></i> Seleccionar Documentos para la Demanda
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="seleccionarTodos">
+                        <label class="form-check-label" for="seleccionarTodos">
+                            <strong>Seleccionar todos los documentos</strong>
+                        </label>
+                    </div>
+                </div>
+                <div id="listaDocumentos" class="row">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-info" id="btnConfirmarDocumentos" onclick="confirmarSeleccionDocumentos()">
+                    <i class="bi bi-check-circle"></i> Confirmar Selección
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .modal-xl {
+        max-width: 1200px;
+    }
+    
+    .documento-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .documento-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .documento-card.selected {
+        border-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+    
+    .badge-instancia {
+        font-size: 0.75rem;
+    }
+</style>
