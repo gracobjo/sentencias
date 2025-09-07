@@ -550,6 +550,33 @@ async def obtener_info_documento(nombre_archivo: str):
         logger.error(f"Error obteniendo info del documento {nombre_archivo}: {e}")
         raise HTTPException(status_code=500, detail=f"Error obteniendo info del documento: {str(e)}")
 
+@app.get("/analisis-predictivo", response_class=HTMLResponse)
+async def analisis_predictivo(request: Request):
+    """Página de análisis predictivo"""
+    try:
+        # Obtener análisis de sentencias existentes
+        datos_analisis = analizar_sentencias_existentes()
+        
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "resultados_por_archivo": datos_analisis.get("resultados_por_archivo", {}),
+            "ranking_global": datos_analisis.get("ranking_global", {}),
+            "total_apariciones": datos_analisis.get("total_apariciones", 0),
+            "archivos_analizados": datos_analisis.get("archivos_analizados", 0),
+            "show_predictive_analysis": True
+        })
+    except Exception as e:
+        logger.error(f"Error en análisis predictivo: {e}")
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "resultados_por_archivo": {},
+            "ranking_global": {},
+            "total_apariciones": 0,
+            "archivos_analizados": 0,
+            "error": f"Error cargando análisis predictivo: {str(e)}",
+            "show_predictive_analysis": True
+        })
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
