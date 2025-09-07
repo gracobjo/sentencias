@@ -1578,7 +1578,7 @@
         // Función para mostrar detalles de un documento específico
         function mostrarDetallesDocumento(nombreArchivo) {
             // Obtener datos del documento desde el backend
-            fetch(`/api/documento/${encodeURIComponent(nombreArchivo)}`)
+            fetch(`/api/documento-info/${encodeURIComponent(nombreArchivo)}`)
                 .then(response => response.json())
                 .then(data => {
                     const modalBody = document.getElementById('documentoModalBody');

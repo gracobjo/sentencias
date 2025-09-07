@@ -449,6 +449,35 @@ async def obtener_documento(nombre_archivo: str):
         logger.error(f"Error obteniendo documento {nombre_archivo}: {e}")
         raise HTTPException(status_code=500, detail=f"Error obteniendo documento: {str(e)}")
 
+@app.get("/api/documento-info/{nombre_archivo}")
+async def obtener_info_documento(nombre_archivo: str):
+    """Endpoint para obtener información/metadatos de un documento"""
+    try:
+        # Obtener datos del análisis
+        datos_analisis = analizar_sentencias_existentes()
+        resultados = datos_analisis.get("resultados_por_archivo", {})
+        
+        if nombre_archivo not in resultados:
+            raise HTTPException(status_code=404, detail="Documento no encontrado en análisis")
+        
+        resultado = resultados[nombre_archivo]
+        
+        # Obtener información del archivo
+        archivo_path = SENTENCIAS_DIR / nombre_archivo
+        if archivo_path.exists():
+            stat = archivo_path.stat()
+            resultado["tamaño"] = stat.st_size
+            resultado["fecha_modificacion"] = datetime.fromtimestamp(stat.st_mtime).isoformat()
+        else:
+            resultado["tamaño"] = 0
+            resultado["fecha_modificacion"] = "Desconocida"
+        
+        return resultado
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo info del documento {nombre_archivo}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error obteniendo info del documento: {str(e)}")
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
