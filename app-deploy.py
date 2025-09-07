@@ -423,10 +423,18 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
                         ranking_frases[frase] = {
                             "total": 0,
                             "categoria": categoria,
-                            "archivos": set()
+                            "archivos": set(),
+                            "ocurrencias": []
                         }
                     ranking_frases[frase]["total"] += ocurrencia.get("apariciones", 0)
                     ranking_frases[frase]["archivos"].add(ocurrencia.get("archivo", ""))
+                    # Agregar la ocurrencia individual
+                    ranking_frases[frase]["ocurrencias"].append({
+                        "archivo": ocurrencia.get("archivo", ""),
+                        "apariciones": ocurrencia.get("apariciones", 0),
+                        "contexto": f"Documento: {ocurrencia.get('archivo', '')}",
+                        "posicion": len(ranking_frases[frase]["ocurrencias"]) + 1
+                    })
         
         # Convertir Set a Array para JSON
         for frase_info in ranking_frases.values():
