@@ -160,6 +160,9 @@
                 <button class="btn btn-danger" onclick="debugAvanzado()">
                     <i class="bi bi-exclamation-triangle me-2"></i>Debug Avanzado
                 </button>
+                <button class="btn btn-warning" onclick="limpiarCache()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Limpiar Caché
+                </button>
             </div>
         </div>
 
@@ -658,7 +661,9 @@
     
     <!-- Variables globales definidas fuera del bloque JavaScript -->
     <script>
-        window.totalApariciones = {{ total_apariciones|default(1) }};
+        // eslint-disable-next-line
+        window.totalApariciones = {{ total_apariciones|default(1) | tojson }};
+        // eslint-disable-next-line
         window.documentosData = {{ resultados_por_archivo|tojson|safe }};
     </script>
     
@@ -2126,6 +2131,24 @@
         function testShowFraseDetails() {
             console.log('=== TEST: showFraseDetails ===');
             mostrarNotificacion('Test ejecutado correctamente', 'success');
+        }
+
+        // Función para limpiar caché
+        async function limpiarCache() {
+            try {
+                const response = await fetch('/api/limpiar-cache', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                mostrarNotificacion('Caché limpiado correctamente', 'success');
+                // Recargar la página para obtener datos frescos
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } catch (error) {
+                console.error('Error limpiando caché:', error);
+                mostrarNotificacion('Error limpiando caché', 'danger');
+            }
         }
 
         // Event listeners

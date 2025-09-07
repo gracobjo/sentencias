@@ -35,6 +35,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Cache para análisis
+ANALISIS_CACHE = {}
+CACHE_TIMESTAMP = None
+CACHE_DURATION = 300  # 5 minutos en segundos
+
 # Crear aplicación FastAPI con configuración robusta
 app = FastAPI(
     title="Analizador de Sentencias IPP/INSS",
@@ -916,6 +921,15 @@ async def api_analizar():
         logger.error(f"Error en API: {e}")
         return {"error": f"Error al analizar: {str(e)}"}
 
+@app.post("/api/limpiar-cache")
+async def limpiar_cache():
+    """Endpoint para limpiar el caché de análisis"""
+    global CACHE_TIMESTAMP, ANALISIS_CACHE
+    ANALISIS_CACHE = {}
+    CACHE_TIMESTAMP = None
+    logger.info("🗑️ Caché limpiado")
+    return JSONResponse(content={"mensaje": "Caché limpiado correctamente"})
+
 
 @app.get("/api/analisis-predictivo")
 async def api_analisis_predictivo():
@@ -1691,19 +1705,31 @@ async def redirigir_documento(nombre_archivo: str):
 
 
 def analizar_sentencias_existentes() -> Dict[str, Any]:
-    """Analiza las sentencias existentes en la carpeta"""
+    """Analiza las sentencias existentes en la carpeta con caché"""
+    global CACHE_TIMESTAMP, ANALISIS_CACHE
+    
+    # Verificar si el caché es válido
+    if (CACHE_TIMESTAMP and 
+        (datetime.now() - CACHE_TIMESTAMP).total_seconds() < CACHE_DURATION and 
+        ANALISIS_CACHE):
+        logger.info("📋 Usando análisis desde caché")
+        return ANALISIS_CACHE
+    
     try:
         logger.info(f"🔍 Iniciando análisis de sentencias existentes en: {SENTENCIAS_DIR}")
         
         if not SENTENCIAS_DIR.exists():
             logger.warning(f"❌ La carpeta '{SENTENCIAS_DIR}' no existe")
-            return {
+            resultado = {
                 "error": f"La carpeta '{SENTENCIAS_DIR}' no existe",
                 "archivos_analizados": 0,
                 "total_apariciones": 0,
                 "resultados_por_archivo": {},
                 "ranking_global": {}
             }
+            ANALISIS_CACHE = resultado
+            CACHE_TIMESTAMP = datetime.now()
+            return resultado
         
         # Buscar archivos de texto y PDF
         archivos_soportados = [f for f in SENTENCIAS_DIR.iterdir() 
@@ -1790,12 +1816,19 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
         logger.info(f"  - Categorías encontradas: {list(ranking_ordenado.keys())}")
         logger.info(f"  - Ranking global: {ranking_ordenado}")
         
-        return {
+        resultado = {
             "archivos_analizados": len(archivos_soportados),
             "total_apariciones": total_apariciones,
             "resultados_por_archivo": resultados_por_archivo,
             "ranking_global": ranking_ordenado
         }
+        
+        # Guardar en caché
+        ANALISIS_CACHE = resultado
+        CACHE_TIMESTAMP = datetime.now()
+        logger.info("💾 Análisis guardado en caché")
+        
+        return resultado
         
     except Exception as e:
         logger.error(f"❌ Error analizando sentencias: {e}")
