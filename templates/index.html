@@ -656,14 +656,14 @@
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Variables globales definidas fuera del bloque JavaScript -->
+    <script>
+        window.totalApariciones = {{ total_apariciones|default(1) }};
+        window.documentosData = {{ resultados_por_archivo|tojson|safe }};
+    </script>
+    
     <!-- Script personalizado -->
     <script>
-        // Variable global para total de apariciones (definida fuera del bloque JS)
-        window.totalApariciones = {{ total_apariciones|default(1) }};
-        
-        // Variables globales para datos de documentos
-        window.documentosData = {{ resultados_por_archivo|tojson|safe }};
-        
         // Variables globales
         let rankingGlobalData = null;
         let fraseSeleccionada = null;
