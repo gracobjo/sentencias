@@ -663,6 +663,9 @@
         let fraseSeleccionada = null;
         let fraseComparacion = null;
         let categoriasFrases = {};
+        
+        // Variable global para total de apariciones
+        window.totalApariciones = {{ total_apariciones|default(1) }};
         let categoriaSeleccionada = null;
         // Estado para búsqueda y paginación de frases
         let fraseQuery = '';
@@ -1045,7 +1048,7 @@
                         <table class="table table-sm">
                             <tr><td><strong>Frase:</strong></td><td>${frase}</td></tr>
                             <tr><td><strong>Total Apariciones:</strong></td><td><span class="badge bg-primary">${datos.total}</span></td></tr>
-                            <tr><td><strong>Porcentaje:</strong></td><td>${((datos.total / {{ total_apariciones|default(1) }}) * 100).toFixed(1)}%</td></tr>
+                            <tr><td><strong>Porcentaje:</strong></td><td>${datos.total && window.totalApariciones ? ((datos.total / window.totalApariciones) * 100).toFixed(1) : '0.0'}%</td></tr>
                             <tr><td><strong>Posición Ranking:</strong></td><td>${obtenerPosicionRanking(frase)}</td></tr>
                         </table>
                     </div>
@@ -1160,7 +1163,7 @@
                 labels: ['Esta Frase', 'Otras Frases'],
                 datasets: [{
                     label: 'Apariciones',
-                    data: [datos.total, {{ total_apariciones }} - datos.total],
+                    data: [datos.total, window.totalApariciones - datos.total],
                     backgroundColor: ['#007bff', '#e9ecef'],
                     borderColor: ['#0056b3', '#adb5bd'],
                     borderWidth: 2
@@ -1221,7 +1224,7 @@
                             </li>
                             <li class="list-group-item d-flex justify-content-between">
                                 <span>Porcentaje:</span>
-                                <span>${((datos.total / {{ total_apariciones|default(1) }}) * 100).toFixed(1)}%</span>
+                                <span>${((datos.total / window.totalApariciones) * 100).toFixed(1)}%</span>
                             </li>
                             <li class="list-group-item d-flex justify-content-between">
                                 <span>Posición:</span>
@@ -1241,7 +1244,7 @@
                                         <tr>
                                             <td>${f}</td>
                                             <td><span class="badge bg-secondary">${d.total}</span></td>
-                                            <td>${((d.total / {{ total_apariciones|default(1) }}) * 100).toFixed(1)}%</td>
+                                            <td>${((d.total / window.totalApariciones) * 100).toFixed(1)}%</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1383,8 +1386,8 @@
                     case 'total':
                         return totalB - totalA;
                     case 'porcentaje':
-                        const porcentajeA = (totalA / {{ total_apariciones }}) * 100;
-                        const porcentajeB = (totalB / {{ total_apariciones }}) * 100;
+                        const porcentajeA = (totalA / window.totalApariciones) * 100;
+                        const porcentajeB = (totalB / window.totalApariciones) * 100;
                         return porcentajeB - porcentajeA;
                     case 'alfabetico':
                         return fraseA.localeCompare(fraseB);
@@ -1522,7 +1525,7 @@
                     posicion: index + 1,
                     frase: frase,
                     apariciones: datos.total,
-                    porcentaje: ((datos.total / {{ total_apariciones }}) * 100).toFixed(1)
+                    porcentaje: ((datos.total / window.totalApariciones) * 100).toFixed(1)
                 }));
             
             const csv = [
@@ -1549,7 +1552,7 @@
             const datos = rankingGlobalData[fraseSeleccionada];
             const contenido = `Detalles de Frase Clave: ${fraseSeleccionada}\n\n` +
                             `Total Apariciones: ${datos.total}\n` +
-                            `Porcentaje: ${((datos.total / {{ total_apariciones|default(1) }}) * 100).toFixed(1)}%\n` +
+                            `Porcentaje: ${((datos.total / window.totalApariciones) * 100).toFixed(1)}%\n` +
                             `Posición en Ranking: ${obtenerPosicionRanking(fraseSeleccionada)}\n\n` +
                             `Ocurrencias:\n${JSON.stringify(datos.ocurrencias || [], null, 2)}`;
             
@@ -1853,11 +1856,11 @@
                 ])
             ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
             
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'documentos_analizados.csv';
-            link.click();
+            const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const csvLink = document.createElement('a');
+            csvLink.href = URL.createObjectURL(csvBlob);
+            csvLink.download = 'documentos_analizados.csv';
+            csvLink.click();
             
             mostrarNotificacion('Lista de documentos exportada', 'success');
         }
@@ -1893,11 +1896,11 @@
                                `  ${datos.error ? `Error: ${datos.error}` : ''}\n`
                            ).join('\n');
             
-            const blob = new Blob([resumen], { type: 'text/plain;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'resumen_documentos.txt';
-            link.click();
+            const resumenBlob = new Blob([resumen], { type: 'text/plain;charset=utf-8;' });
+            const resumenLink = document.createElement('a');
+            resumenLink.href = URL.createObjectURL(resumenBlob);
+            resumenLink.download = 'resumen_documentos.txt';
+            resumenLink.click();
             
             mostrarNotificacion('Resumen de documentos exportado', 'success');
         }
