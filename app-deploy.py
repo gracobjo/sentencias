@@ -349,7 +349,29 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
                     "timestamp": datetime.now().isoformat()
                 }
         
-        # Ordenar ranking
+        # Crear ranking de frases individuales
+        ranking_frases = {}
+        for categoria, info in ranking_global.items():
+            for ocurrencia in info.get("ocurrencias", []):
+                frase = ocurrencia.get("frase", "")
+                if frase:
+                    if frase not in ranking_frases:
+                        ranking_frases[frase] = {
+                            "total": 0,
+                            "categoria": categoria,
+                            "archivos": set()
+                        }
+                    ranking_frases[frase]["total"] += ocurrencia.get("apariciones", 0)
+                    ranking_frases[frase]["archivos"].add(ocurrencia.get("archivo", ""))
+        
+        # Convertir Set a Array para JSON
+        for frase_info in ranking_frases.values():
+            frase_info["archivos"] = list(frase_info["archivos"])
+        
+        # Ordenar ranking de frases
+        ranking_frases_ordenado = dict(sorted(ranking_frases.items(), key=lambda x: x[1]["total"], reverse=True))
+        
+        # Ordenar ranking por categorías también
         ranking_ordenado = dict(sorted(ranking_global.items(), key=lambda x: x[1]["total"], reverse=True))
         
         logger.info(f"📊 RESUMEN FINAL:")
@@ -361,7 +383,8 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
             "archivos_analizados": len(archivos_soportados),
             "total_apariciones": total_apariciones,
             "resultados_por_archivo": resultados_por_archivo,
-            "ranking_global": ranking_ordenado
+            "ranking_global": ranking_frases_ordenado,
+            "ranking_categorias": ranking_ordenado
         }
         
         # Guardar en caché
