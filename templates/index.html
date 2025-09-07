@@ -658,14 +658,17 @@
     
     <!-- Script personalizado -->
     <script>
+        // Variable global para total de apariciones (definida fuera del bloque JS)
+        window.totalApariciones = {{ total_apariciones|default(1) }};
+        
+        // Variables globales para datos de documentos
+        window.documentosData = {{ resultados_por_archivo|tojson|safe }};
+        
         // Variables globales
         let rankingGlobalData = null;
         let fraseSeleccionada = null;
         let fraseComparacion = null;
         let categoriasFrases = {};
-        
-        // Variable global para total de apariciones
-        window.totalApariciones = {{ total_apariciones|default(1) }};
         let categoriaSeleccionada = null;
         // Estado para búsqueda y paginación de frases
         let fraseQuery = '';
@@ -1694,8 +1697,8 @@
         function mostrarDetallesDocumentos() {
             const modalBody = document.getElementById('documentosGeneralesModalBody');
             
-            // Obtener datos de los documentos desde el DOM
-            const documentos = {{ resultados_por_archivo|tojson|safe }};
+            // Obtener datos de los documentos desde la variable global
+            const documentos = window.documentosData;
             
             if (!documentos || Object.keys(documentos).length === 0) {
                 modalBody.innerHTML = `
@@ -1838,7 +1841,7 @@
 
         // Función para exportar lista de documentos
         function exportarDocumentos() {
-            const documentos = {{ resultados_por_archivo|tojson|safe }};
+            const documentos = window.documentosData;
             
             if (!documentos || Object.keys(documentos).length === 0) {
                 mostrarNotificacion('No hay documentos para exportar', 'warning');
@@ -1873,7 +1876,7 @@
 
         // Función para exportar resumen de documentos
         function exportarResumenDocumentos() {
-            const documentos = {{ resultados_por_archivo|tojson|safe }};
+            const documentos = window.documentosData;
             
             if (!documentos || Object.keys(documentos).length === 0) {
                 mostrarNotificacion('No hay documentos para exportar', 'warning');
