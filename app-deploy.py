@@ -550,6 +550,67 @@ async def obtener_info_documento(nombre_archivo: str):
         logger.error(f"Error obteniendo info del documento {nombre_archivo}: {e}")
         raise HTTPException(status_code=500, detail=f"Error obteniendo info del documento: {str(e)}")
 
+@app.get("/subir", response_class=HTMLResponse)
+async def subir_documentos(request: Request):
+    """Página para subir documentos"""
+    try:
+        # Obtener análisis de sentencias existentes
+        datos_analisis = analizar_sentencias_existentes()
+        
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "resultados_por_archivo": datos_analisis.get("resultados_por_archivo", {}),
+            "ranking_global": datos_analisis.get("ranking_global", {}),
+            "total_apariciones": datos_analisis.get("total_apariciones", 0),
+            "archivos_analizados": datos_analisis.get("archivos_analizados", 0),
+            "show_upload_section": True
+        })
+    except Exception as e:
+        logger.error(f"Error en página de subida: {e}")
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "resultados_por_archivo": {},
+            "ranking_global": {},
+            "total_apariciones": 0,
+            "archivos_analizados": 0,
+            "error": f"Error cargando página de subida: {str(e)}",
+            "show_upload_section": True
+        })
+
+@app.post("/api/subir-documento")
+async def subir_documento_api(archivo: UploadFile = File(...)):
+    """API para subir documentos"""
+    try:
+        # Validar tipo de archivo
+        if not archivo.filename.lower().endswith(('.pdf', '.txt')):
+            raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF y TXT")
+        
+        # Generar nombre único para evitar conflictos
+        nombre_archivo = f"{uuid.uuid4().hex}_{archivo.filename}"
+        ruta_destino = SENTENCIAS_DIR / nombre_archivo
+        
+        # Guardar archivo
+        with open(ruta_destino, "wb") as buffer:
+            contenido = await archivo.read()
+            buffer.write(contenido)
+        
+        # Limpiar caché para que se analice el nuevo archivo
+        global CACHE_TIMESTAMP, ANALISIS_CACHE
+        ANALISIS_CACHE = {}
+        CACHE_TIMESTAMP = None
+        
+        logger.info(f"Archivo subido correctamente: {nombre_archivo}")
+        
+        return JSONResponse(content={
+            "mensaje": "Archivo subido correctamente",
+            "nombre_archivo": nombre_archivo,
+            "tamaño": len(contenido)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error subiendo archivo: {e}")
+        raise HTTPException(status_code=500, detail=f"Error subiendo archivo: {str(e)}")
+
 @app.get("/analisis-predictivo", response_class=HTMLResponse)
 async def analisis_predictivo(request: Request):
     """Página de análisis predictivo"""

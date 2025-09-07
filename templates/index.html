@@ -166,6 +166,51 @@
             </div>
         </div>
 
+        {% if show_upload_section %}
+        <!-- Sección de Subida de Documentos -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-upload me-2"></i>Subir Nuevo Documento
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="archivoInput" class="form-label">Seleccionar archivo:</label>
+                                        <input type="file" class="form-control" id="archivoInput" accept=".pdf,.txt" required>
+                                        <div class="form-text">Formatos soportados: PDF, TXT (máximo 10MB)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="submit" class="btn btn-success w-100" id="btnSubir">
+                                            <i class="bi bi-upload me-2"></i>Subir Documento
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div id="uploadProgress" class="mt-3" style="display: none;">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">Subiendo archivo...</small>
+                        </div>
+                        
+                        <div id="uploadResult" class="mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Documentos Analizados -->
         {% if resultados_por_archivo %}
         <div class="row mb-4">
@@ -2219,6 +2264,81 @@
             }
         }
 
+        // ===== FUNCIONES PARA SUBIDA DE ARCHIVOS =====
+        
+        // Función para manejar la subida de archivos
+        async function subirArchivo(archivo) {
+            const formData = new FormData();
+            formData.append('archivo', archivo);
+            
+            try {
+                const response = await fetch('/api/subir-documento', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Error subiendo archivo');
+                }
+                
+                const result = await response.json();
+                return result;
+                
+            } catch (error) {
+                console.error('Error subiendo archivo:', error);
+                throw error;
+            }
+        }
+        
+        // Función para mostrar progreso de subida
+        function mostrarProgresoSubida(mostrar = true) {
+            const progressDiv = document.getElementById('uploadProgress');
+            const btnSubir = document.getElementById('btnSubir');
+            
+            if (mostrar) {
+                progressDiv.style.display = 'block';
+                btnSubir.disabled = true;
+                btnSubir.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Subiendo...';
+            } else {
+                progressDiv.style.display = 'none';
+                btnSubir.disabled = false;
+                btnSubir.innerHTML = '<i class="bi bi-upload me-2"></i>Subir Documento';
+            }
+        }
+        
+        // Función para mostrar resultado de subida
+        function mostrarResultadoSubida(exito, mensaje, detalles = null) {
+            const resultDiv = document.getElementById('uploadResult');
+            
+            if (exito) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>¡Archivo subido correctamente!</strong><br>
+                        ${mensaje}
+                        ${detalles ? `<br><small class="text-muted">${detalles}</small>` : ''}
+                    </div>
+                `;
+                // Limpiar el formulario
+                document.getElementById('archivoInput').value = '';
+                // Recargar la página después de 2 segundos para mostrar el nuevo documento
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Error subiendo archivo:</strong><br>
+                        ${mensaje}
+                    </div>
+                `;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM cargado, inicializando aplicación...');
@@ -2248,6 +2368,38 @@
             const ordenRanking = document.getElementById('ordenRanking');
             if (ordenRanking) {
                 ordenRanking.addEventListener('change', aplicarFiltros);
+            }
+            
+            // Event listener para el formulario de subida
+            const uploadForm = document.getElementById('uploadForm');
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const archivoInput = document.getElementById('archivoInput');
+                    const archivo = archivoInput.files[0];
+                    
+                    if (!archivo) {
+                        mostrarResultadoSubida(false, 'Por favor selecciona un archivo');
+                        return;
+                    }
+                    
+                    // Validar tamaño del archivo (10MB máximo)
+                    if (archivo.size > 10 * 1024 * 1024) {
+                        mostrarResultadoSubida(false, 'El archivo es demasiado grande. Máximo 10MB');
+                        return;
+                    }
+                    
+                    try {
+                        mostrarProgresoSubida(true);
+                        const resultado = await subirArchivo(archivo);
+                        mostrarProgresoSubida(false);
+                        mostrarResultadoSubida(true, resultado.mensaje, `Archivo: ${resultado.nombre_archivo}`);
+                    } catch (error) {
+                        mostrarProgresoSubida(false);
+                        mostrarResultadoSubida(false, error.message);
+                    }
+                });
             }
         });
     </script>
