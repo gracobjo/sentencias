@@ -20,7 +20,7 @@ from io import BytesIO
 from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, PlainTextResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from docx import Document
@@ -399,6 +399,32 @@ async def limpiar_cache():
     CACHE_TIMESTAMP = None
     logger.info("🗑️ Caché limpiado")
     return JSONResponse(content={"mensaje": "Caché limpiado correctamente"})
+
+@app.get("/api/documento/{nombre_archivo}")
+async def obtener_documento(nombre_archivo: str):
+    """Endpoint para obtener documentos"""
+    try:
+        archivo_path = SENTENCIAS_DIR / nombre_archivo
+        if not archivo_path.exists():
+            raise HTTPException(status_code=404, detail="Archivo no encontrado")
+        
+        # Determinar el tipo de contenido
+        if archivo_path.suffix.lower() == '.pdf':
+            media_type = "application/pdf"
+        elif archivo_path.suffix.lower() == '.txt':
+            media_type = "text/plain"
+        else:
+            media_type = "application/octet-stream"
+        
+        # Leer y devolver el archivo
+        with open(archivo_path, 'rb') as f:
+            content = f.read()
+        
+        return Response(content=content, media_type=media_type)
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo documento {nombre_archivo}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error obteniendo documento: {str(e)}")
 
 @app.get("/health")
 async def health_check():

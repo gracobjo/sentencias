@@ -2162,15 +2162,25 @@
                 console.error('Error inicializando la aplicación');
             }
             
-            // Configurar event listeners para filtros
-            document.getElementById('searchFrase').addEventListener('input', function() {
-                if (this.value.length >= 2 || this.value.length === 0) {
-                    aplicarFiltros();
-                }
-            });
+            // Configurar event listeners para filtros con verificación de existencia
+            const searchFrase = document.getElementById('searchFrase');
+            if (searchFrase) {
+                searchFrase.addEventListener('input', function() {
+                    if (this.value.length >= 2 || this.value.length === 0) {
+                        aplicarFiltros();
+                    }
+                });
+            }
             
-            document.getElementById('minApariciones').addEventListener('change', aplicarFiltros);
-            document.getElementById('ordenRanking').addEventListener('change', aplicarFiltros);
+            const minApariciones = document.getElementById('minApariciones');
+            if (minApariciones) {
+                minApariciones.addEventListener('change', aplicarFiltros);
+            }
+            
+            const ordenRanking = document.getElementById('ordenRanking');
+            if (ordenRanking) {
+                ordenRanking.addEventListener('change', aplicarFiltros);
+            }
         });
     </script>
 </body>
