@@ -19,7 +19,7 @@ python-dotenv==1.0.0
 
 # Dependencias web
 requests==2.31.0
-httpx==0.25.2
+httpx==0.28.1
 
 # Dependencias de base de datos
 sqlalchemy==2.0.25
