@@ -1,5 +1,5 @@
 # Dockerfile para despliegue en Render
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Instalar dependencias del sistema necesarias
 RUN apt-get update && apt-get install -y \
