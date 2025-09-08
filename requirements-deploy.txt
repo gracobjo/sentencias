@@ -1,5 +1,5 @@
 # Dependencias esenciales para despliegue
-fastapi==0.109.2
+fastapi==0.116.1
 uvicorn==0.27.1
 jinja2==3.1.4
 python-multipart==0.0.6
