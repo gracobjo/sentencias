@@ -113,25 +113,25 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.discrepancias_detectadas|length }}</div>
+                                <div class="metric-value">{{ resultado.analisis_discrepancias.discrepancias_detectadas|length if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas else 0 }}</div>
                                 <div class="metric-label">Discrepancias Detectadas</div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.evidencia_favorable|length }}</div>
+                                <div class="metric-value">{{ resultado.analisis_discrepancias.evidencia_favorable|length if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable else 0 }}</div>
                                 <div class="metric-label">Elementos de Evidencia</div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.puntuacion_discrepancia }}/100</div>
+                                <div class="metric-value">{{ resultado.analisis_discrepancias.puntuacion_discrepancia if resultado.analisis_discrepancias and resultado.analisis_discrepancias.puntuacion_discrepancia else 0 }}/100</div>
                                 <div class="metric-label">Puntuación Discrepancia</div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ (resultado.analisis_discrepancias.probabilidad_ipp * 100)|round(1) }}%</div>
+                                <div class="metric-value">{{ (resultado.analisis_discrepancias.probabilidad_ipp * 100)|round(1) if resultado.analisis_discrepancias and resultado.analisis_discrepancias.probabilidad_ipp else 0 }}%</div>
                                 <div class="metric-label">Probabilidad IPP</div>
                             </div>
                         </div>
@@ -146,12 +146,12 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <pre class="mb-0">{{ resultado.analisis_discrepancias.resumen_ejecutivo }}</pre>
+                        <pre class="mb-0">{{ resultado.analisis_discrepancias.resumen_ejecutivo if resultado.analisis_discrepancias and resultado.analisis_discrepancias.resumen_ejecutivo else "Resumen no disponible" }}</pre>
                     </div>
                 </div>
 
                 <!-- Discrepancias Detectadas -->
-                {% if resultado.analisis_discrepancias.discrepancias_detectadas %}
+                {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas %}
                 <div class="card mb-4">
                     <div class="card-header bg-danger text-white">
                         <h5 class="mb-0">
@@ -193,7 +193,7 @@
                 {% endif %}
 
                 <!-- Evidencia Favorable -->
-                {% if resultado.analisis_discrepancias.evidencia_favorable %}
+                {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable %}
                 <div class="card mb-4">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">
@@ -225,7 +225,7 @@
                 {% endif %}
 
                 <!-- Argumentos Jurídicos -->
-                {% if resultado.analisis_discrepancias.argumentos_juridicos %}
+                {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.argumentos_juridicos %}
                 <div class="card mb-4">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0">
@@ -263,7 +263,7 @@
                 {% endif %}
 
                 <!-- Recomendaciones de Defensa -->
-                {% if resultado.analisis_discrepancias.recomendaciones_defensa %}
+                {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.recomendaciones_defensa %}
                 <div class="card mb-4">
                     <div class="card-header bg-warning text-dark">
                         <h5 class="mb-0">
@@ -301,7 +301,7 @@
                 {% endif %}
 
                 <!-- Contradicciones Internas -->
-                {% if resultado.analisis_discrepancias.contradicciones_internas %}
+                {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.contradicciones_internas %}
                 <div class="card mb-4">
                     <div class="card-header bg-secondary text-white">
                         <h5 class="mb-0">
@@ -491,10 +491,10 @@
         
         // Función para generar contenido del resumen
         function generarContenidoResumen() {
-            const discrepancias = {{ resultado.analisis_discrepancias.discrepancias_detectadas | tojson }};
-            const evidencia = {{ resultado.analisis_discrepancias.evidencia_favorable | tojson }};
-            const argumentos = {{ resultado.analisis_discrepancias.argumentos_juridicos | tojson }};
-            const recomendaciones = {{ resultado.analisis_discrepancias.recomendaciones_defensa | tojson }};
+            const discrepancias = {{ resultado.analisis_discrepancias.discrepancias_detectadas | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas else [] }};
+            const evidencia = {{ resultado.analisis_discrepancias.evidencia_favorable | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable else [] }};
+            const argumentos = {{ resultado.analisis_discrepancias.argumentos_juridicos | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.argumentos_juridicos else [] }};
+            const recomendaciones = {{ resultado.analisis_discrepancias.recomendaciones_defensa | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.recomendaciones_defensa else [] }};
             
             let contenido = `
                 <h1>ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES</h1>
@@ -505,8 +505,8 @@
                 <ul>
                     <li>Discrepancias detectadas: ${discrepancias.length}</li>
                     <li>Evidencia favorable: ${evidencia.length} elementos</li>
-                    <li>Puntuación discrepancia: {{ resultado.analisis_discrepancias.puntuacion_discrepancia }}/100</li>
-                    <li>Probabilidad IPP: {{ (resultado.analisis_discrepancias.probabilidad_ipp * 100) | round(1) }}%</li>
+                    <li>Puntuación discrepancia: {{ resultado.analisis_discrepancias.puntuacion_discrepancia if resultado.analisis_discrepancias and resultado.analisis_discrepancias.puntuacion_discrepancia else 0 }}/100</li>
+                    <li>Probabilidad IPP: {{ (resultado.analisis_discrepancias.probabilidad_ipp * 100) | round(1) if resultado.analisis_discrepancias and resultado.analisis_discrepancias.probabilidad_ipp else 0 }}%</li>
                 </ul>
                 
                 <h3>DISCREPANCIAS DETECTADAS</h3>
