@@ -996,32 +996,55 @@ async def pagina_analisis_predictivo(request: Request):
 async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
     """Página web para mostrar análisis de discrepancias de un archivo específico"""
     try:
+        logger.info(f"🔍 Buscando archivo para análisis de discrepancias: {archivo_id}")
+        
         # Buscar el archivo en ambos directorios
         archivo_path = None
         
-        # Buscar en directorio sentencias
-        for archivo in Path("sentencias").glob("*.pdf"):
-            if archivo_id in archivo.name:
-                archivo_path = archivo
+        # Buscar en directorio sentencias (PDF y otros formatos)
+        for extension in ["*.pdf", "*.txt", "*.docx"]:
+            for archivo in Path("sentencias").glob(extension):
+                if archivo_id in archivo.name:
+                    archivo_path = archivo
+                    logger.info(f"✅ Archivo encontrado en sentencias/: {archivo}")
+                    break
+            if archivo_path:
                 break
         
         # Si no se encuentra, buscar en directorio uploads
         if not archivo_path:
-            for archivo in Path("uploads").glob("*.pdf"):
-                if archivo_id in archivo.name:
-                    archivo_path = archivo
+            for extension in ["*.pdf", "*.txt", "*.docx"]:
+                for archivo in Path("uploads").glob(extension):
+                    if archivo_id in archivo.name:
+                        archivo_path = archivo
+                        logger.info(f"✅ Archivo encontrado en uploads/: {archivo}")
+                        break
+                if archivo_path:
                     break
         
         if not archivo_path:
-            raise HTTPException(status_code=404, detail="Archivo no encontrado")
+            logger.error(f"❌ Archivo no encontrado: {archivo_id}")
+            # Listar archivos disponibles para debug
+            archivos_sentencias = list(Path("sentencias").glob("*"))
+            archivos_uploads = list(Path("uploads").glob("*"))
+            logger.info(f"Archivos en sentencias/: {[f.name for f in archivos_sentencias]}")
+            logger.info(f"Archivos en uploads/: {[f.name for f in archivos_uploads]}")
+            raise HTTPException(status_code=404, detail=f"Archivo no encontrado: {archivo_id}")
         
         # Realizar análisis del archivo
-        if ANALIZADOR_IA_DISPONIBLE:
-            from backend.analisis import AnalizadorLegal
-            analizador = AnalizadorLegal()
-            resultado = analizador.analizar_documento(str(archivo_path))
-        else:
-            resultado = analizador_basico.analizar_documento(str(archivo_path), archivo_path.name)
+        logger.info(f"🔬 Iniciando análisis de discrepancias para: {archivo_path}")
+        try:
+            if ANALIZADOR_IA_DISPONIBLE:
+                from backend.analisis import AnalizadorLegal
+                analizador = AnalizadorLegal()
+                resultado = analizador.analizar_documento(str(archivo_path))
+                logger.info("✅ Análisis con IA completado")
+            else:
+                resultado = analizador_basico.analizar_documento(str(archivo_path), archivo_path.name)
+                logger.info("✅ Análisis básico completado")
+        except Exception as e:
+            logger.error(f"❌ Error en análisis: {e}")
+            raise HTTPException(status_code=500, detail=f"Error en análisis: {str(e)}")
         
         return templates.TemplateResponse("analisis_discrepancias.html", {
             "request": request,
@@ -1031,6 +1054,36 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
     except Exception as e:
         logger.error(f"Error en análisis de discrepancias: {e}")
         raise HTTPException(status_code=500, detail=f"Error procesando archivo: {str(e)}")
+
+
+@app.get("/test-analisis-discrepancias/{archivo_id}")
+async def test_analisis_discrepancias(archivo_id: str):
+    """Endpoint de prueba para verificar que el análisis de discrepancias funciona"""
+    try:
+        logger.info(f"🧪 Test endpoint - Buscando archivo: {archivo_id}")
+        
+        # Buscar archivo
+        archivo_path = None
+        for extension in ["*.pdf", "*.txt", "*.docx"]:
+            for archivo in Path("sentencias").glob(extension):
+                if archivo_id in archivo.name:
+                    archivo_path = archivo
+                    break
+            if archivo_path:
+                break
+        
+        if not archivo_path:
+            archivos_disponibles = [f.name for f in Path("sentencias").glob("*")]
+            return {"error": f"Archivo no encontrado: {archivo_id}", "archivos_disponibles": archivos_disponibles}
+        
+        return {
+            "archivo_encontrado": str(archivo_path),
+            "archivo_id": archivo_id,
+            "status": "ok"
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.get("/diagnostico")
