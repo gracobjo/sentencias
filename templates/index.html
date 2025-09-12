@@ -49,6 +49,167 @@
             margin: 2px;
             display: inline-block;
         }
+
+        /* Estilos responsive y menú hamburguesa */
+        @media (max-width: 768px) {
+            .btn-lg {
+                font-size: 1rem;
+                padding: 0.5rem 1rem;
+            }
+            
+            .btn-group-mobile {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .btn-group-mobile .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .debug-buttons {
+                display: none;
+            }
+            
+            .debug-buttons.show {
+                display: block;
+            }
+            
+            .debug-buttons .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .mobile-menu-toggle {
+                display: block;
+            }
+            
+            .desktop-buttons {
+                display: none;
+            }
+            
+            .hamburger-menu {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1050;
+                background: #007bff;
+                border-radius: 50%;
+                width: 60px;
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            
+            .hamburger-menu:hover {
+                background: #0056b3;
+                transform: scale(1.1);
+            }
+            
+            .hamburger-icon {
+                color: white;
+                font-size: 1.5rem;
+            }
+            
+            .mobile-menu-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 1040;
+                display: none;
+            }
+            
+            .mobile-menu-overlay.show {
+                display: block;
+            }
+            
+            .mobile-menu {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 80%;
+                max-width: 300px;
+                height: 100%;
+                background: white;
+                z-index: 1050;
+                transition: right 0.3s ease;
+                overflow-y: auto;
+                box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            }
+            
+            .mobile-menu.show {
+                right: 0;
+            }
+            
+            .mobile-menu-header {
+                background: #007bff;
+                color: white;
+                padding: 1rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .mobile-menu-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+            
+            .mobile-menu-body {
+                padding: 1rem;
+            }
+            
+            .mobile-menu-section {
+                margin-bottom: 2rem;
+            }
+            
+            .mobile-menu-section h6 {
+                color: #6c757d;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                text-transform: uppercase;
+                font-size: 0.8rem;
+                letter-spacing: 0.5px;
+            }
+            
+            .mobile-menu-section .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+                justify-content: flex-start;
+                text-align: left;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle,
+            .mobile-menu-overlay,
+            .mobile-menu {
+                display: none !important;
+            }
+            
+            .desktop-buttons {
+                display: block;
+            }
+        }
         
         .stats-card {
             transition: transform 0.2s ease;
@@ -127,8 +288,8 @@
                     Sistema de análisis automático de resoluciones en busca de frases clave
                 </p>
                 
-                <!-- Botón para subir archivos -->
-                <div class="text-center mt-4">
+                <!-- Botones principales -->
+                <div class="text-center mt-4 desktop-buttons">
                     <a href="/subir" class="btn btn-success btn-lg">
                         <i class="bi bi-upload me-2"></i>Subir Nuevo Documento
                     </a>
@@ -136,11 +297,21 @@
                         <i class="bi bi-trash3 me-2"></i>Eliminar Documento
                     </button>
                 </div>
+                
+                <!-- Botones móviles -->
+                <div class="btn-group-mobile mt-4 d-md-none">
+                    <a href="/subir" class="btn btn-success">
+                        <i class="bi bi-upload me-2"></i>Subir Nuevo Documento
+                    </a>
+                    <button class="btn btn-outline-danger" onclick="abrirGestorDocumentos()">
+                        <i class="bi bi-trash3 me-2"></i>Eliminar Documento
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Botones de debug -->
-        <div class="row mb-4">
+        <!-- Botones de debug (desktop) -->
+        <div class="row mb-4 desktop-buttons">
             <div class="col-12 text-center">
                 <button class="btn btn-warning" onclick="testShowFraseDetails()">
                     <i class="bi bi-bug me-2"></i>Test: Ver Detalles
@@ -780,9 +951,9 @@
     <!-- Variables globales definidas fuera del bloque JavaScript -->
     <script>
         // eslint-disable-next-line
-        window.totalApariciones = {{ total_apariciones|default(1) | tojson if total_apariciones is defined else 1 }};
+        window.totalApariciones = {{ total_apariciones|default(1) if total_apariciones is defined else 1 }};
         // eslint-disable-next-line
-        window.documentosData = {{ resultados_por_archivo|tojson|safe if resultados_por_archivo is defined else "{}" }};
+        window.documentosData = {{ resultados_por_archivo|tojson|safe if resultados_por_archivo is defined else '{}' }};
     </script>
     
     <!-- Script personalizado -->
@@ -2417,6 +2588,93 @@
                         mostrarResultadoSubida(false, error.message);
                     }
                 });
+            }
+        });
+    </script>
+
+    <!-- Menú hamburguesa móvil -->
+    <div class="mobile-menu-toggle d-md-none" onclick="toggleMobileMenu()">
+        <i class="bi bi-list hamburger-icon"></i>
+    </div>
+
+    <!-- Overlay del menú móvil -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu()"></div>
+
+    <!-- Menú móvil -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <h5 class="mb-0">Menú</h5>
+            <button class="mobile-menu-close" onclick="closeMobileMenu()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="mobile-menu-body">
+            <div class="mobile-menu-section">
+                <h6>Documentos</h6>
+                <a href="/subir" class="btn btn-success">
+                    <i class="bi bi-upload me-2"></i>Subir Nuevo Documento
+                </a>
+                <button class="btn btn-outline-danger" onclick="abrirGestorDocumentos(); closeMobileMenu();">
+                    <i class="bi bi-trash3 me-2"></i>Eliminar Documento
+                </button>
+            </div>
+            
+            <div class="mobile-menu-section">
+                <h6>Análisis</h6>
+                <button class="btn btn-primary" onclick="mostrarAnalisisInteligente(); closeMobileMenu();">
+                    <i class="bi bi-brain me-2"></i>Análisis Inteligente
+                </button>
+            </div>
+            
+            <div class="mobile-menu-section">
+                <h6>Herramientas de Debug</h6>
+                <button class="btn btn-warning" onclick="testShowFraseDetails(); closeMobileMenu();">
+                    <i class="bi bi-bug me-2"></i>Test: Ver Detalles
+                </button>
+                <button class="btn btn-info" onclick="debugFraseData(); closeMobileMenu();">
+                    <i class="bi bi-info-circle me-2"></i>Debug: Datos Frases
+                </button>
+                <button class="btn btn-success" onclick="testBusquedaArgumentos(); closeMobileMenu();">
+                    <i class="bi bi-search me-2"></i>Test: Búsqueda Argumentos
+                </button>
+                <button class="btn btn-dark" onclick="verificarDatosBackend(); closeMobileMenu();">
+                    <i class="bi bi-server me-2"></i>Verificar Backend
+                </button>
+                <button class="btn btn-danger" onclick="debugAvanzado(); closeMobileMenu();">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Debug Avanzado
+                </button>
+                <button class="btn btn-warning" onclick="limpiarCache(); closeMobileMenu();">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Limpiar Caché
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript para el menú hamburguesa -->
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            
+            menu.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            
+            menu.classList.remove('show');
+            overlay.classList.remove('show');
+        }
+
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobileMenu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (!menu.contains(event.target) && !toggle.contains(event.target)) {
+                closeMobileMenu();
             }
         });
     </script>

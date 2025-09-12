@@ -553,9 +553,9 @@
         function descargarInforme() {
             try {
                 const datos = {
-                    nombre_archivo: "{{ resultado.nombre_archivo }}",
-                    analisis_discrepancias: {{ resultado.analisis_discrepancias | tojson if resultado.analisis_discrepancias else {} }},
-                    timestamp: "{{ resultado.timestamp }}"
+                    nombre_archivo: "{{ resultado.nombre_archivo or '' }}",
+                    analisis_discrepancias: {{ resultado.analisis_discrepancias | tojson if resultado.analisis_discrepancias else '{}' }},
+                    timestamp: "{{ resultado.timestamp or '' }}"
                 };
                 
                 fetch('/api/descargar-informe-discrepancias', {
@@ -660,10 +660,10 @@
         
         // Función para generar contenido del resumen
         function generarContenidoResumen() {
-            const discrepancias = {{ resultado.analisis_discrepancias.discrepancias_detectadas | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas else [] }};
-            const evidencia = {{ resultado.analisis_discrepancias.evidencia_favorable | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable else [] }};
-            const argumentos = {{ resultado.analisis_discrepancias.argumentos_juridicos | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.argumentos_juridicos else [] }};
-            const recomendaciones = {{ resultado.analisis_discrepancias.recomendaciones_defensa | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.recomendaciones_defensa else [] }};
+            const discrepancias = {{ resultado.analisis_discrepancias.discrepancias_detectadas | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas else '[]' }};
+            const evidencia = {{ resultado.analisis_discrepancias.evidencia_favorable | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable else '[]' }};
+            const argumentos = {{ resultado.analisis_discrepancias.argumentos_juridicos | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.argumentos_juridicos else '[]' }};
+            const recomendaciones = {{ resultado.analisis_discrepancias.recomendaciones_defensa | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.recomendaciones_defensa else '[]' }};
             
             let contenido = `
                 <h1>ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES</h1>
