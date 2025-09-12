@@ -8,7 +8,7 @@ pydantic==2.5.3
 starlette==0.36.3
 
 # Dependencias de análisis de texto (versiones ligeras)
-nltk==3.8.1
+nltk==3.9.1
 scikit-learn==1.3.2
 numpy==1.24.4
 pandas==2.0.3
