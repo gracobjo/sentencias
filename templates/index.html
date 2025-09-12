@@ -771,7 +771,7 @@
 
     <!-- Script con datos del backend -->
     <script type="application/json" id="rankingData">
-        {{ ranking_global|tojson|safe }}
+        {{ ranking_global|tojson|safe if ranking_global else "{}" }}
     </script>
 
     <!-- Bootstrap 5 JS -->
@@ -780,9 +780,9 @@
     <!-- Variables globales definidas fuera del bloque JavaScript -->
     <script>
         // eslint-disable-next-line
-        window.totalApariciones = {{ total_apariciones|default(1) | tojson }};
+        window.totalApariciones = {{ total_apariciones|default(1) | tojson if total_apariciones is defined else 1 }};
         // eslint-disable-next-line
-        window.documentosData = {{ resultados_por_archivo|tojson|safe }};
+        window.documentosData = {{ resultados_por_archivo|tojson|safe if resultados_por_archivo is defined else "{}" }};
     </script>
     
     <!-- Script personalizado -->
