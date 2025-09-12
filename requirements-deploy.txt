@@ -12,10 +12,12 @@ nltk==3.8.1
 scikit-learn==1.3.2
 numpy==1.24.4
 pandas==2.0.3
+sentence-transformers==2.2.2
 
 # Dependencias de archivos
 PyPDF2==3.0.1
 python-dotenv==1.0.0
+reportlab==4.0.7
 
 # Dependencias web
 requests==2.31.0
