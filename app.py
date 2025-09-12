@@ -1004,7 +1004,7 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
         # Buscar en directorio sentencias (PDF y otros formatos)
         for extension in ["*.pdf", "*.txt", "*.docx"]:
             for archivo in Path("sentencias").glob(extension):
-                if archivo_id in archivo.name:
+                if archivo_id in archivo.name or archivo.name in archivo_id:
                     archivo_path = archivo
                     logger.info(f"✅ Archivo encontrado en sentencias/: {archivo}")
                     break
@@ -1015,9 +1015,37 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
         if not archivo_path:
             for extension in ["*.pdf", "*.txt", "*.docx"]:
                 for archivo in Path("uploads").glob(extension):
-                    if archivo_id in archivo.name:
+                    if archivo_id in archivo.name or archivo.name in archivo_id:
                         archivo_path = archivo
                         logger.info(f"✅ Archivo encontrado en uploads/: {archivo}")
+                        break
+                if archivo_path:
+                    break
+        
+        # Búsqueda más flexible: buscar por partes del nombre
+        if not archivo_path:
+            logger.info(f"🔍 Búsqueda flexible para: {archivo_id}")
+            # Extraer partes del ID que podrían ser el nombre real
+            partes_id = archivo_id.split('_')
+            posibles_nombres = [p for p in partes_id if len(p) > 5 and not p.isdigit()]
+            
+            for nombre_posible in posibles_nombres:
+                logger.info(f"🔍 Buscando archivos que contengan: {nombre_posible}")
+                for extension in ["*.pdf", "*.txt", "*.docx"]:
+                    for archivo in Path("sentencias").glob(extension):
+                        if nombre_posible in archivo.name:
+                            archivo_path = archivo
+                            logger.info(f"✅ Archivo encontrado por búsqueda flexible en sentencias/: {archivo}")
+                            break
+                    if archivo_path:
+                        break
+                    
+                    for archivo in Path("uploads").glob(extension):
+                        if nombre_posible in archivo.name:
+                            archivo_path = archivo
+                            logger.info(f"✅ Archivo encontrado por búsqueda flexible en uploads/: {archivo}")
+                            break
+                    if archivo_path:
                         break
                 if archivo_path:
                     break
@@ -1080,6 +1108,24 @@ async def test_analisis_discrepancias(archivo_id: str):
             "archivo_encontrado": str(archivo_path),
             "archivo_id": archivo_id,
             "status": "ok"
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/listar-archivos")
+async def listar_archivos_disponibles():
+    """Endpoint para listar todos los archivos disponibles para análisis"""
+    try:
+        archivos_sentencias = [f.name for f in Path("sentencias").glob("*") if f.is_file()]
+        archivos_uploads = [f.name for f in Path("uploads").glob("*") if f.is_file()]
+        
+        return {
+            "archivos_sentencias": archivos_sentencias,
+            "archivos_uploads": archivos_uploads,
+            "total_sentencias": len(archivos_sentencias),
+            "total_uploads": len(archivos_uploads)
         }
         
     except Exception as e:
