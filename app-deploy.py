@@ -2201,10 +2201,10 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
                 if ANALIZADOR_IA_DISPONIBLE:
                     logger.info(f"🤖 Usando analizador de IA para: {archivo.name}")
                     try:
-                    from backend.analisis import AnalizadorLegal
-                except ImportError as e:
-                    logger.error(f"Error importando AnalizadorLegal: {e}")
-                    raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+                        from backend.analisis import AnalizadorLegal
+                    except ImportError as e:
+                        logger.error(f"Error importando AnalizadorLegal: {e}")
+                        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
                     analizador = AnalizadorLegal()
                     analizador._tiempo_inicio = tiempo_inicio
                     resultado = analizador.analizar_documento(str(archivo))
