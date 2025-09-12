@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 import json
 import pickle
+from .analisis_discrepancias import AnalizadorDiscrepancias
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +40,8 @@ class AnalizadorLegal:
         # Componentes SBERT (si existen)
         self.sbert_encoder = None
         self.sbert_clf = None
+        # Analizador de discrepancias
+        self.analizador_discrepancias = AnalizadorDiscrepancias()
         
         # Intentar cargar el modelo
         self._cargar_modelo()
@@ -155,6 +158,16 @@ class AnalizadorLegal:
                 resultado = self._analisis_con_ia(contenido, nombre_archivo)
             else:
                 resultado = self._analisis_basado_reglas(contenido, nombre_archivo)
+            
+            # Análisis de discrepancias médicas-legales
+            try:
+                logger.info("🔍 Iniciando análisis de discrepancias...")
+                analisis_discrepancias = self.analizador_discrepancias.analizar_discrepancias(contenido)
+                logger.info(f"✅ Análisis de discrepancias completado: {len(analisis_discrepancias.get('discrepancias_detectadas', []))} discrepancias encontradas")
+                resultado["analisis_discrepancias"] = analisis_discrepancias
+            except Exception as e:
+                logger.error(f"❌ Error en análisis de discrepancias: {e}")
+                resultado["analisis_discrepancias"] = {"error": f"Error en análisis de discrepancias: {str(e)}"}
             
             # Agregar metadatos
             resultado.update({

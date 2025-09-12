@@ -306,6 +306,11 @@
                                                     title="Demanda base desde este documento">
                                                 <i class="bi bi-file-earmark-text"></i>
                                             </button>
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    onclick="event.stopPropagation(); analizarDiscrepancias('{{ nombre_archivo }}')"
+                                                    title="Análisis de discrepancias médicas-legales">
+                                                <i class="bi bi-search"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -1952,6 +1957,18 @@
                 a.remove();
                 URL.revokeObjectURL(url);
                 mostrarNotificacion('Demanda base generada', 'success');
+            } catch (e) {
+                mostrarNotificacion('Error: ' + (e.message || e), 'danger');
+            }
+        }
+
+        function analizarDiscrepancias(nombreArchivo) {
+            try {
+                // Extraer ID del archivo (nombre sin extensión)
+                const archivoId = nombreArchivo.replace(/\.[^/.]+$/, "");
+                const url = `/analisis-discrepancias/${encodeURIComponent(archivoId)}`;
+                window.open(url, '_blank');
+                mostrarNotificacion('Abriendo análisis de discrepancias...', 'info');
             } catch (e) {
                 mostrarNotificacion('Error: ' + (e.message || e), 'danger');
             }

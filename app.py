@@ -992,10 +992,260 @@ async def pagina_analisis_predictivo(request: Request):
     return templates.TemplateResponse("analisis_predictivo.html", {"request": request})
 
 
+@app.get("/analisis-discrepancias/{archivo_id}")
+async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
+    """Página web para mostrar análisis de discrepancias de un archivo específico"""
+    try:
+        # Buscar el archivo en ambos directorios
+        archivo_path = None
+        
+        # Buscar en directorio sentencias
+        for archivo in Path("sentencias").glob("*.pdf"):
+            if archivo_id in archivo.name:
+                archivo_path = archivo
+                break
+        
+        # Si no se encuentra, buscar en directorio uploads
+        if not archivo_path:
+            for archivo in Path("uploads").glob("*.pdf"):
+                if archivo_id in archivo.name:
+                    archivo_path = archivo
+                    break
+        
+        if not archivo_path:
+            raise HTTPException(status_code=404, detail="Archivo no encontrado")
+        
+        # Realizar análisis del archivo
+        if ANALIZADOR_IA_DISPONIBLE:
+            from backend.analisis import AnalizadorLegal
+            analizador = AnalizadorLegal()
+            resultado = analizador.analizar_documento(str(archivo_path))
+        else:
+            resultado = analizador_basico.analizar_documento(str(archivo_path), archivo_path.name)
+        
+        return templates.TemplateResponse("analisis_discrepancias.html", {
+            "request": request,
+            "resultado": resultado
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en análisis de discrepancias: {e}")
+        raise HTTPException(status_code=500, detail=f"Error procesando archivo: {str(e)}")
+
+
 @app.get("/diagnostico")
 async def pagina_diagnostico(request: Request):
     """Página de diagnóstico del sistema"""
     return templates.TemplateResponse("diagnostico.html", {"request": request})
+
+
+@app.post("/api/descargar-informe-discrepancias")
+async def descargar_informe_discrepancias(request: Request):
+    """Genera y descarga un informe completo de discrepancias en formato Word"""
+    try:
+        from docx import Document
+        from docx.shared import Inches, Pt
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.enum.style import WD_STYLE_TYPE
+        
+        # Obtener datos del request
+        datos = await request.json()
+        nombre_archivo = datos.get("nombre_archivo", "archivo_desconocido")
+        analisis = datos.get("analisis_discrepancias", {})
+        timestamp = datos.get("timestamp", "")
+        
+        # Crear documento Word
+        doc = Document()
+        
+        # Título principal
+        titulo = doc.add_heading('ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES', 0)
+        titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # Información del archivo
+        doc.add_heading('Información del Archivo', level=1)
+        doc.add_paragraph(f"Archivo: {nombre_archivo}")
+        doc.add_paragraph(f"Fecha de análisis: {timestamp}")
+        doc.add_paragraph(f"Método: Análisis automático con IA")
+        
+        # Resumen ejecutivo
+        doc.add_heading('Resumen Ejecutivo', level=1)
+        discrepancias = analisis.get("discrepancias_detectadas", [])
+        evidencia = analisis.get("evidencia_favorable", [])
+        puntuacion = analisis.get("puntuacion_discrepancia", 0)
+        probabilidad = analisis.get("probabilidad_ipp", 0)
+        
+        doc.add_paragraph(f"• Discrepancias detectadas: {len(discrepancias)}")
+        doc.add_paragraph(f"• Evidencia favorable: {len(evidencia)} elementos")
+        doc.add_paragraph(f"• Puntuación discrepancia: {puntuacion}/100")
+        doc.add_paragraph(f"• Probabilidad IPP: {probabilidad:.1%}")
+        
+        # Conclusión
+        if probabilidad >= 0.7:
+            conclusion = "ALTA PROBABILIDAD DE IPP"
+        elif probabilidad >= 0.5:
+            conclusion = "PROBABILIDAD MEDIA DE IPP"
+        else:
+            conclusion = "BAJA PROBABILIDAD DE IPP"
+        
+        doc.add_paragraph(f"Conclusión: {conclusion}")
+        
+        # Discrepancias detectadas
+        if discrepancias:
+            doc.add_heading('Discrepancias Detectadas', level=1)
+            for i, disc in enumerate(discrepancias, 1):
+                doc.add_heading(f"{i}. {disc.get('tipo', '').replace('_', ' ').title()}", level=2)
+                doc.add_paragraph(f"Descripción: {disc.get('descripcion', '')}")
+                doc.add_paragraph(f"Severidad: {disc.get('severidad', '')}")
+                doc.add_paragraph(f"Argumento jurídico: {disc.get('argumento_juridico', '')}")
+        
+        # Evidencia favorable
+        if evidencia:
+            doc.add_heading('Evidencia Favorable para IPP', level=1)
+            for i, ev in enumerate(evidencia, 1):
+                doc.add_heading(f"{i}. {ev.get('tipo', '').replace('_', ' ').title()}", level=2)
+                doc.add_paragraph(f"Descripción: {ev.get('descripcion', '')}")
+                doc.add_paragraph(f"Relevancia: {ev.get('relevancia', '')}")
+                doc.add_paragraph(f"Argumento: {ev.get('argumento', '')}")
+        
+        # Argumentos jurídicos
+        argumentos = analisis.get("argumentos_juridicos", [])
+        if argumentos:
+            doc.add_heading('Argumentos Jurídicos Generados', level=1)
+            for i, arg in enumerate(argumentos, 1):
+                doc.add_heading(f"{i}. {arg.get('titulo', '')}", level=2)
+                doc.add_paragraph(f"Contenido: {arg.get('contenido', '')}")
+                doc.add_paragraph(f"Fuerza: {arg.get('fuerza', '')}")
+        
+        # Recomendaciones de defensa
+        recomendaciones = analisis.get("recomendaciones_defensa", [])
+        if recomendaciones:
+            doc.add_heading('Recomendaciones de Defensa', level=1)
+            for i, rec in enumerate(recomendaciones, 1):
+                doc.add_heading(f"{i}. {rec.get('titulo', '')}", level=2)
+                doc.add_paragraph(f"Contenido: {rec.get('contenido', '')}")
+                doc.add_paragraph(f"Prioridad: {rec.get('prioridad', '')}")
+                
+                acciones = rec.get('acciones', [])
+                if acciones:
+                    doc.add_paragraph("Acciones recomendadas:")
+                    for accion in acciones:
+                        doc.add_paragraph(f"• {accion}", style='List Bullet')
+        
+        # Contradicciones internas
+        contradicciones = analisis.get("contradicciones_internas", [])
+        if contradicciones:
+            doc.add_heading('Contradicciones Internas Detectadas', level=1)
+            for i, cont in enumerate(contradicciones, 1):
+                doc.add_heading(f"{i}. Contradicción Interna", level=2)
+                doc.add_paragraph(f"Descripción: {cont.get('descripcion', '')}")
+                doc.add_paragraph(f"Texto detectado: {cont.get('texto', '')}")
+                doc.add_paragraph(f"Argumento: {cont.get('argumento', '')}")
+        
+        # Guardar en memoria
+        from io import BytesIO
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        
+        # Preparar respuesta
+        from fastapi.responses import Response
+        return Response(
+            content=buffer.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": f"attachment; filename=informe_discrepancias_{nombre_archivo.replace('.pdf', '')}.docx"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generando informe Word: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generando informe: {str(e)}")
+
+
+@app.post("/api/descargar-resumen-pdf")
+async def descargar_resumen_pdf(request: Request):
+    """Genera y descarga un resumen en formato PDF"""
+    try:
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from io import BytesIO
+        
+        # Obtener datos del request
+        datos = await request.json()
+        contenido = datos.get("contenido", "")
+        nombre_archivo = datos.get("nombre_archivo", "archivo_desconocido")
+        
+        # Crear documento PDF en memoria
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+        
+        # Estilos
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            spaceAfter=30,
+            alignment=1  # Centrado
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            spaceAfter=12,
+            spaceBefore=20
+        )
+        
+        # Contenido
+        story = []
+        
+        # Convertir HTML a texto plano para PDF
+        import re
+        contenido_texto = re.sub(r'<[^>]+>', '', contenido)
+        contenido_texto = contenido_texto.replace('&nbsp;', ' ')
+        
+        # Dividir en párrafos
+        parrafos = contenido_texto.split('\n')
+        
+        for parrafo in parrafos:
+            parrafo = parrafo.strip()
+            if not parrafo:
+                continue
+                
+            if parrafo.startswith('ANÁLISIS DE DISCREPANCIAS'):
+                story.append(Paragraph(parrafo, title_style))
+            elif parrafo.startswith('Archivo:') or parrafo.startswith('Fecha de análisis:'):
+                story.append(Paragraph(parrafo, styles['Normal']))
+            elif parrafo.startswith('RESUMEN EJECUTIVO') or parrafo.startswith('DISCREPANCIAS') or parrafo.startswith('EVIDENCIA') or parrafo.startswith('ARGUMENTOS') or parrafo.startswith('RECOMENDACIONES'):
+                story.append(Spacer(1, 12))
+                story.append(Paragraph(parrafo, heading_style))
+            elif parrafo.startswith('•'):
+                story.append(Paragraph(parrafo, styles['Normal']))
+            else:
+                story.append(Paragraph(parrafo, styles['Normal']))
+            
+            story.append(Spacer(1, 6))
+        
+        # Construir PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Preparar respuesta
+        from fastapi.responses import Response
+        return Response(
+            content=buffer.getvalue(),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=resumen_discrepancias_{nombre_archivo.replace('.pdf', '')}.pdf"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generando PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generando PDF: {str(e)}")
 
 
 # ====== DEMANDA BASE: generación desde fallos y fundamentos ======
@@ -1731,16 +1981,25 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
             CACHE_TIMESTAMP = datetime.now()
             return resultado
         
-        # Buscar archivos de texto y PDF
-        archivos_soportados = [f for f in SENTENCIAS_DIR.iterdir() 
-                              if f.suffix.lower() in ['.txt', '.pdf']]
+        # Buscar archivos de texto y PDF en ambos directorios
+        archivos_soportados = []
+        
+        # Buscar en directorio sentencias
+        if SENTENCIAS_DIR.exists():
+            archivos_soportados.extend([f for f in SENTENCIAS_DIR.iterdir() 
+                                      if f.suffix.lower() in ['.txt', '.pdf']])
+        
+        # Buscar en directorio uploads
+        if UPLOADS_DIR.exists():
+            archivos_soportados.extend([f for f in UPLOADS_DIR.iterdir() 
+                                      if f.suffix.lower() in ['.txt', '.pdf']])
         
         logger.info(f"📁 Archivos encontrados: {[f.name for f in archivos_soportados]}")
         
         if not archivos_soportados:
-            logger.warning(f"❌ No se encontraron archivos .txt o .pdf en '{SENTENCIAS_DIR}'")
+            logger.warning(f"❌ No se encontraron archivos .txt o .pdf en '{SENTENCIAS_DIR}' ni '{UPLOADS_DIR}'")
             return {
-                "error": f"No se encontraron archivos .txt o .pdf en '{SENTENCIAS_DIR}'",
+                "error": f"No se encontraron archivos .txt o .pdf en '{SENTENCIAS_DIR}' ni '{UPLOADS_DIR}'",
                 "archivos_analizados": 0,
                 "total_apariciones": 0,
                 "resultados_por_archivo": {},
