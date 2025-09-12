@@ -1050,6 +1050,27 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
                 if archivo_path:
                     break
         
+        # Búsqueda final: buscar archivos que contengan 'informe' y parte del hash
+        if not archivo_path and 'informe' in archivo_id:
+            logger.info("🔍 Búsqueda final por archivos de informe...")
+            hash_parts = [p for p in archivo_id.split('_') if len(p) == 8 and p.isalnum()]
+            for hash_part in hash_parts:
+                for archivo in Path("sentencias").glob("*informe*.pdf"):
+                    if hash_part in archivo.name:
+                        archivo_path = archivo
+                        logger.info(f"✅ Archivo encontrado por búsqueda de informe en sentencias/: {archivo}")
+                        break
+                if archivo_path:
+                    break
+                    
+                for archivo in Path("uploads").glob("*informe*.pdf"):
+                    if hash_part in archivo.name:
+                        archivo_path = archivo
+                        logger.info(f"✅ Archivo encontrado por búsqueda de informe en uploads/: {archivo}")
+                        break
+                if archivo_path:
+                    break
+        
         if not archivo_path:
             logger.error(f"❌ Archivo no encontrado: {archivo_id}")
             # Listar archivos disponibles para debug
