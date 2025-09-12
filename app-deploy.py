@@ -162,11 +162,7 @@ def save_frases_clave(data: Dict[str, List[str]]) -> None:
 
 # Importar el analizador de IA (asumiendo que ya está entrenado)
 try:
-    try:
-        from backend.analisis import AnalizadorLegal
-    except ImportError as e:
-        logger.error(f"Error importando AnalizadorLegal: {e}")
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+    from backend.analisis import AnalizadorLegal
     ANALIZADOR_IA_DISPONIBLE = True
     logger.info("✅ Módulo de IA cargado correctamente")
 except ImportError as e:
@@ -1094,10 +1090,10 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
         try:
             if ANALIZADOR_IA_DISPONIBLE:
                 try:
-        from backend.analisis import AnalizadorLegal
-    except ImportError as e:
-        logger.error(f"Error importando AnalizadorLegal: {e}")
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+                    from backend.analisis import AnalizadorLegal
+                except ImportError as e:
+                    logger.error(f"Error importando AnalizadorLegal: {e}")
+                    raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
                 analizador = AnalizadorLegal()
                 resultado = analizador.analizar_documento(str(archivo_path))
                 logger.info("✅ Análisis con IA completado")
@@ -1438,10 +1434,10 @@ def _leer_texto_archivo_simple(path: Path) -> str:
             # Delegar a analizador para extraer texto
             if ANALIZADOR_IA_DISPONIBLE:
                 try:
-        from backend.analisis import AnalizadorLegal
-    except ImportError as e:
-        logger.error(f"Error importando AnalizadorLegal: {e}")
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+                    from backend.analisis import AnalizadorLegal
+                except ImportError as e:
+                    logger.error(f"Error importando AnalizadorLegal: {e}")
+                    raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
                 analizador = AnalizadorLegal()
                 res = analizador.analizar_documento(str(path))
             else:
@@ -1879,11 +1875,7 @@ async def api_diagnostico_ia():
         
         # Verificar analizador
         try:
-            try:
-        from backend.analisis import AnalizadorLegal
-    except ImportError as e:
-        logger.error(f"Error importando AnalizadorLegal: {e}")
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+            from backend.analisis import AnalizadorLegal
             analizador = AnalizadorLegal()
             
             estado_analizador = {
@@ -2085,10 +2077,10 @@ async def obtener_documento(nombre_archivo: str):
         try:
             if ANALIZADOR_IA_DISPONIBLE:
                 try:
-        from backend.analisis import AnalizadorLegal
-    except ImportError as e:
-        logger.error(f"Error importando AnalizadorLegal: {e}")
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+                    from backend.analisis import AnalizadorLegal
+                except ImportError as e:
+                    logger.error(f"Error importando AnalizadorLegal: {e}")
+                    raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
                 analizador = AnalizadorLegal()
                 resultado = analizador.analizar_documento(str(archivo_path))
             else:
@@ -2209,10 +2201,10 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
                 if ANALIZADOR_IA_DISPONIBLE:
                     logger.info(f"🤖 Usando analizador de IA para: {archivo.name}")
                     try:
-        from backend.analisis import AnalizadorLegal
-    except ImportError as e:
-        logger.error(f"Error importando AnalizadorLegal: {e}")
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+                    from backend.analisis import AnalizadorLegal
+                except ImportError as e:
+                    logger.error(f"Error importando AnalizadorLegal: {e}")
+                    raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
                     analizador = AnalizadorLegal()
                     analizador._tiempo_inicio = tiempo_inicio
                     resultado = analizador.analizar_documento(str(archivo))
