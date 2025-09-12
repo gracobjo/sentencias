@@ -1,7 +1,7 @@
 # Dependencias esenciales para despliegue
 fastapi==0.109.2
 uvicorn==0.27.1
-jinja2==3.1.4
+jinja2==3.1.6
 python-multipart==0.0.6
 python-docx==1.2.0
 pydantic==2.5.3
