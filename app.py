@@ -1146,7 +1146,49 @@ async def listar_archivos_disponibles():
             "archivos_sentencias": archivos_sentencias,
             "archivos_uploads": archivos_uploads,
             "total_sentencias": len(archivos_sentencias),
-            "total_uploads": len(archivos_uploads)
+            "total_uploads": len(archivos_uploads),
+            "directorio_actual": str(Path.cwd()),
+            "directorio_sentencias": str(Path("sentencias").resolve()),
+            "directorio_uploads": str(Path("uploads").resolve()),
+            "existe_sentencias": Path("sentencias").exists(),
+            "existe_uploads": Path("uploads").exists()
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/test-sts2384")
+async def test_sts2384():
+    """Endpoint específico para probar STS_2384_2025"""
+    try:
+        archivo_id = "STS_2384_2025"
+        
+        # Buscar archivo
+        archivo_path = None
+        for extension in ["*.pdf", "*.txt", "*.docx"]:
+            for archivo in Path("sentencias").glob(extension):
+                if archivo_id in archivo.name:
+                    archivo_path = archivo
+                    break
+            if archivo_path:
+                break
+        
+        if not archivo_path:
+            for extension in ["*.pdf", "*.txt", "*.docx"]:
+                for archivo in Path("uploads").glob(extension):
+                    if archivo_id in archivo.name:
+                        archivo_path = archivo
+                        break
+                if archivo_path:
+                    break
+        
+        return {
+            "archivo_id": archivo_id,
+            "archivo_encontrado": str(archivo_path) if archivo_path else None,
+            "existe": archivo_path is not None,
+            "archivos_sentencias": [f.name for f in Path("sentencias").glob("STS*")],
+            "archivos_uploads": [f.name for f in Path("uploads").glob("STS*")]
         }
         
     except Exception as e:
