@@ -615,9 +615,20 @@
             }
         }
         
-        // Ejecutar inmediatamente y también cuando el DOM esté listo
+        // Ejecutar cuando la página esté completamente cargada con delay
+        window.onload = function() {
+            console.log('Página completamente cargada, esperando renderizado...');
+            setTimeout(function() {
+                console.log('Actualizando métricas después del delay...');
+                actualizarMetricas();
+            }, 500); // 500ms de delay para asegurar renderizado completo
+        };
+        
+        // También ejecutar inmediatamente y en DOMContentLoaded por si acaso
         actualizarMetricas();
-        document.addEventListener('DOMContentLoaded', actualizarMetricas);
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(actualizarMetricas, 200);
+        });
         
         // Función para descargar informe completo en formato Word
         function descargarInforme() {
