@@ -282,25 +282,25 @@
                     <div class="row">
                         <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.discrepancias_detectadas|length if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas else 0 }}</div>
+                                <div class="metric-value" id="metric-discrepancias">-</div>
                                 <div class="metric-label">Discrepancias Detectadas</div>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.evidencia_favorable|length if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable else 0 }}</div>
+                                <div class="metric-value" id="metric-evidencia">-</div>
                                 <div class="metric-label">Elementos de Evidencia</div>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.puntuacion_discrepancia if resultado.analisis_discrepancias and resultado.analisis_discrepancias.puntuacion_discrepancia else 0 }}/100</div>
+                                <div class="metric-value" id="metric-puntuacion">-</div>
                                 <div class="metric-label">Puntuación Discrepancia</div>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ (resultado.analisis_discrepancias.probabilidad_ipp * 100)|round(1) if resultado.analisis_discrepancias and resultado.analisis_discrepancias.probabilidad_ipp else 0 }}%</div>
+                                <div class="metric-value" id="metric-probabilidad">-</div>
                                 <div class="metric-label">Probabilidad IPP</div>
                             </div>
                         </div>
@@ -562,6 +562,15 @@
         const evidencia = datosAnalisis.analisis_discrepancias?.evidencia_favorable || [];
         const argumentos = datosAnalisis.analisis_discrepancias?.argumentos_juridicos || [];
         const recomendaciones = datosAnalisis.analisis_discrepancias?.recomendaciones_defensa || [];
+        
+        // Poblar métricas del dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Actualizar métricas
+            document.getElementById('metric-discrepancias').textContent = discrepancias.length;
+            document.getElementById('metric-evidencia').textContent = evidencia.length;
+            document.getElementById('metric-puntuacion').textContent = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0) + '/100';
+            document.getElementById('metric-probabilidad').textContent = ((datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0) * 100).toFixed(1) + '%';
+        });
         
         // Función para descargar informe completo en formato Word
         function descargarInforme() {
