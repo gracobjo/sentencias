@@ -307,6 +307,19 @@
                     </div>
                 </div>
 
+                <!-- Debug Panel (temporal) -->
+                <div class="card mb-4 bg-light">
+                    <div class="card-header">
+                        <h6 class="mb-0">🔍 Debug - JavaScript</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Datos cargados:</strong> <span id="debug-datos">Cargando...</span></p>
+                        <p><strong>Discrepancias JS:</strong> <span id="debug-discrepancias">-</span></p>
+                        <p><strong>Evidencia JS:</strong> <span id="debug-evidencia">-</span></p>
+                        <p><strong>Puntuación JS:</strong> <span id="debug-puntuacion">-</span></p>
+                        <p><strong>Probabilidad JS:</strong> <span id="debug-probabilidad">-</span></p>
+                    </div>
+                </div>
 
                 <!-- Resumen Ejecutivo Texto -->
                 <div class="card mb-4">
@@ -563,14 +576,33 @@
         const argumentos = datosAnalisis.analisis_discrepancias?.argumentos_juridicos || [];
         const recomendaciones = datosAnalisis.analisis_discrepancias?.recomendaciones_defensa || [];
         
-        // Poblar métricas del dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            // Actualizar métricas
-            document.getElementById('metric-discrepancias').textContent = discrepancias.length;
-            document.getElementById('metric-evidencia').textContent = evidencia.length;
-            document.getElementById('metric-puntuacion').textContent = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0) + '/100';
-            document.getElementById('metric-probabilidad').textContent = ((datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0) * 100).toFixed(1) + '%';
-        });
+        // Poblar métricas del dashboard inmediatamente
+        function actualizarMetricas() {
+            try {
+                // Actualizar métricas del dashboard
+                document.getElementById('metric-discrepancias').textContent = discrepancias.length;
+                document.getElementById('metric-evidencia').textContent = evidencia.length;
+                document.getElementById('metric-puntuacion').textContent = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0) + '/100';
+                document.getElementById('metric-probabilidad').textContent = ((datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0) * 100).toFixed(1) + '%';
+                
+                // Actualizar panel de debug
+                document.getElementById('debug-datos').textContent = 'Sí';
+                document.getElementById('debug-discrepancias').textContent = discrepancias.length;
+                document.getElementById('debug-evidencia').textContent = evidencia.length;
+                document.getElementById('debug-puntuacion').textContent = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0);
+                document.getElementById('debug-probabilidad').textContent = (datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0);
+                
+            } catch (e) {
+                console.log('Error actualizando métricas:', e);
+                document.getElementById('debug-datos').textContent = 'Error: ' + e.message;
+                // Reintentar después de un pequeño delay
+                setTimeout(actualizarMetricas, 100);
+            }
+        }
+        
+        // Ejecutar inmediatamente y también cuando el DOM esté listo
+        actualizarMetricas();
+        document.addEventListener('DOMContentLoaded', actualizarMetricas);
         
         // Función para descargar informe completo en formato Word
         function descargarInforme() {
