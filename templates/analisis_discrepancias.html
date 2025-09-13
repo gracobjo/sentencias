@@ -548,14 +548,27 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Datos para JavaScript -->
+    <script type="application/json" id="datos-analisis">
+        {{ resultado | tojson | safe }}
+    </script>
+    
     <script>
+        // Variables globales para JavaScript
+        const datosAnalisis = JSON.parse(document.getElementById('datos-analisis').textContent);
+        
+        const discrepancias = datosAnalisis.analisis_discrepancias?.discrepancias_detectadas || [];
+        const evidencia = datosAnalisis.analisis_discrepancias?.evidencia_favorable || [];
+        const argumentos = datosAnalisis.analisis_discrepancias?.argumentos_juridicos || [];
+        const recomendaciones = datosAnalisis.analisis_discrepancias?.recomendaciones_defensa || [];
+        
         // Función para descargar informe completo en formato Word
         function descargarInforme() {
             try {
                 const datos = {
-                    nombre_archivo: "{{ resultado.nombre_archivo or '' }}",
-                    analisis_discrepancias: {{ resultado.analisis_discrepancias | tojson if resultado.analisis_discrepancias else '{}' }},
-                    timestamp: "{{ resultado.timestamp or '' }}"
+                    nombre_archivo: datosAnalisis.nombre_archivo,
+                    analisis_discrepancias: datosAnalisis.analisis_discrepancias,
+                    timestamp: datosAnalisis.timestamp
                 };
                 
                 fetch('/api/descargar-informe-discrepancias', {
@@ -660,15 +673,12 @@
         
         // Función para generar contenido del resumen
         function generarContenidoResumen() {
-            const discrepancias = {{ resultado.analisis_discrepancias.discrepancias_detectadas | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas else '[]' }};
-            const evidencia = {{ resultado.analisis_discrepancias.evidencia_favorable | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable else '[]' }};
-            const argumentos = {{ resultado.analisis_discrepancias.argumentos_juridicos | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.argumentos_juridicos else '[]' }};
-            const recomendaciones = {{ resultado.analisis_discrepancias.recomendaciones_defensa | tojson if resultado.analisis_discrepancias and resultado.analisis_discrepancias.recomendaciones_defensa else '[]' }};
+            // Usar las variables globales ya definidas
             
             let contenido = `
                 <h1>ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES</h1>
-                <h2>Archivo: {{ resultado.nombre_archivo }}</h2>
-                <p><strong>Fecha de análisis:</strong> {{ resultado.timestamp }}</p>
+                <h2>Archivo: ${datosAnalisis.nombre_archivo}</h2>
+                <p><strong>Fecha de análisis:</strong> ${datosAnalisis.timestamp}</p>
                 
                 <h3>RESUMEN EJECUTIVO</h3>
                 <ul>
@@ -683,10 +693,10 @@
             
             discrepancias.forEach((disc, index) => {
                 contenido += `
-                    <h4>${index + 1}. ${disc.tipo.replace('_', ' ').toUpperCase()}</h4>
-                    <p><strong>Descripción:</strong> ${disc.descripcion}</p>
-                    <p><strong>Severidad:</strong> ${disc.severidad}</p>
-                    <p><strong>Argumento:</strong> ${disc.argumento_juridico}</p>
+                    <h4>${index + 1}. ${(disc.tipo || 'Discrepancia').replace('_', ' ').toUpperCase()}</h4>
+                    <p><strong>Descripción:</strong> ${disc.descripcion || disc}</p>
+                    <p><strong>Severidad:</strong> ${disc.severidad || 'MEDIA'}</p>
+                    <p><strong>Argumento:</strong> ${disc.argumento_juridico || disc.argumento || 'No disponible'}</p>
                 `;
             });
             
@@ -696,10 +706,10 @@
             
             evidencia.forEach((ev, index) => {
                 contenido += `
-                    <h4>${index + 1}. ${ev.tipo.replace('_', ' ').toUpperCase()}</h4>
-                    <p><strong>Descripción:</strong> ${ev.descripcion}</p>
-                    <p><strong>Relevancia:</strong> ${ev.relevancia}</p>
-                    <p><strong>Argumento:</strong> ${ev.argumento}</p>
+                    <h4>${index + 1}. ${(ev.tipo || 'Evidencia').replace('_', ' ').toUpperCase()}</h4>
+                    <p><strong>Descripción:</strong> ${ev.descripcion || ev}</p>
+                    <p><strong>Relevancia:</strong> ${ev.relevancia || 'MEDIA'}</p>
+                    <p><strong>Argumento:</strong> ${ev.argumento || 'No disponible'}</p>
                 `;
             });
             
@@ -709,9 +719,9 @@
             
             argumentos.forEach((arg, index) => {
                 contenido += `
-                    <h4>${index + 1}. ${arg.titulo}</h4>
-                    <p><strong>Contenido:</strong> ${arg.contenido}</p>
-                    <p><strong>Fuerza:</strong> ${arg.fuerza}</p>
+                    <h4>${index + 1}. ${arg.titulo || arg || 'Argumento'}</h4>
+                    <p><strong>Contenido:</strong> ${arg.contenido || arg}</p>
+                    <p><strong>Fuerza:</strong> ${arg.fuerza || 'MEDIA'}</p>
                 `;
             });
             
@@ -721,9 +731,9 @@
             
             recomendaciones.forEach((rec, index) => {
                 contenido += `
-                    <h4>${index + 1}. ${rec.titulo}</h4>
-                    <p><strong>Contenido:</strong> ${rec.contenido}</p>
-                    <p><strong>Prioridad:</strong> ${rec.prioridad}</p>
+                    <h4>${index + 1}. ${rec.titulo || rec.tipo || rec || 'Recomendación'}</h4>
+                    <p><strong>Contenido:</strong> ${rec.contenido || rec.descripcion || rec}</p>
+                    <p><strong>Prioridad:</strong> ${rec.prioridad || rec.nivel || 'MEDIA'}</p>
                 `;
                 if (rec.acciones && rec.acciones.length > 0) {
                     contenido += `<p><strong>Acciones:</strong></p><ul>`;
