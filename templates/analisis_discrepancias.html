@@ -627,7 +627,7 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `informe_discrepancias_{{ resultado.nombre_archivo.replace('.pdf', '') }}.docx`;
+                    a.download = `informe_discrepancias_${datosAnalisis.nombre_archivo.replace('.pdf', '')}.docx`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
@@ -659,7 +659,7 @@
                     },
                     body: JSON.stringify({
                         contenido: contenido,
-                        nombre_archivo: "{{ resultado.nombre_archivo }}"
+                        nombre_archivo: datosAnalisis.nombre_archivo
                     })
                 })
                 .then(response => {
@@ -672,7 +672,7 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `resumen_discrepancias_{{ resultado.nombre_archivo.replace('.pdf', '') }}.pdf`;
+                    a.download = `resumen_discrepancias_${datosAnalisis.nombre_archivo.replace('.pdf', '')}.pdf`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
