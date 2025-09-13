@@ -171,6 +171,108 @@ except ImportError as e:
     logger.info("Se usará análisis básico como fallback")
 
 
+def generar_analisis_discrepancias_basico(ruta_archivo: str, resultado_base: dict) -> dict:
+    """Generar análisis básico de discrepancias médicas-legales"""
+    try:
+        # Leer contenido del archivo
+        contenido = ""
+        if ruta_archivo.endswith('.pdf'):
+            contenido = extraer_texto_pdf(ruta_archivo)
+        else:
+            with open(ruta_archivo, 'r', encoding='utf-8') as f:
+                contenido = f.read()
+        
+        # Análisis básico de discrepancias
+        discrepancias_detectadas = []
+        evidencia_favorable = []
+        argumentos_juridicos = []
+        recomendaciones_defensa = []
+        contradicciones_internas = []
+        
+        # Detectar patrones básicos de discrepancias
+        contenido_lower = contenido.lower()
+        
+        # Patrones de evidencia favorable para IPP
+        patrones_evidencia = [
+            "rotura completa",
+            "cirugía reconstructiva", 
+            "limitación activa",
+            "fuerza insuficiente",
+            "atrofia muscular",
+            "discinesia escapular",
+            "manguito rotador",
+            "supraespinoso",
+            "artropatía"
+        ]
+        
+        for patron in patrones_evidencia:
+            if patron in contenido_lower:
+                evidencia_favorable.append({
+                    "descripcion": f"Evidencia encontrada: {patron}",
+                    "argumento": f"Patrón '{patron}' sugiere gravedad de la lesión"
+                })
+        
+        # Generar argumentos jurídicos básicos
+        if evidencia_favorable:
+            argumentos_juridicos.append("Art. 194.2 LGSS: Disminución ≥33% en rendimiento profesional")
+            argumentos_juridicos.append("Evidencia objetiva de limitación funcional permanente")
+            argumentos_juridicos.append("Necesidad de cirugía reconstructiva indica gravedad")
+        
+        # Generar recomendaciones básicas
+        recomendaciones_defensa.append({
+            "tipo": "Estrategia general de defensa",
+            "descripcion": "Enfocar la defensa en la evidencia objetiva",
+            "nivel": "MEDIA",
+            "acciones": [
+                "Preparar argumentos basados en el Art. 194.2 LGSS",
+                "Documentar todas las limitaciones funcionales",
+                "Presentar evidencia de duración prolongada del proceso"
+            ]
+        })
+        
+        # Calcular métricas básicas
+        puntuacion_discrepancia = len(evidencia_favorable) * 10
+        probabilidad_ipp = min(0.8, len(evidencia_favorable) * 0.1)
+        
+        # Generar resumen ejecutivo
+        resumen_ejecutivo = f"""
+ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES
+
+📊 RESUMEN EJECUTIVO:
+• Discrepancias detectadas: {len(discrepancias_detectadas)}
+• Evidencia favorable: {len(evidencia_favorable)} elementos
+• Puntuación de discrepancia: {puntuacion_discrepancia}/100
+• Probabilidad de IPP: {probabilidad_ipp*100:.1f}%
+
+{'✅ CONCLUSIÓN: ALTA PROBABILIDAD DE IPP' if probabilidad_ipp > 0.5 else '❌ CONCLUSIÓN: BAJA PROBABILIDAD DE IPP'}
+{'La evidencia disponible respalda la calificación de IPP.' if probabilidad_ipp > 0.5 else 'La evidencia disponible no respalda claramente la calificación de IPP.'}
+"""
+        
+        return {
+            "discrepancias_detectadas": discrepancias_detectadas,
+            "evidencia_favorable": evidencia_favorable,
+            "argumentos_juridicos": argumentos_juridicos,
+            "recomendaciones_defensa": recomendaciones_defensa,
+            "contradicciones_internas": contradicciones_internas,
+            "puntuacion_discrepancia": puntuacion_discrepancia,
+            "probabilidad_ipp": probabilidad_ipp,
+            "resumen_ejecutivo": resumen_ejecutivo.strip()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generando análisis de discrepancias: {e}")
+        return {
+            "discrepancias_detectadas": [],
+            "evidencia_favorable": [],
+            "argumentos_juridicos": [],
+            "recomendaciones_defensa": [],
+            "contradicciones_internas": [],
+            "puntuacion_discrepancia": 0,
+            "probabilidad_ipp": 0.0,
+            "resumen_ejecutivo": "Error en el análisis de discrepancias"
+        }
+
+
 class AnalizadorBasico:
     """Analizador básico como fallback cuando no hay IA disponible"""
     
@@ -1100,6 +1202,13 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
             else:
                 resultado = analizador_basico.analizar_documento(str(archivo_path), archivo_path.name)
                 logger.info("✅ Análisis básico completado")
+            
+            # Generar análisis de discrepancias específico
+            logger.info("🔍 Generando análisis de discrepancias...")
+            analisis_discrepancias = generar_analisis_discrepancias_basico(str(archivo_path), resultado)
+            resultado["analisis_discrepancias"] = analisis_discrepancias
+            logger.info("✅ Análisis de discrepancias completado")
+            
         except Exception as e:
             logger.error(f"❌ Error en análisis: {e}")
             raise HTTPException(status_code=500, detail=f"Error en análisis: {str(e)}")
