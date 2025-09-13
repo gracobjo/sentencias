@@ -318,6 +318,7 @@
                         <p><strong>Evidencia JS:</strong> <span id="debug-evidencia">-</span></p>
                         <p><strong>Puntuación JS:</strong> <span id="debug-puntuacion">-</span></p>
                         <p><strong>Probabilidad JS:</strong> <span id="debug-probabilidad">-</span></p>
+                        <p><strong>Elementos encontrados:</strong> <span id="debug-elementos">-</span></p>
                     </div>
                 </div>
 
@@ -579,11 +580,24 @@
         // Poblar métricas del dashboard inmediatamente
         function actualizarMetricas() {
             try {
+                // Debug: verificar que los elementos existen
+                const elemDiscrepancias = document.getElementById('metric-discrepancias');
+                const elemEvidencia = document.getElementById('metric-evidencia');
+                const elemPuntuacion = document.getElementById('metric-puntuacion');
+                const elemProbabilidad = document.getElementById('metric-probabilidad');
+                
+                console.log('Elementos encontrados:', {
+                    discrepancias: !!elemDiscrepancias,
+                    evidencia: !!elemEvidencia,
+                    puntuacion: !!elemPuntuacion,
+                    probabilidad: !!elemProbabilidad
+                });
+                
                 // Actualizar métricas del dashboard
-                document.getElementById('metric-discrepancias').textContent = discrepancias.length;
-                document.getElementById('metric-evidencia').textContent = evidencia.length;
-                document.getElementById('metric-puntuacion').textContent = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0) + '/100';
-                document.getElementById('metric-probabilidad').textContent = ((datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0) * 100).toFixed(1) + '%';
+                if (elemDiscrepancias) elemDiscrepancias.textContent = discrepancias.length;
+                if (elemEvidencia) elemEvidencia.textContent = evidencia.length;
+                if (elemPuntuacion) elemPuntuacion.textContent = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0) + '/100';
+                if (elemProbabilidad) elemProbabilidad.textContent = ((datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0) * 100).toFixed(1) + '%';
                 
                 // Actualizar panel de debug
                 document.getElementById('debug-datos').textContent = 'Sí';
@@ -591,6 +605,7 @@
                 document.getElementById('debug-evidencia').textContent = evidencia.length;
                 document.getElementById('debug-puntuacion').textContent = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0);
                 document.getElementById('debug-probabilidad').textContent = (datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0);
+                document.getElementById('debug-elementos').textContent = `Discrepancias: ${!!elemDiscrepancias}, Evidencia: ${!!elemEvidencia}, Puntuación: ${!!elemPuntuacion}, Probabilidad: ${!!elemProbabilidad}`;
                 
             } catch (e) {
                 console.log('Error actualizando métricas:', e);
