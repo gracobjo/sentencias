@@ -75,6 +75,11 @@
             font-size: 2rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
+            color: #333 !important;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .metric-label {
             font-size: 0.875rem;
@@ -594,10 +599,34 @@
                 });
                 
                 // Actualizar métricas del dashboard
-                if (elemDiscrepancias) elemDiscrepancias.textContent = discrepancias.length;
-                if (elemEvidencia) elemEvidencia.textContent = evidencia.length;
-                if (elemPuntuacion) elemPuntuacion.textContent = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0) + '/100';
-                if (elemProbabilidad) elemProbabilidad.textContent = ((datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0) * 100).toFixed(1) + '%';
+                const valorDiscrepancias = discrepancias.length;
+                const valorEvidencia = evidencia.length;
+                const valorPuntuacion = (datosAnalisis.analisis_discrepancias?.puntuacion_discrepancia || 0) + '/100';
+                const valorProbabilidad = ((datosAnalisis.analisis_discrepancias?.probabilidad_ipp || 0) * 100).toFixed(1) + '%';
+                
+                console.log('Valores a asignar:', {
+                    discrepancias: valorDiscrepancias,
+                    evidencia: valorEvidencia,
+                    puntuacion: valorPuntuacion,
+                    probabilidad: valorProbabilidad
+                });
+                
+                if (elemDiscrepancias) {
+                    elemDiscrepancias.textContent = valorDiscrepancias;
+                    console.log('Discrepancias actualizado:', elemDiscrepancias.textContent);
+                }
+                if (elemEvidencia) {
+                    elemEvidencia.textContent = valorEvidencia;
+                    console.log('Evidencia actualizado:', elemEvidencia.textContent);
+                }
+                if (elemPuntuacion) {
+                    elemPuntuacion.textContent = valorPuntuacion;
+                    console.log('Puntuación actualizado:', elemPuntuacion.textContent);
+                }
+                if (elemProbabilidad) {
+                    elemProbabilidad.textContent = valorProbabilidad;
+                    console.log('Probabilidad actualizado:', elemProbabilidad.textContent);
+                }
                 
                 // Actualizar panel de debug
                 document.getElementById('debug-datos').textContent = 'Sí';
