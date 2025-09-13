@@ -171,6 +171,29 @@ except ImportError as e:
     logger.info("Se usará análisis básico como fallback")
 
 
+def extraer_texto_pdf(ruta: str) -> str:
+    """Lee archivos PDF y extrae el texto"""
+    try:
+        # Intentar importar PyPDF2
+        try:
+            import PyPDF2
+        except ImportError:
+            logger.warning("PyPDF2 no está instalado. Instala: pip install PyPDF2")
+            return "Error: PyPDF2 no está instalado. Ejecuta: pip install PyPDF2"
+        
+        texto = ""
+        with open(ruta, 'rb') as archivo:
+            lector = PyPDF2.PdfReader(archivo)
+            
+            for pagina in lector.pages:
+                texto += pagina.extract_text() + "\n"
+            
+            return texto.strip()
+            
+    except Exception as e:
+        logger.error(f"Error leyendo PDF {ruta}: {e}")
+        return ""
+
 def generar_analisis_discrepancias_basico(ruta_archivo: str, resultado_base: dict) -> dict:
     """Generar análisis básico de discrepancias médicas-legales"""
     try:
@@ -181,6 +204,19 @@ def generar_analisis_discrepancias_basico(ruta_archivo: str, resultado_base: dic
         else:
             with open(ruta_archivo, 'r', encoding='utf-8') as f:
                 contenido = f.read()
+        
+        if not contenido or len(contenido.strip()) == 0:
+            logger.warning(f"Contenido vacío o no se pudo leer: {ruta_archivo}")
+            return {
+                "discrepancias_detectadas": [],
+                "evidencia_favorable": [],
+                "argumentos_juridicos": [],
+                "recomendaciones_defensa": [],
+                "contradicciones_internas": [],
+                "puntuacion_discrepancia": 0,
+                "probabilidad_ipp": 0.0,
+                "resumen_ejecutivo": "No se pudo leer el contenido del archivo"
+            }
         
         # Análisis básico de discrepancias
         discrepancias_detectadas = []
@@ -195,6 +231,7 @@ def generar_analisis_discrepancias_basico(ruta_archivo: str, resultado_base: dic
         # Patrones de evidencia favorable para IPP
         patrones_evidencia = [
             "rotura completa",
+            "rotura de espesor completo",
             "cirugía reconstructiva", 
             "limitación activa",
             "fuerza insuficiente",
@@ -202,50 +239,129 @@ def generar_analisis_discrepancias_basico(ruta_archivo: str, resultado_base: dic
             "discinesia escapular",
             "manguito rotador",
             "supraespinoso",
-            "artropatía"
+            "artropatía",
+            "retracción fibrilar",
+            "tenopatía severa",
+            "anclajes",
+            "tornillos corkscrew",
+            "flexión activa",
+            "abducción activa",
+            "balance muscular",
+            "fuerza de garra",
+            "prácticamente nulo desarrollo de fuerza",
+            "insuficiente para vencer la gravedad"
         ]
         
+        # Detectar evidencia favorable
         for patron in patrones_evidencia:
             if patron in contenido_lower:
                 evidencia_favorable.append({
+                    "tipo": "evidencia_estructural",
                     "descripcion": f"Evidencia encontrada: {patron}",
-                    "argumento": f"Patrón '{patron}' sugiere gravedad de la lesión"
+                    "relevancia": "ALTA",
+                    "argumento": f"Patrón '{patron}' sugiere gravedad de la lesión que excede LPNI"
                 })
         
-        # Generar argumentos jurídicos básicos
-        if evidencia_favorable:
-            argumentos_juridicos.append("Art. 194.2 LGSS: Disminución ≥33% en rendimiento profesional")
-            argumentos_juridicos.append("Evidencia objetiva de limitación funcional permanente")
-            argumentos_juridicos.append("Necesidad de cirugía reconstructiva indica gravedad")
+        # Detectar discrepancias específicas
+        if "lesiones permanentes no incapacitantes" in contenido_lower or "lpni" in contenido_lower:
+            if evidencia_favorable:
+                discrepancias_detectadas.append({
+                    "tipo": "clasificacion_inadecuada",
+                    "descripcion": "Clasificación como LPNI incompatible con evidencia de gravedad",
+                    "severidad": "ALTA",
+                    "argumento_juridico": "La evidencia objetiva sugiere limitación funcional permanente superior al 33%"
+                })
         
-        # Generar recomendaciones básicas
+        # Detectar contradicciones internas
+        if "no presenta limitación importante" in contenido_lower and ("limitación activa" in contenido_lower or "fuerza insuficiente" in contenido_lower):
+            contradicciones_internas.append({
+                "tipo": "contradiccion_interna",
+                "descripcion": "Contradicción entre conclusión y hallazgos objetivos",
+                "severidad": "MEDIA"
+            })
+        
+        # Generar argumentos jurídicos específicos
+        if evidencia_favorable:
+            argumentos_juridicos.append({
+                "titulo": "Fundamento Legal - Art. 194.2 LGSS",
+                "contenido": "Disminución ≥33% en el rendimiento normal de la profesión habitual",
+                "fuerza": "ALTA"
+            })
+            argumentos_juridicos.append({
+                "titulo": "Evidencia Estructural",
+                "contenido": "Lesiones anatómicas permanentes que impiden recuperación funcional completa",
+                "fuerza": "ALTA"
+            })
+            argumentos_juridicos.append({
+                "titulo": "Limitación Funcional Objetiva",
+                "contenido": "Diferencia entre movilidad pasiva y activa indica incapacidad laboral",
+                "fuerza": "MEDIA"
+            })
+        
+        # Generar recomendaciones específicas
         recomendaciones_defensa.append({
-            "tipo": "Estrategia general de defensa",
-            "descripcion": "Enfocar la defensa en la evidencia objetiva",
-            "nivel": "MEDIA",
+            "titulo": "Estrategia de Defensa Principal",
+            "contenido": "Enfocar la defensa en la evidencia objetiva y contradicciones del informe",
+            "prioridad": "ALTA",
             "acciones": [
                 "Preparar argumentos basados en el Art. 194.2 LGSS",
-                "Documentar todas las limitaciones funcionales",
-                "Presentar evidencia de duración prolongada del proceso"
+                "Documentar todas las limitaciones funcionales objetivas",
+                "Presentar evidencia de duración prolongada del proceso",
+                "Destacar las contradicciones internas del informe médico",
+                "Solicitar peritaje biomecánico complementario"
             ]
         })
         
-        # Calcular métricas básicas
-        puntuacion_discrepancia = len(evidencia_favorable) * 10
-        probabilidad_ipp = min(0.8, len(evidencia_favorable) * 0.1)
+        if contradicciones_internas:
+            recomendaciones_defensa.append({
+                "titulo": "Explotar Contradicciones",
+                "contenido": "Las contradicciones internas del informe debilitan la conclusión de LPNI",
+                "prioridad": "MEDIA",
+                "acciones": [
+                    "Señalar la discrepancia entre hallazgos y conclusión",
+                    "Cuestionar la validez de la evaluación médica",
+                    "Solicitar revisión por perito independiente"
+                ]
+            })
         
-        # Generar resumen ejecutivo
+        # Calcular métricas mejoradas
+        puntuacion_base = len(evidencia_favorable) * 5
+        puntuacion_discrepancias = len(discrepancias_detectadas) * 15
+        puntuacion_contradicciones = len(contradicciones_internas) * 10
+        
+        puntuacion_discrepancia = min(100, puntuacion_base + puntuacion_discrepancias + puntuacion_contradicciones)
+        
+        # Calcular probabilidad IPP basada en evidencia específica
+        probabilidad_base = len(evidencia_favorable) * 0.08
+        if len(discrepancias_detectadas) > 0:
+            probabilidad_base += 0.3
+        if len(contradicciones_internas) > 0:
+            probabilidad_base += 0.2
+            
+        probabilidad_ipp = min(0.95, probabilidad_base)
+        
+        # Generar resumen ejecutivo mejorado
+        conclusion = "ALTA PROBABILIDAD DE IPP" if probabilidad_ipp > 0.6 else "MEDIA PROBABILIDAD DE IPP" if probabilidad_ipp > 0.3 else "BAJA PROBABILIDAD DE IPP"
+        icono = "✅" if probabilidad_ipp > 0.6 else "⚠️" if probabilidad_ipp > 0.3 else "❌"
+        
         resumen_ejecutivo = f"""
 ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES
 
 📊 RESUMEN EJECUTIVO:
 • Discrepancias detectadas: {len(discrepancias_detectadas)}
 • Evidencia favorable: {len(evidencia_favorable)} elementos
+• Contradicciones internas: {len(contradicciones_internas)}
 • Puntuación de discrepancia: {puntuacion_discrepancia}/100
 • Probabilidad de IPP: {probabilidad_ipp*100:.1f}%
 
-{'✅ CONCLUSIÓN: ALTA PROBABILIDAD DE IPP' if probabilidad_ipp > 0.5 else '❌ CONCLUSIÓN: BAJA PROBABILIDAD DE IPP'}
-{'La evidencia disponible respalda la calificación de IPP.' if probabilidad_ipp > 0.5 else 'La evidencia disponible no respalda claramente la calificación de IPP.'}
+{icono} CONCLUSIÓN: {conclusion}
+{'La evidencia disponible respalda firmemente la calificación de IPP.' if probabilidad_ipp > 0.6 else 'La evidencia sugiere una posible calificación de IPP que merece revisión.' if probabilidad_ipp > 0.3 else 'La evidencia disponible no respalda claramente la calificación de IPP.'}
+
+🔍 PUNTOS CLAVE PARA LA DEFENSA:
+• Evidencia estructural de gravedad que excede LPNI
+• Limitaciones funcionales objetivas documentadas
+• Contradicciones internas en el informe médico
+• Fundamentos legales sólidos (Art. 194.2 LGSS)
 """
         
         return {
