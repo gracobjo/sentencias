@@ -1205,103 +1205,210 @@ async def pagina_diagnostico(request: Request):
 async def descargar_informe_discrepancias(request: Request):
     """Genera y descarga un informe completo de discrepancias en formato Word"""
     try:
-        from docx import Document
-        from docx.shared import Inches, Pt
-        from docx.enum.text import WD_ALIGN_PARAGRAPH
-        from docx.enum.style import WD_STYLE_TYPE
+        logger.info("🔧 Iniciando generación de informe Word...")
         
         # Obtener datos del request
         datos = await request.json()
+        logger.info(f"📋 Datos recibidos: {list(datos.keys())}")
+        
         nombre_archivo = datos.get("nombre_archivo", "archivo_desconocido")
         analisis = datos.get("analisis_discrepancias", {})
         timestamp = datos.get("timestamp", "")
         
-        # Crear documento Word
+        logger.info(f"📄 Archivo: {nombre_archivo}")
+        logger.info(f"📊 Análisis keys: {list(analisis.keys())}")
+        
+        # Crear documento Word con manejo de errores
+        try:
+            from docx import Document
+            from docx.shared import Inches, Pt
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            from docx.enum.style import WD_STYLE_TYPE
+            
+            doc = Document()
+            logger.info("✅ Documento Word creado")
+            
+            # Título principal
+            titulo = doc.add_heading('ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES', 0)
+            titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            
+            # Información del archivo
+            doc.add_heading('Información del Archivo', level=1)
+            doc.add_paragraph(f"Archivo: {nombre_archivo}")
+            doc.add_paragraph(f"Fecha de análisis: {timestamp}")
+            doc.add_paragraph(f"Método: Análisis automático con IA")
+            
+            # Resumen ejecutivo
+            doc.add_heading('Resumen Ejecutivo', level=1)
+            discrepancias = analisis.get("discrepancias_detectadas", [])
+            evidencia = analisis.get("evidencia_favorable", [])
+            puntuacion = analisis.get("puntuacion_discrepancia", 0)
+            probabilidad = analisis.get("probabilidad_ipp", 0)
+            
+            doc.add_paragraph(f"• Discrepancias detectadas: {len(discrepancias)}")
+            doc.add_paragraph(f"• Evidencia favorable: {len(evidencia)} elementos")
+            doc.add_paragraph(f"• Puntuación discrepancia: {puntuacion}/100")
+            doc.add_paragraph(f"• Probabilidad IPP: {probabilidad:.1%}")
+            
+            # Conclusión
+            if probabilidad >= 0.7:
+                conclusion = "ALTA PROBABILIDAD DE IPP"
+            elif probabilidad >= 0.5:
+                conclusion = "PROBABILIDAD MEDIA DE IPP"
+            else:
+                conclusion = "BAJA PROBABILIDAD DE IPP"
+            
+            doc.add_paragraph(f"Conclusión: {conclusion}")
+            
+            # Discrepancias detectadas
+            if discrepancias:
+                doc.add_heading('Discrepancias Detectadas', level=1)
+                for i, disc in enumerate(discrepancias, 1):
+                    try:
+                        doc.add_heading(f"{i}. {disc.get('tipo', '').replace('_', ' ').title()}", level=2)
+                        doc.add_paragraph(f"Descripción: {disc.get('descripcion', '')}")
+                        doc.add_paragraph(f"Severidad: {disc.get('severidad', '')}")
+                        doc.add_paragraph(f"Argumento jurídico: {disc.get('argumento_juridico', '')}")
+                    except Exception as e:
+                        logger.warning(f"Error procesando discrepancia {i}: {e}")
+                        doc.add_paragraph(f"Error procesando discrepancia {i}")
+            
+            # Evidencia favorable
+            if evidencia:
+                doc.add_heading('Evidencia Favorable para IPP', level=1)
+                for i, ev in enumerate(evidencia, 1):
+                    try:
+                        doc.add_heading(f"{i}. {ev.get('tipo', '').replace('_', ' ').title()}", level=2)
+                        doc.add_paragraph(f"Descripción: {ev.get('descripcion', '')}")
+                        doc.add_paragraph(f"Relevancia: {ev.get('relevancia', '')}")
+                        doc.add_paragraph(f"Argumento: {ev.get('argumento', '')}")
+                    except Exception as e:
+                        logger.warning(f"Error procesando evidencia {i}: {e}")
+                        doc.add_paragraph(f"Error procesando evidencia {i}")
+            
+            # Argumentos jurídicos
+            argumentos = analisis.get("argumentos_juridicos", [])
+            if argumentos:
+                doc.add_heading('Argumentos Jurídicos Generados', level=1)
+                for i, arg in enumerate(argumentos, 1):
+                    try:
+                        doc.add_heading(f"{i}. {arg.get('titulo', '')}", level=2)
+                        doc.add_paragraph(f"Contenido: {arg.get('contenido', '')}")
+                        doc.add_paragraph(f"Fuerza: {arg.get('fuerza', '')}")
+                    except Exception as e:
+                        logger.warning(f"Error procesando argumento {i}: {e}")
+                        doc.add_paragraph(f"Error procesando argumento {i}")
+            
+            # Recomendaciones de defensa
+            recomendaciones = analisis.get("recomendaciones_defensa", [])
+            if recomendaciones:
+                doc.add_heading('Recomendaciones de Defensa', level=1)
+                for i, rec in enumerate(recomendaciones, 1):
+                    try:
+                        doc.add_heading(f"{i}. {rec.get('titulo', '')}", level=2)
+                        doc.add_paragraph(f"Contenido: {rec.get('contenido', '')}")
+                        doc.add_paragraph(f"Prioridad: {rec.get('prioridad', '')}")
+                        
+                        acciones = rec.get('acciones', [])
+                        if acciones:
+                            doc.add_paragraph("Acciones recomendadas:")
+                            for accion in acciones:
+                                doc.add_paragraph(f"• {accion}", style='List Bullet')
+                    except Exception as e:
+                        logger.warning(f"Error procesando recomendación {i}: {e}")
+                        doc.add_paragraph(f"Error procesando recomendación {i}")
+            
+            # Contradicciones internas
+            contradicciones = analisis.get("contradicciones_internas", [])
+            if contradicciones:
+                doc.add_heading('Contradicciones Internas Detectadas', level=1)
+                for i, cont in enumerate(contradicciones, 1):
+                    try:
+                        doc.add_heading(f"{i}. Contradicción Interna", level=2)
+                        doc.add_paragraph(f"Descripción: {cont.get('descripcion', '')}")
+                        doc.add_paragraph(f"Texto detectado: {cont.get('texto', '')}")
+                        doc.add_paragraph(f"Argumento: {cont.get('argumento', '')}")
+                    except Exception as e:
+                        logger.warning(f"Error procesando contradicción {i}: {e}")
+                        doc.add_paragraph(f"Error procesando contradicción {i}")
+            
+            logger.info("✅ Contenido del documento generado")
+            
+        except Exception as doc_error:
+            logger.error(f"❌ Error creando documento Word: {doc_error}")
+            raise doc_error
+        
+        # Guardar en memoria con manejo de errores
+        try:
+            from io import BytesIO
+            buffer = BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
+            
+            # Verificar que el buffer tiene contenido
+            content = buffer.getvalue()
+            logger.info(f"📦 Tamaño del archivo generado: {len(content)} bytes")
+            
+            if len(content) == 0:
+                raise Exception("El archivo generado está vacío")
+            
+        except Exception as save_error:
+            logger.error(f"❌ Error guardando documento: {save_error}")
+            raise save_error
+        
+        # Preparar respuesta
+        try:
+            from fastapi.responses import Response
+            
+            # Limpiar nombre de archivo para evitar caracteres problemáticos
+            nombre_limpio = re.sub(r'[<>:"/\\|?*]', '_', nombre_archivo)
+            nombre_limpio = nombre_limpio.replace('.pdf', '').replace('.txt', '').replace('.docx', '')
+            
+            logger.info(f"📤 Enviando archivo: informe_discrepancias_{nombre_limpio}.docx")
+            
+            return Response(
+                content=content,
+                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                headers={
+                    "Content-Disposition": f"attachment; filename=informe_discrepancias_{nombre_limpio}.docx",
+                    "Content-Length": str(len(content))
+                }
+            )
+            
+        except Exception as response_error:
+            logger.error(f"❌ Error preparando respuesta: {response_error}")
+            raise response_error
+        
+    except Exception as e:
+        logger.error(f"❌ Error general generando informe Word: {e}")
+        logger.error(f"❌ Tipo de error: {type(e).__name__}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error generando informe: {str(e)}")
+
+
+@app.get("/api/test-word")
+async def test_word_generation():
+    """Endpoint de prueba para verificar que la generación de Word funciona"""
+    try:
+        logger.info("🧪 Probando generación de Word...")
+        
+        from docx import Document
+        from docx.shared import Inches, Pt
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        
+        # Crear documento de prueba
         doc = Document()
         
-        # Título principal
-        titulo = doc.add_heading('ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES', 0)
+        # Título
+        titulo = doc.add_heading('PRUEBA DE GENERACIÓN WORD', 0)
         titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
         
-        # Información del archivo
-        doc.add_heading('Información del Archivo', level=1)
-        doc.add_paragraph(f"Archivo: {nombre_archivo}")
-        doc.add_paragraph(f"Fecha de análisis: {timestamp}")
-        doc.add_paragraph(f"Método: Análisis automático con IA")
-        
-        # Resumen ejecutivo
-        doc.add_heading('Resumen Ejecutivo', level=1)
-        discrepancias = analisis.get("discrepancias_detectadas", [])
-        evidencia = analisis.get("evidencia_favorable", [])
-        puntuacion = analisis.get("puntuacion_discrepancia", 0)
-        probabilidad = analisis.get("probabilidad_ipp", 0)
-        
-        doc.add_paragraph(f"• Discrepancias detectadas: {len(discrepancias)}")
-        doc.add_paragraph(f"• Evidencia favorable: {len(evidencia)} elementos")
-        doc.add_paragraph(f"• Puntuación discrepancia: {puntuacion}/100")
-        doc.add_paragraph(f"• Probabilidad IPP: {probabilidad:.1%}")
-        
-        # Conclusión
-        if probabilidad >= 0.7:
-            conclusion = "ALTA PROBABILIDAD DE IPP"
-        elif probabilidad >= 0.5:
-            conclusion = "PROBABILIDAD MEDIA DE IPP"
-        else:
-            conclusion = "BAJA PROBABILIDAD DE IPP"
-        
-        doc.add_paragraph(f"Conclusión: {conclusion}")
-        
-        # Discrepancias detectadas
-        if discrepancias:
-            doc.add_heading('Discrepancias Detectadas', level=1)
-            for i, disc in enumerate(discrepancias, 1):
-                doc.add_heading(f"{i}. {disc.get('tipo', '').replace('_', ' ').title()}", level=2)
-                doc.add_paragraph(f"Descripción: {disc.get('descripcion', '')}")
-                doc.add_paragraph(f"Severidad: {disc.get('severidad', '')}")
-                doc.add_paragraph(f"Argumento jurídico: {disc.get('argumento_juridico', '')}")
-        
-        # Evidencia favorable
-        if evidencia:
-            doc.add_heading('Evidencia Favorable para IPP', level=1)
-            for i, ev in enumerate(evidencia, 1):
-                doc.add_heading(f"{i}. {ev.get('tipo', '').replace('_', ' ').title()}", level=2)
-                doc.add_paragraph(f"Descripción: {ev.get('descripcion', '')}")
-                doc.add_paragraph(f"Relevancia: {ev.get('relevancia', '')}")
-                doc.add_paragraph(f"Argumento: {ev.get('argumento', '')}")
-        
-        # Argumentos jurídicos
-        argumentos = analisis.get("argumentos_juridicos", [])
-        if argumentos:
-            doc.add_heading('Argumentos Jurídicos Generados', level=1)
-            for i, arg in enumerate(argumentos, 1):
-                doc.add_heading(f"{i}. {arg.get('titulo', '')}", level=2)
-                doc.add_paragraph(f"Contenido: {arg.get('contenido', '')}")
-                doc.add_paragraph(f"Fuerza: {arg.get('fuerza', '')}")
-        
-        # Recomendaciones de defensa
-        recomendaciones = analisis.get("recomendaciones_defensa", [])
-        if recomendaciones:
-            doc.add_heading('Recomendaciones de Defensa', level=1)
-            for i, rec in enumerate(recomendaciones, 1):
-                doc.add_heading(f"{i}. {rec.get('titulo', '')}", level=2)
-                doc.add_paragraph(f"Contenido: {rec.get('contenido', '')}")
-                doc.add_paragraph(f"Prioridad: {rec.get('prioridad', '')}")
-                
-                acciones = rec.get('acciones', [])
-                if acciones:
-                    doc.add_paragraph("Acciones recomendadas:")
-                    for accion in acciones:
-                        doc.add_paragraph(f"• {accion}", style='List Bullet')
-        
-        # Contradicciones internas
-        contradicciones = analisis.get("contradicciones_internas", [])
-        if contradicciones:
-            doc.add_heading('Contradicciones Internas Detectadas', level=1)
-            for i, cont in enumerate(contradicciones, 1):
-                doc.add_heading(f"{i}. Contradicción Interna", level=2)
-                doc.add_paragraph(f"Descripción: {cont.get('descripcion', '')}")
-                doc.add_paragraph(f"Texto detectado: {cont.get('texto', '')}")
-                doc.add_paragraph(f"Argumento: {cont.get('argumento', '')}")
+        # Contenido simple
+        doc.add_heading('Información de Prueba', level=1)
+        doc.add_paragraph("Este es un documento de prueba para verificar que la generación de archivos Word funciona correctamente.")
+        doc.add_paragraph("Fecha de prueba: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        doc.add_paragraph("Estado: ✅ FUNCIONANDO")
         
         # Guardar en memoria
         from io import BytesIO
@@ -1309,19 +1416,24 @@ async def descargar_informe_discrepancias(request: Request):
         doc.save(buffer)
         buffer.seek(0)
         
-        # Preparar respuesta
+        content = buffer.getvalue()
+        logger.info(f"✅ Documento de prueba generado: {len(content)} bytes")
+        
         from fastapi.responses import Response
         return Response(
-            content=buffer.getvalue(),
+            content=content,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={
-                "Content-Disposition": f"attachment; filename=informe_discrepancias_{nombre_archivo.replace('.pdf', '')}.docx"
+                "Content-Disposition": "attachment; filename=test_word.docx",
+                "Content-Length": str(len(content))
             }
         )
         
     except Exception as e:
-        logger.error(f"Error generando informe Word: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generando informe: {str(e)}")
+        logger.error(f"❌ Error en prueba Word: {e}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error en prueba: {str(e)}")
 
 
 @app.post("/api/descargar-resumen-pdf")
