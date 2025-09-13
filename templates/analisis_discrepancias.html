@@ -282,28 +282,72 @@
                     <div class="row">
                         <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.discrepancias_detectadas|length if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas else 0 }}</div>
+                                <div class="metric-value">
+                                    {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.discrepancias_detectadas %}
+                                        {{ resultado.analisis_discrepancias.discrepancias_detectadas|length }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </div>
                                 <div class="metric-label">Discrepancias Detectadas</div>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.evidencia_favorable|length if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable else 0 }}</div>
+                                <div class="metric-value">
+                                    {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.evidencia_favorable %}
+                                        {{ resultado.analisis_discrepancias.evidencia_favorable|length }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </div>
                                 <div class="metric-label">Elementos de Evidencia</div>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ resultado.analisis_discrepancias.puntuacion_discrepancia if resultado.analisis_discrepancias and resultado.analisis_discrepancias.puntuacion_discrepancia else 0 }}/100</div>
+                                <div class="metric-value">
+                                    {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.puntuacion_discrepancia %}
+                                        {{ resultado.analisis_discrepancias.puntuacion_discrepancia }}/100
+                                    {% else %}
+                                        0/100
+                                    {% endif %}
+                                </div>
                                 <div class="metric-label">Puntuación Discrepancia</div>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                             <div class="metric-card">
-                                <div class="metric-value">{{ (resultado.analisis_discrepancias.probabilidad_ipp * 100)|round(1) if resultado.analisis_discrepancias and resultado.analisis_discrepancias.probabilidad_ipp else 0 }}%</div>
+                                <div class="metric-value">
+                                    {% if resultado.analisis_discrepancias and resultado.analisis_discrepancias.probabilidad_ipp %}
+                                        {{ (resultado.analisis_discrepancias.probabilidad_ipp * 100)|round(1) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </div>
                                 <div class="metric-label">Probabilidad IPP</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Debug Panel (temporal) -->
+                <div class="card mb-4 bg-light">
+                    <div class="card-header">
+                        <h6 class="mb-0">🔍 Debug - Datos Recibidos</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Análisis discrepancias disponible:</strong> 
+                            {% if resultado.analisis_discrepancias %}Sí{% else %}No{% endif %}
+                        </p>
+                        <p><strong>Tipo de datos:</strong> {{ resultado.analisis_discrepancias.__class__.__name__ if resultado.analisis_discrepancias else 'None' }}</p>
+                        {% if resultado.analisis_discrepancias %}
+                        <p><strong>Claves disponibles:</strong> {{ resultado.analisis_discrepancias.keys()|list }}</p>
+                        <p><strong>Discrepancias count:</strong> {{ resultado.analisis_discrepancias.discrepancias_detectadas|length if resultado.analisis_discrepancias.discrepancias_detectadas else 0 }}</p>
+                        <p><strong>Evidencia count:</strong> {{ resultado.analisis_discrepancias.evidencia_favorable|length if resultado.analisis_discrepancias.evidencia_favorable else 0 }}</p>
+                        <p><strong>Puntuación:</strong> {{ resultado.analisis_discrepancias.puntuacion_discrepancia if resultado.analisis_discrepancias.puntuacion_discrepancia else 0 }}</p>
+                        <p><strong>Probabilidad IPP:</strong> {{ resultado.analisis_discrepancias.probabilidad_ipp if resultado.analisis_discrepancias.probabilidad_ipp else 0 }}</p>
+                        {% endif %}
                     </div>
                 </div>
 
