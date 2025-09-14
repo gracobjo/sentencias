@@ -1134,8 +1134,14 @@ async def test_analisis_discrepancias(archivo_id: str):
                     break
         
         if not archivo_path:
-            archivos_disponibles = [f.name for f in Path("sentencias").glob("*")]
-            return {"error": f"Archivo no encontrado: {archivo_id}", "archivos_disponibles": archivos_disponibles}
+            archivos_sentencias = [f.name for f in Path("sentencias").glob("*")]
+            archivos_uploads = [f.name for f in Path("uploads").glob("*")]
+            return {
+                "error": f"Archivo no encontrado: {archivo_id}", 
+                "archivos_en_sentencias": archivos_sentencias,
+                "archivos_en_uploads": archivos_uploads,
+                "archivo_id_buscado": archivo_id
+            }
         
         # Realizar análisis completo
         if ANALIZADOR_IA_DISPONIBLE:
