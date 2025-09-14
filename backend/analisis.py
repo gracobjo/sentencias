@@ -158,24 +158,57 @@ class AnalizadorLegal:
             # Generar insights
             insights = self._generar_insights_avanzados(es_favorable, frases_encontradas, confianza)
             
-            return {
-                "prediccion": {
-                    "es_favorable": es_favorable,
-                    "confianza": confianza,
-                    "interpretacion": "Favorable" if es_favorable else "Desfavorable",
-                    "probabilidades": {
-                        "favorable": confianza if es_favorable else 1 - confianza,
-                        "desfavorable": 1 - confianza if es_favorable else confianza
-                    }
-                },
-                "argumentos": argumentos,
-                "frases_clave": frases_encontradas,
-                "resumen_inteligente": self._generar_resumen_ia(es_favorable, confianza, frases_encontradas),
-                "insights_juridicos": insights,
-                "total_frases_clave": sum(datos["total"] for datos in frases_encontradas.values()),
-                "modelo_ia": True,
-                "metodo_analisis": "IA (Híbrido Avanzado)"
-            }
+            # INCLUIR ANÁLISIS DE DISCREPANCIAS ESPECÍFICO POR TIPO DE DOCUMENTO
+            try:
+                logger.info("🔍 Iniciando análisis de discrepancias...")
+                analisis_discrepancias = self.analizador_discrepancias.analizar_discrepancias(contenido, nombre_archivo)
+                logger.info(f"✅ Análisis de discrepancias completado: {len(analisis_discrepancias.get('discrepancias_detectadas', []))} discrepancias encontradas")
+                
+                # Integrar el análisis de discrepancias en el resultado
+                resultado_base = {
+                    "prediccion": {
+                        "es_favorable": es_favorable,
+                        "confianza": confianza,
+                        "interpretacion": "Favorable" if es_favorable else "Desfavorable",
+                        "probabilidades": {
+                            "favorable": confianza if es_favorable else 1 - confianza,
+                            "desfavorable": 1 - confianza if es_favorable else confianza
+                        }
+                    },
+                    "argumentos": argumentos,
+                    "frases_clave": frases_encontradas,
+                    "resumen_inteligente": self._generar_resumen_ia(es_favorable, confianza, frases_encontradas),
+                    "insights_juridicos": insights,
+                    "total_frases_clave": sum(datos["total"] for datos in frases_encontradas.values()),
+                    "modelo_ia": True,
+                    "metodo_analisis": "IA (Híbrido Avanzado)"
+                }
+                
+                # Combinar con análisis de discrepancias
+                resultado_base.update(analisis_discrepancias)
+                return resultado_base
+                
+            except Exception as e:
+                logger.error(f"Error en análisis de discrepancias: {e}")
+                # Si falla el análisis de discrepancias, devolver resultado básico
+                return {
+                    "prediccion": {
+                        "es_favorable": es_favorable,
+                        "confianza": confianza,
+                        "interpretacion": "Favorable" if es_favorable else "Desfavorable",
+                        "probabilidades": {
+                            "favorable": confianza if es_favorable else 1 - confianza,
+                            "desfavorable": 1 - confianza if es_favorable else confianza
+                        }
+                    },
+                    "argumentos": argumentos,
+                    "frases_clave": frases_encontradas,
+                    "resumen_inteligente": self._generar_resumen_ia(es_favorable, confianza, frases_encontradas),
+                    "insights_juridicos": insights,
+                    "total_frases_clave": sum(datos["total"] for datos in frases_encontradas.values()),
+                    "modelo_ia": True,
+                    "metodo_analisis": "IA (Híbrido Avanzado)"
+                }
             
         except Exception as e:
             logger.error(f"Error en análisis híbrido: {e}")
