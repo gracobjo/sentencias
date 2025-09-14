@@ -93,7 +93,7 @@ class AnalizadorLegal:
         return frases_default
     
     def _cargar_modelo(self):
-        """Carga el modelo pre-entrenado"""
+        """Carga el modelo pre-entrenado con manejo de incompatibilidades"""
         try:
             if self.modelo_path.exists():
                 with open(self.modelo_path, 'rb') as f:
@@ -107,11 +107,39 @@ class AnalizadorLegal:
                 logger.info("Se usará análisis basado en reglas")
         except Exception as e:
             logger.error(f"❌ Error cargando modelo: {e}")
-            logger.info("Se usará análisis basado en reglas")
+            logger.info("⚠️ Incompatibilidad de versiones detectada")
+            logger.info("Creando modelo TF-IDF básico para análisis")
+            self._crear_modelo_basico()
 
         # En producción, usar solo modelo TF-IDF para evitar problemas de memoria
         logger.info("⚠️ Modo producción: usando solo modelo TF-IDF, evitando SentenceTransformer")
         logger.info("Usando análisis basado en TF-IDF + reglas para máxima compatibilidad")
+    
+    def _crear_modelo_basico(self):
+        """Crea un modelo TF-IDF básico cuando hay incompatibilidades"""
+        try:
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.linear_model import LogisticRegression
+            
+            # Crear vectorizador básico
+            self.vectorizador = TfidfVectorizer(
+                max_features=1000,
+                stop_words='spanish',
+                ngram_range=(1, 2)
+            )
+            
+            # Crear clasificador básico
+            self.clasificador = LogisticRegression(random_state=42)
+            
+            # Marcar que tenemos un modelo básico
+            self.modelo = "basico"
+            
+            logger.info("✅ Modelo TF-IDF básico creado exitosamente")
+            logger.info("⚠️ Usando modelo básico debido a incompatibilidad de versiones")
+            
+        except Exception as e:
+            logger.error(f"❌ Error creando modelo básico: {e}")
+            logger.info("Se usará análisis basado en reglas")
     
     def analizar_documento(self, ruta_archivo: str) -> Dict[str, Any]:
         """
@@ -135,7 +163,8 @@ class AnalizadorLegal:
             # Análisis con IA si está disponible (priorizar SBERT si está listo)
             if self.sbert_encoder is not None and self.sbert_clf is not None:
                 resultado = self._analisis_con_sbert(contenido, nombre_archivo)
-            elif self.modelo and self.vectorizador and self.clasificador:
+            elif (self.modelo is not None and self.vectorizador is not None and 
+                  self.clasificador is not None):
                 resultado = self._analisis_con_ia(contenido, nombre_archivo)
             else:
                 resultado = self._analisis_basado_reglas(contenido, nombre_archivo)
