@@ -251,7 +251,7 @@ class AnalizadorLegal:
             # Análisis de discrepancias médicas-legales
             try:
                 logger.info("🔍 Iniciando análisis de discrepancias...")
-                analisis_discrepancias = self.analizador_discrepancias.analizar_discrepancias(contenido)
+                analisis_discrepancias = self.analizador_discrepancias.analizar_discrepancias(contenido, nombre_archivo)
                 logger.info(f"✅ Análisis de discrepancias completado: {len(analisis_discrepancias.get('discrepancias_detectadas', []))} discrepancias encontradas")
                 resultado["analisis_discrepancias"] = analisis_discrepancias
             except Exception as e:

@@ -146,20 +146,21 @@ class AnalizadorDiscrepancias:
             ]
         }
     
-    def analizar_discrepancias(self, texto: str) -> Dict[str, Any]:
+    def analizar_discrepancias(self, texto: str, nombre_archivo: str = None) -> Dict[str, Any]:
         """
         Analiza discrepancias médicas-legales en el texto
         
         Args:
             texto: Texto del informe médico-legal
+            nombre_archivo: Nombre del archivo para detección de tipo
             
         Returns:
             Diccionario con análisis de discrepancias
         """
         try:
-            # Detectar tipo de documento
-            tipo_documento = self._detectar_tipo_documento(texto)
-            logger.info(f"Tipo de documento detectado: {tipo_documento}")
+            # Detectar tipo de documento por nombre de archivo (más confiable)
+            tipo_documento = self._detectar_tipo_por_nombre(nombre_archivo) if nombre_archivo else "documento_generico"
+            logger.info(f"Tipo de documento detectado: {tipo_documento} (archivo: {nombre_archivo})")
             
             resultado = {
                 "tipo_documento": tipo_documento,
@@ -184,6 +185,23 @@ class AnalizadorDiscrepancias:
         except Exception as e:
             logger.error(f"Error analizando discrepancias: {e}")
             return {"error": f"Error en análisis de discrepancias: {str(e)}"}
+    
+    def _detectar_tipo_por_nombre(self, nombre_archivo: str) -> str:
+        """Detecta el tipo de documento basado en el nombre del archivo"""
+        if not nombre_archivo:
+            return "documento_generico"
+        
+        nombre_lower = nombre_archivo.lower()
+        
+        # Detectar STS (Sentencias del Tribunal Supremo)
+        if "sts" in nombre_lower:
+            return "sentencia"
+        
+        # Detectar informes médicos
+        if any(palabra in nombre_lower for palabra in ["informe", "médico", "medico", "diagnostico", "diagnóstico"]):
+            return "informe_medico"
+        
+        return "documento_generico"
     
     def _detectar_tipo_documento(self, texto: str) -> str:
         """Detecta el tipo de documento basado en su contenido"""
