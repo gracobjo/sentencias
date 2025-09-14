@@ -58,10 +58,10 @@ logs/
 *.tmp
 *.temp
 
-# Model files (if too large)
-*.pkl
-*.joblib
-models/
+# Model files (if too large) - COMMENTED OUT FOR PRODUCTION
+# *.pkl
+# *.joblib
+# models/
 
 # Sentencias directory (PDFs)
 sentencias/
