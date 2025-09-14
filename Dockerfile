@@ -13,17 +13,17 @@ RUN apt-get update && apt-get install -y \
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de dependencias
-COPY requirements-deploy.txt .
+# Copiar archivos de dependencias ligeras
+COPY requirements-deploy-lite.txt .
 
 # Instalar dependencias de Python con manejo de errores
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir numpy==1.24.4 && \
-    pip install --no-cache-dir -r requirements-deploy.txt
+    pip install --no-cache-dir -r requirements-deploy-lite.txt
 
-# Instalar modelos de spaCy por separado
-RUN python -m spacy download en_core_web_sm --no-cache-dir || echo "Error descargando en_core_web_sm"
-RUN python -m spacy download es_core_news_sm --no-cache-dir || echo "Error descargando es_core_news_sm"
+# Sin modelos de spaCy para reducir memoria
+# RUN python -m spacy download en_core_web_sm --no-cache-dir || echo "Error descargando en_core_web_sm"
+# RUN python -m spacy download es_core_news_sm --no-cache-dir || echo "Error descargando es_core_news_sm"
 
 # Copiar código de la aplicación
 COPY . .
@@ -35,8 +35,8 @@ RUN mkdir -p sentencias uploads logs
 RUN ls -la models/ || echo "Directorio models no encontrado"
 RUN ls -la models/*.pkl || echo "Archivos .pkl no encontrados"
 
-# Ejecutar script de diagnóstico
-RUN python test_deploy_fix.py || echo "Script de diagnóstico falló"
+# Ejecutar script de diagnóstico ligero
+RUN python test_deploy_lite.py || echo "Script de diagnóstico falló"
 
 # Exponer puerto
 EXPOSE 8000
