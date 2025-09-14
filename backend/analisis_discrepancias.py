@@ -257,36 +257,61 @@ class AnalizadorDiscrepancias:
         # Analizar evidencia favorable
         evidencia = self._analizar_evidencia_favorable(texto)
         resultado["evidencia_favorable"] = evidencia
-            
-            # Detectar contradicciones internas
-            contradicciones = self._detectar_contradicciones_internas(texto)
-            resultado["contradicciones_internas"] = contradicciones
-            
-            # Generar argumentos jurídicos
-            argumentos = self._generar_argumentos_juridicos(texto, discrepancias, evidencia)
-            resultado["argumentos_juridicos"] = argumentos
-            
-            # Generar recomendaciones de defensa
-            recomendaciones = self._generar_recomendaciones_defensa(texto, discrepancias, evidencia, contradicciones)
-            resultado["recomendaciones_defensa"] = recomendaciones
-            
-            # Calcular puntuación de discrepancia
-            puntuacion = self._calcular_puntuacion_discrepancia(discrepancias, evidencia, contradicciones)
-            resultado["puntuacion_discrepancia"] = puntuacion
-            
-            # Calcular probabilidad de IPP
-            probabilidad = self._calcular_probabilidad_ipp(texto, discrepancias, evidencia)
-            resultado["probabilidad_ipp"] = probabilidad
-            
-            # Generar resumen ejecutivo
-            resumen = self._generar_resumen_ejecutivo(resultado)
-            resultado["resumen_ejecutivo"] = resumen
-            
-            return resultado
-            
-        except Exception as e:
-            logger.error(f"Error analizando discrepancias: {e}")
-            return {"error": f"Error en análisis de discrepancias: {str(e)}"}
+        
+        # Detectar contradicciones internas
+        contradicciones = self._detectar_contradicciones_internas(texto)
+        resultado["contradicciones_internas"] = contradicciones
+        
+        # Generar argumentos jurídicos
+        argumentos = self._generar_argumentos_juridicos(texto, discrepancias, evidencia)
+        resultado["argumentos_juridicos"] = argumentos
+        
+        # Generar recomendaciones de defensa
+        recomendaciones = self._generar_recomendaciones_defensa(texto, discrepancias, evidencia, contradicciones)
+        resultado["recomendaciones_defensa"] = recomendaciones
+        
+        # Calcular puntuación de discrepancia
+        puntuacion = self._calcular_puntuacion_discrepancia(discrepancias, evidencia, contradicciones)
+        resultado["puntuacion_discrepancia"] = puntuacion
+        
+        # Calcular probabilidad de IPP
+        probabilidad = self._calcular_probabilidad_ipp(texto, discrepancias, evidencia)
+        resultado["probabilidad_ipp"] = probabilidad
+        
+        # Generar resumen ejecutivo
+        resumen = self._generar_resumen_ejecutivo(resultado)
+        resultado["resumen_ejecutivo"] = resumen
+        
+        return resultado
+    
+    def _analizar_documento_generico(self, texto: str, resultado: Dict[str, Any]) -> Dict[str, Any]:
+        """Análisis para documentos genéricos"""
+        # Usar análisis básico de discrepancias
+        discrepancias = self._detectar_discrepancias_especificas(texto)
+        resultado["discrepancias_detectadas"] = discrepancias
+        
+        evidencia = self._analizar_evidencia_favorable(texto)
+        resultado["evidencia_favorable"] = evidencia
+        
+        contradicciones = self._detectar_contradicciones_internas(texto)
+        resultado["contradicciones_internas"] = contradicciones
+        
+        argumentos = self._generar_argumentos_juridicos(texto, discrepancias, evidencia)
+        resultado["argumentos_juridicos"] = argumentos
+        
+        recomendaciones = self._generar_recomendaciones_defensa(texto, discrepancias, evidencia, contradicciones)
+        resultado["recomendaciones_defensa"] = recomendaciones
+        
+        puntuacion = self._calcular_puntuacion_discrepancia(discrepancias, evidencia, contradicciones)
+        resultado["puntuacion_discrepancia"] = puntuacion
+        
+        probabilidad = self._calcular_probabilidad_ipp(texto, discrepancias, evidencia)
+        resultado["probabilidad_ipp"] = probabilidad
+        
+        resumen = self._generar_resumen_ejecutivo(resultado)
+        resultado["resumen_ejecutivo"] = resumen
+        
+        return resultado
     
     def _detectar_discrepancias_especificas(self, texto: str) -> List[Dict[str, Any]]:
         """Detecta discrepancias específicas entre diagnóstico médico y calificación legal"""
