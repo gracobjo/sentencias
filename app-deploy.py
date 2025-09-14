@@ -2050,6 +2050,93 @@ async def api_sugerencias_test():
     return {"sugerencias_meta": sugerencias}
 
 
+@app.get("/api/diagnostico/modelo")
+async def api_diagnostico_modelo():
+    """Endpoint para diagnóstico detallado del modelo IA en producción"""
+    try:
+        logger.info("🔍 Iniciando diagnóstico del modelo...")
+        
+        diagnostico = {
+            "timestamp": datetime.now().isoformat(),
+            "ia_disponible_global": ANALIZADOR_IA_DISPONIBLE,
+            "modelos_disponibles": {},
+            "errores": [],
+            "estado_importacion": {},
+            "archivos_modelo": {},
+            "prueba_carga": {}
+        }
+        
+        # 1. Verificar archivos de modelo
+        models_dir = Path("models")
+        if models_dir.exists():
+            archivos = list(models_dir.iterdir())
+            diagnostico["archivos_modelo"]["existe_directorio"] = True
+            diagnostico["archivos_modelo"]["archivos"] = [f.name for f in archivos]
+            diagnostico["archivos_modelo"]["tamaños"] = {f.name: f.stat().st_size for f in archivos}
+        else:
+            diagnostico["archivos_modelo"]["existe_directorio"] = False
+            diagnostico["errores"].append("Directorio 'models' no existe")
+        
+        # 2. Probar importación del módulo backend
+        try:
+            from backend.analisis import AnalizadorLegal
+            diagnostico["estado_importacion"]["backend_analisis"] = "✅ OK"
+        except Exception as e:
+            diagnostico["estado_importacion"]["backend_analisis"] = f"❌ Error: {e}"
+            diagnostico["errores"].append(f"Error importando backend.analisis: {e}")
+        
+        # 3. Probar carga directa del modelo
+        try:
+            import pickle
+            with open('models/modelo_legal.pkl', 'rb') as f:
+                modelo = pickle.load(f)
+            diagnostico["prueba_carga"]["modelo_principal"] = "✅ OK"
+            diagnostico["prueba_carga"]["tipo_modelo"] = str(type(modelo))
+            if isinstance(modelo, dict):
+                diagnostico["prueba_carga"]["keys_modelo"] = list(modelo.keys())
+        except Exception as e:
+            diagnostico["prueba_carga"]["modelo_principal"] = f"❌ Error: {e}"
+            diagnostico["errores"].append(f"Error cargando modelo: {e}")
+        
+        # 4. Probar creación del analizador
+        try:
+            if "backend.analisis" in diagnostico["estado_importacion"]:
+                analizador = AnalizadorLegal()
+                diagnostico["prueba_carga"]["creacion_analizador"] = "✅ OK"
+                diagnostico["prueba_carga"]["modelo_ia_analizador"] = getattr(analizador, 'modelo', None) is not None
+            else:
+                diagnostico["prueba_carga"]["creacion_analizador"] = "❌ No se puede crear - error de importación"
+        except Exception as e:
+            diagnostico["prueba_carga"]["creacion_analizador"] = f"❌ Error: {e}"
+            diagnostico["errores"].append(f"Error creando analizador: {e}")
+        
+        # 5. Probar análisis básico
+        try:
+            if "creacion_analizador" in diagnostico["prueba_carga"] and "✅ OK" in diagnostico["prueba_carga"]["creacion_analizador"]:
+                analizador = AnalizadorLegal()
+                resultado = analizador.analizar_documento("sentencias/STS_2384_2025.pdf")
+                diagnostico["prueba_carga"]["analisis_basico"] = "✅ OK"
+                diagnostico["prueba_carga"]["metodo_analisis"] = resultado.get("metodo_analisis", "desconocido")
+                diagnostico["prueba_carga"]["modelo_ia_resultado"] = resultado.get("modelo_ia", False)
+            else:
+                diagnostico["prueba_carga"]["analisis_basico"] = "❌ No se puede probar - error anterior"
+        except Exception as e:
+            diagnostico["prueba_carga"]["analisis_basico"] = f"❌ Error: {e}"
+            diagnostico["errores"].append(f"Error en análisis: {e}")
+        
+        logger.info(f"🔍 Diagnóstico completado: {len(diagnostico['errores'])} errores encontrados")
+        
+        return diagnostico
+        
+    except Exception as e:
+        logger.error(f"❌ Error en diagnóstico: {e}")
+        return {
+            "error": str(e),
+            "timestamp": datetime.now().isoformat(),
+            "ia_disponible_global": ANALIZADOR_IA_DISPONIBLE
+        }
+
+
 @app.get("/api/diagnostico/ia")
 async def api_diagnostico_ia():
     """Endpoint para diagnóstico detallado del modelo IA"""
