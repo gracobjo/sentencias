@@ -162,12 +162,36 @@ def save_frases_clave(data: Dict[str, List[str]]) -> None:
 
 # Importar el analizador de IA (asumiendo que ya está entrenado)
 try:
+    logger.info("🔍 Intentando cargar módulo de IA...")
+    
+    # Verificar que los archivos del modelo existan
+    models_dir = Path("models")
+    if not models_dir.exists():
+        raise ImportError("Directorio 'models' no existe")
+    
+    modelo_file = models_dir / "modelo_legal.pkl"
+    if not modelo_file.exists():
+        raise ImportError(f"Archivo del modelo no existe: {modelo_file}")
+    
+    logger.info(f"✅ Archivos del modelo encontrados: {list(models_dir.iterdir())}")
+    
+    # Intentar importar el módulo
     from backend.analisis import AnalizadorLegal
+    logger.info("✅ Módulo backend.analisis importado")
+    
+    # Intentar crear una instancia para verificar que funciona
+    analizador_test = AnalizadorLegal()
+    logger.info("✅ AnalizadorLegal creado exitosamente")
+    
     ANALIZADOR_IA_DISPONIBLE = True
     logger.info("✅ Módulo de IA cargado correctamente")
-except ImportError as e:
+    
+except Exception as e:
     ANALIZADOR_IA_DISPONIBLE = False
-    logger.warning(f"⚠️ Módulo de IA no disponible: {e}")
+    logger.error(f"❌ Error cargando módulo de IA: {e}")
+    logger.error(f"❌ Tipo de error: {type(e).__name__}")
+    import traceback
+    logger.error(f"❌ Traceback completo: {traceback.format_exc()}")
     logger.info("Se usará análisis básico como fallback")
 
 
