@@ -1111,8 +1111,10 @@ async def test_analisis_discrepancias(archivo_id: str):
     try:
         logger.info(f"🧪 Test endpoint - Buscando archivo: {archivo_id}")
         
-        # Buscar archivo
+        # Buscar archivo en ambos directorios
         archivo_path = None
+        
+        # Buscar en sentencias
         for extension in ["*.pdf", "*.txt", "*.docx"]:
             for archivo in Path("sentencias").glob(extension):
                 if archivo_id in archivo.name:
@@ -1121,14 +1123,35 @@ async def test_analisis_discrepancias(archivo_id: str):
             if archivo_path:
                 break
         
+        # Si no se encuentra, buscar en uploads
+        if not archivo_path:
+            for extension in ["*.pdf", "*.txt", "*.docx"]:
+                for archivo in Path("uploads").glob(extension):
+                    if archivo_id in archivo.name:
+                        archivo_path = archivo
+                        break
+                if archivo_path:
+                    break
+        
         if not archivo_path:
             archivos_disponibles = [f.name for f in Path("sentencias").glob("*")]
             return {"error": f"Archivo no encontrado: {archivo_id}", "archivos_disponibles": archivos_disponibles}
         
+        # Realizar análisis completo
+        if ANALIZADOR_IA_DISPONIBLE:
+            from backend.analisis import AnalizadorLegal
+            analizador = AnalizadorLegal()
+            resultado = analizador.analizar_documento(str(archivo_path))
+        else:
+            resultado = analizador_basico.analizar_documento(str(archivo_path), archivo_path.name)
+        
         return {
             "archivo_encontrado": str(archivo_path),
             "archivo_id": archivo_id,
-            "status": "ok"
+            "status": "ok",
+            "analisis_completo": resultado,
+            "tipo_documento": resultado.get("analisis_discrepancias", {}).get("tipo_documento", "NO_DETECTADO"),
+            "resumen_ejecutivo": resultado.get("analisis_discrepancias", {}).get("resumen_ejecutivo", "NO_DISPONIBLE")
         }
         
     except Exception as e:
