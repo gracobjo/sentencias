@@ -157,7 +157,12 @@ class AnalizadorDiscrepancias:
             Diccionario con análisis de discrepancias
         """
         try:
+            # Detectar tipo de documento
+            tipo_documento = self._detectar_tipo_documento(texto)
+            logger.info(f"Tipo de documento detectado: {tipo_documento}")
+            
             resultado = {
+                "tipo_documento": tipo_documento,
                 "discrepancias_detectadas": [],
                 "argumentos_juridicos": [],
                 "evidencia_favorable": [],
@@ -168,13 +173,90 @@ class AnalizadorDiscrepancias:
                 "resumen_ejecutivo": ""
             }
             
-            # Detectar discrepancias específicas
-            discrepancias = self._detectar_discrepancias_especificas(texto)
-            resultado["discrepancias_detectadas"] = discrepancias
+            # Análisis específico según tipo de documento
+            if tipo_documento == "sentencia":
+                return self._analizar_sentencia(texto, resultado)
+            elif tipo_documento == "informe_medico":
+                return self._analizar_informe_medico(texto, resultado)
+            else:
+                return self._analizar_documento_generico(texto, resultado)
             
-            # Analizar evidencia favorable
-            evidencia = self._analizar_evidencia_favorable(texto)
-            resultado["evidencia_favorable"] = evidencia
+        except Exception as e:
+            logger.error(f"Error analizando discrepancias: {e}")
+            return {"error": f"Error en análisis de discrepancias: {str(e)}"}
+    
+    def _detectar_tipo_documento(self, texto: str) -> str:
+        """Detecta el tipo de documento basado en su contenido"""
+        texto_lower = texto.lower()
+        
+        # Indicadores de sentencia
+        indicadores_sentencia = [
+            "tribunal supremo", "sts", "sentencia", "magistrado", "magistrada",
+            "fallamos", "estimamos", "desestimamos", "resuelvo", "resolvemos",
+            "parte dispositiva", "fundamentos de derecho", "antecedentes de hecho"
+        ]
+        
+        # Indicadores de informe médico
+        indicadores_informe = [
+            "informe médico", "diagnóstico", "tratamiento", "evolución", "pronóstico",
+            "exploración física", "pruebas complementarias", "alta médica", "baja médica",
+            "limitaciones funcionales", "capacidad laboral"
+        ]
+        
+        contador_sentencia = sum(1 for indicador in indicadores_sentencia if indicador in texto_lower)
+        contador_informe = sum(1 for indicador in indicadores_informe if indicador in texto_lower)
+        
+        if contador_sentencia > contador_informe and contador_sentencia >= 3:
+            return "sentencia"
+        elif contador_informe > contador_sentencia and contador_informe >= 3:
+            return "informe_medico"
+        else:
+            return "documento_generico"
+    
+    def _analizar_sentencia(self, texto: str, resultado: Dict[str, Any]) -> Dict[str, Any]:
+        """Análisis específico para sentencias"""
+        # Análisis específico para sentencias
+        discrepancias = self._detectar_discrepancias_sentencia(texto)
+        resultado["discrepancias_detectadas"] = discrepancias
+        
+        evidencia = self._analizar_evidencia_sentencia(texto)
+        resultado["evidencia_favorable"] = evidencia
+        
+        # Detectar contradicciones internas
+        contradicciones = self._detectar_contradicciones_sentencia(texto)
+        resultado["contradicciones_internas"] = contradicciones
+        
+        # Generar argumentos jurídicos específicos para sentencias
+        argumentos = self._generar_argumentos_sentencia(texto, discrepancias, evidencia)
+        resultado["argumentos_juridicos"] = argumentos
+        
+        # Generar recomendaciones específicas para sentencias
+        recomendaciones = self._generar_recomendaciones_sentencia(texto, discrepancias, evidencia, contradicciones)
+        resultado["recomendaciones_defensa"] = recomendaciones
+        
+        # Calcular puntuación específica para sentencias
+        puntuacion = self._calcular_puntuacion_sentencia(discrepancias, evidencia, contradicciones)
+        resultado["puntuacion_discrepancia"] = puntuacion
+        
+        # Calcular probabilidad específica para sentencias
+        probabilidad = self._calcular_probabilidad_sentencia(texto, discrepancias, evidencia)
+        resultado["probabilidad_ipp"] = probabilidad
+        
+        # Generar resumen específico para sentencias
+        resumen = self._generar_resumen_sentencia(resultado)
+        resultado["resumen_ejecutivo"] = resumen
+        
+        return resultado
+    
+    def _analizar_informe_medico(self, texto: str, resultado: Dict[str, Any]) -> Dict[str, Any]:
+        """Análisis específico para informes médicos"""
+        # Detectar discrepancias específicas
+        discrepancias = self._detectar_discrepancias_especificas(texto)
+        resultado["discrepancias_detectadas"] = discrepancias
+        
+        # Analizar evidencia favorable
+        evidencia = self._analizar_evidencia_favorable(texto)
+        resultado["evidencia_favorable"] = evidencia
             
             # Detectar contradicciones internas
             contradicciones = self._detectar_contradicciones_internas(texto)
@@ -506,6 +588,195 @@ class AnalizadorDiscrepancias:
         
         if evidencia:
             resumen += f"\n✅ EVIDENCIA CLAVE:\n"
+            for i, ev in enumerate(evidencia[:3], 1):
+                resumen += f"{i}. {ev['descripcion']}\n"
+        
+        return resumen
+    
+    def _detectar_discrepancias_sentencia(self, texto: str) -> List[Dict[str, Any]]:
+        """Detecta discrepancias específicas en sentencias"""
+        discrepancias = []
+        texto_lower = texto.lower()
+        
+        # Detectar sentencias que hablan de informes médicos
+        if "informe" in texto_lower and ("médico" in texto_lower or "médica" in texto_lower):
+            discrepancias.append({
+                "tipo": "sentencia_referencia_informe",
+                "descripcion": "La sentencia hace referencia a un informe médico que no está presente en este documento",
+                "severidad": "media",
+                "argumento_juridico": "La sentencia se basa en un informe médico que debe ser analizado por separado"
+            })
+        
+        # Detectar conclusiones sobre IPP vs LPNI
+        if "incapacidad permanente parcial" in texto_lower or "ipp" in texto_lower:
+            discrepancias.append({
+                "tipo": "conclusion_ipp",
+                "descripcion": "La sentencia contiene conclusiones sobre Incapacidad Permanente Parcial",
+                "severidad": "alta",
+                "argumento_juridico": "Las conclusiones sobre IPP en la sentencia son vinculantes"
+            })
+        
+        return discrepancias
+    
+    def _analizar_evidencia_sentencia(self, texto: str) -> List[Dict[str, Any]]:
+        """Analiza evidencia específica en sentencias"""
+        evidencia = []
+        texto_lower = texto.lower()
+        
+        # Evidencia de fundamentos jurídicos
+        if "artículo" in texto_lower and ("194" in texto or "lgss" in texto_lower):
+            evidencia.append({
+                "tipo": "fundamento_legal",
+                "descripcion": "La sentencia contiene fundamentos jurídicos específicos (Art. 194 LGSS)",
+                "fuerza": "alta",
+                "contexto": "Fundamento legal para IPP"
+            })
+        
+        # Evidencia de lesiones mencionadas
+        if "supraespinoso" in texto_lower or "hombro" in texto_lower:
+            evidencia.append({
+                "tipo": "lesion_especifica",
+                "descripcion": "La sentencia menciona lesiones específicas del supraespinoso/hombro",
+                "fuerza": "alta",
+                "contexto": "Lesiones anatómicas específicas documentadas"
+            })
+        
+        return evidencia
+    
+    def _detectar_contradicciones_sentencia(self, texto: str) -> List[Dict[str, Any]]:
+        """Detecta contradicciones específicas en sentencias"""
+        contradicciones = []
+        texto_lower = texto.lower()
+        
+        # Detectar contradicciones entre estimación y desestimación
+        if "estimamos" in texto_lower and "desestimamos" in texto_lower:
+            contradicciones.append({
+                "tipo": "contradiccion_estimacion",
+                "descripcion": "La sentencia contiene tanto estimación como desestimación de pretensiones",
+                "severidad": "alta",
+                "argumento": "Contradicción en las conclusiones de la sentencia"
+            })
+        
+        return contradicciones
+    
+    def _generar_argumentos_sentencia(self, texto: str, discrepancias: List[Dict], evidencia: List[Dict]) -> List[Dict[str, Any]]:
+        """Genera argumentos específicos para sentencias"""
+        argumentos = []
+        
+        # Argumento principal para sentencias
+        if evidencia:
+            argumentos.append({
+                "tipo": "argumento_sentencia",
+                "titulo": "Análisis de Sentencia Judicial",
+                "contenido": f"Esta es una sentencia del Tribunal Supremo que contiene {len(evidencia)} elementos de evidencia específicos",
+                "evidencia_soporte": [e["descripcion"] for e in evidencia],
+                "fuerza": "alta"
+            })
+        
+        # Argumentos específicos por discrepancias
+        for discrepancia in discrepancias:
+            if discrepancia["tipo"] == "sentencia_referencia_informe":
+                argumentos.append({
+                    "tipo": "argumento_referencia",
+                    "titulo": "Referencia a Informe Médico",
+                    "contenido": "La sentencia hace referencia a un informe médico que debe ser analizado por separado para un análisis completo",
+                    "evidencia_soporte": [],
+                    "fuerza": "media"
+                })
+        
+        return argumentos
+    
+    def _generar_recomendaciones_sentencia(self, texto: str, discrepancias: List[Dict], evidencia: List[Dict], contradicciones: List[Dict]) -> List[Dict[str, Any]]:
+        """Genera recomendaciones específicas para sentencias"""
+        recomendaciones = []
+        
+        # Recomendación principal para sentencias
+        recomendaciones.append({
+            "tipo": "recomendacion_sentencia",
+            "titulo": "Análisis de Sentencia Judicial",
+            "contenido": f"Esta es una sentencia del Tribunal Supremo. Se detectaron {len(evidencia)} elementos de evidencia y {len(discrepancias)} discrepancias específicas",
+            "acciones": [
+                "Analizar los fundamentos jurídicos aplicados",
+                "Revisar las conclusiones sobre IPP vs LPNI",
+                "Identificar referencias a informes médicos",
+                "Evaluar la coherencia de la argumentación"
+            ],
+            "prioridad": "alta"
+        })
+        
+        # Recomendaciones específicas por evidencia
+        for ev in evidencia:
+            if ev["tipo"] == "fundamento_legal":
+                recomendaciones.append({
+                    "tipo": "recomendacion_legal",
+                    "titulo": "Análisis de Fundamentos Legales",
+                    "contenido": "La sentencia contiene fundamentos jurídicos específicos que deben ser analizados",
+                    "acciones": [
+                        "Revisar la aplicación del Art. 194 LGSS",
+                        "Analizar la interpretación jurídica",
+                        "Evaluar la coherencia con la jurisprudencia"
+                    ],
+                    "prioridad": "alta"
+                })
+        
+        return recomendaciones
+    
+    def _calcular_puntuacion_sentencia(self, discrepancias: List[Dict], evidencia: List[Dict], contradicciones: List[Dict]) -> int:
+        """Calcula puntuación específica para sentencias"""
+        puntuacion = 0
+        
+        # Base por evidencia
+        puntuacion += len(evidencia) * 10
+        
+        # Por discrepancias
+        puntuacion += len(discrepancias) * 15
+        
+        # Por contradicciones
+        puntuacion += len(contradicciones) * 20
+        
+        return min(100, puntuacion)
+    
+    def _calcular_probabilidad_sentencia(self, texto: str, discrepancias: List[Dict], evidencia: List[Dict]) -> float:
+        """Calcula probabilidad específica para sentencias"""
+        probabilidad = 0.0
+        texto_lower = texto.lower()
+        
+        # Si la sentencia menciona IPP, alta probabilidad
+        if "incapacidad permanente parcial" in texto_lower or "ipp" in texto_lower:
+            probabilidad = 0.8
+        
+        # Ajuste por evidencia
+        probabilidad += len(evidencia) * 0.05
+        
+        return min(1.0, probabilidad)
+    
+    def _generar_resumen_sentencia(self, resultado: Dict[str, Any]) -> str:
+        """Genera resumen específico para sentencias"""
+        discrepancias = resultado["discrepancias_detectadas"]
+        evidencia = resultado["evidencia_favorable"]
+        probabilidad = resultado["probabilidad_ipp"]
+        puntuacion = resultado["puntuacion_discrepancia"]
+        
+        resumen = f"ANÁLISIS DE SENTENCIA JUDICIAL\n\n"
+        resumen += f"📊 RESUMEN EJECUTIVO:\n"
+        resumen += f"• Tipo de documento: Sentencia del Tribunal Supremo\n"
+        resumen += f"• Elementos de evidencia: {len(evidencia)}\n"
+        resumen += f"• Discrepancias detectadas: {len(discrepancias)}\n"
+        resumen += f"• Puntuación de análisis: {puntuacion}/100\n"
+        resumen += f"• Relevancia para IPP: {probabilidad:.1%}\n\n"
+        
+        if probabilidad >= 0.7:
+            resumen += "🎯 CONCLUSIÓN: SENTENCIA RELEVANTE PARA IPP\n"
+            resumen += "La sentencia contiene elementos importantes para casos de IPP.\n"
+        elif probabilidad >= 0.4:
+            resumen += "⚠️ CONCLUSIÓN: SENTENCIA PARCIALMENTE RELEVANTE\n"
+            resumen += "La sentencia contiene algunos elementos útiles para el análisis.\n"
+        else:
+            resumen += "ℹ️ CONCLUSIÓN: SENTENCIA DE REFERENCIA\n"
+            resumen += "Esta sentencia puede servir como referencia jurídica.\n"
+        
+        if evidencia:
+            resumen += f"\n✅ ELEMENTOS CLAVE:\n"
             for i, ev in enumerate(evidencia[:3], 1):
                 resumen += f"{i}. {ev['descripcion']}\n"
         
