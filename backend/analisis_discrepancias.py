@@ -160,7 +160,7 @@ class AnalizadorDiscrepancias:
         try:
             # Detectar tipo de documento por nombre de archivo (más confiable)
             tipo_documento = self._detectar_tipo_por_nombre(nombre_archivo) if nombre_archivo else "documento_generico"
-            logger.info(f"Tipo de documento detectado: {tipo_documento} (archivo: {nombre_archivo})")
+            logger.info(f"🔍 Tipo de documento detectado: {tipo_documento} (archivo: {nombre_archivo}) - VERSIÓN ACTUALIZADA")
             
             resultado = {
                 "tipo_documento": tipo_documento,
@@ -176,10 +176,13 @@ class AnalizadorDiscrepancias:
             
             # Análisis específico según tipo de documento
             if tipo_documento == "sentencia":
+                logger.info("⚖️ Ejecutando análisis específico para SENTENCIA")
                 return self._analizar_sentencia(texto, resultado)
             elif tipo_documento == "informe_medico":
+                logger.info("🏥 Ejecutando análisis específico para INFORME MÉDICO")
                 return self._analizar_informe_medico(texto, resultado)
             else:
+                logger.info("📄 Ejecutando análisis genérico")
                 return self._analizar_documento_generico(texto, resultado)
             
         except Exception as e:
@@ -264,6 +267,7 @@ class AnalizadorDiscrepancias:
         resumen = self._generar_resumen_sentencia(resultado)
         resultado["resumen_ejecutivo"] = resumen
         
+        logger.info(f"✅ Análisis de SENTENCIA completado - Resumen: {resumen[:50]}...")
         return resultado
     
     def _analizar_informe_medico(self, texto: str, resultado: Dict[str, Any]) -> Dict[str, Any]:
