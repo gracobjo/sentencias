@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     g++ \
     libffi-dev \
     libssl-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Establecer directorio de trabajo
@@ -15,9 +16,14 @@ WORKDIR /app
 # Copiar archivos de dependencias
 COPY requirements-deploy.txt .
 
-# Instalar dependencias de Python
-RUN pip install --no-cache-dir --upgrade pip && \
+# Instalar dependencias de Python con manejo de errores
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir numpy==1.24.4 && \
     pip install --no-cache-dir -r requirements-deploy.txt
+
+# Instalar modelos de spaCy por separado
+RUN python -m spacy download en_core_web_sm --no-cache-dir || echo "Error descargando en_core_web_sm"
+RUN python -m spacy download es_core_news_sm --no-cache-dir || echo "Error descargando es_core_news_sm"
 
 # Copiar código de la aplicación
 COPY . .
@@ -30,7 +36,7 @@ RUN ls -la models/ || echo "Directorio models no encontrado"
 RUN ls -la models/*.pkl || echo "Archivos .pkl no encontrados"
 
 # Ejecutar script de diagnóstico
-RUN python test_deploy.py || echo "Script de diagnóstico falló"
+RUN python test_deploy_fix.py || echo "Script de diagnóstico falló"
 
 # Exponer puerto
 EXPOSE 8000

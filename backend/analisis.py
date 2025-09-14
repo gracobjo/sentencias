@@ -123,12 +123,20 @@ class AnalizadorLegal:
                     logger.info("✅ Modelo de IA (TF-IDF) cargado correctamente")
                 elif encoder_name:
                     try:
-                        from sentence_transformers import SentenceTransformer
-                        self.sbert_encoder = SentenceTransformer(encoder_name)
-                        self.sbert_clf = sbert_data.get('clasificador')
-                        logger.info("✅ Modelo de IA (SBERT) cargado correctamente")
+                        # Intentar importar con manejo de errores de compatibilidad
+                        try:
+                            from sentence_transformers import SentenceTransformer
+                            self.sbert_encoder = SentenceTransformer(encoder_name)
+                            self.sbert_clf = sbert_data.get('clasificador')
+                            logger.info("✅ Modelo de IA (SBERT) cargado correctamente")
+                        except ImportError as ie:
+                            logger.warning(f"Error de importación con SentenceTransformer: {ie}")
+                            logger.info("Usando fallback para modelo SBERT")
+                        except Exception as e:
+                            logger.warning(f"No se pudo cargar SentenceTransformer '{encoder_name}': {e}")
+                            logger.info("Usando fallback para modelo SBERT")
                     except Exception as e:
-                        logger.warning(f"No se pudo cargar SentenceTransformer '{encoder_name}': {e}")
+                        logger.warning(f"Error general cargando SBERT: {e}")
         except Exception as e:
             logger.warning(f"No se pudo cargar modelo SBERT: {e}")
     
