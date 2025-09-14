@@ -1114,24 +1114,21 @@ async def test_analisis_discrepancias(archivo_id: str):
         # Buscar archivo en ambos directorios
         archivo_path = None
         
-        # Buscar en sentencias
-        for extension in ["*.pdf", "*.txt", "*.docx"]:
-            for archivo in Path("sentencias").glob(extension):
-                if archivo_id in archivo.name:
-                    archivo_path = archivo
-                    break
-            if archivo_path:
-                break
-        
-        # Si no se encuentra, buscar en uploads
-        if not archivo_path:
+        # Buscar en ambos directorios con búsqueda más flexible
+        for directorio in ["sentencias", "uploads"]:
+            logger.info(f"🔍 Buscando en directorio: {directorio}")
             for extension in ["*.pdf", "*.txt", "*.docx"]:
-                for archivo in Path("uploads").glob(extension):
-                    if archivo_id in archivo.name:
+                for archivo in Path(directorio).glob(extension):
+                    logger.info(f"📁 Archivo encontrado: {archivo.name}")
+                    # Búsqueda más flexible: buscar por partes del ID
+                    if archivo_id in archivo.name or archivo.name in archivo_id:
                         archivo_path = archivo
+                        logger.info(f"✅ Archivo seleccionado: {archivo_path}")
                         break
                 if archivo_path:
                     break
+            if archivo_path:
+                break
         
         if not archivo_path:
             archivos_sentencias = [f.name for f in Path("sentencias").glob("*")]
