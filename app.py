@@ -1141,12 +1141,24 @@ async def test_analisis_discrepancias(archivo_id: str):
             }
         
         # Realizar análisis completo
-        if ANALIZADOR_IA_DISPONIBLE:
-            from backend.analisis import AnalizadorLegal
-            analizador = AnalizadorLegal()
-            resultado = analizador.analizar_documento(str(archivo_path))
-        else:
-            resultado = analizador_basico.analizar_documento(str(archivo_path), archivo_path.name)
+        logger.info(f"🔬 Iniciando análisis para archivo: {archivo_path}")
+        try:
+            if ANALIZADOR_IA_DISPONIBLE:
+                from backend.analisis import AnalizadorLegal
+                analizador = AnalizadorLegal()
+                resultado = analizador.analizar_documento(str(archivo_path))
+                logger.info("✅ Análisis con IA completado")
+            else:
+                resultado = analizador_basico.analizar_documento(str(archivo_path), archivo_path.name)
+                logger.info("✅ Análisis básico completado")
+            
+            logger.info(f"📊 Resultado contiene: {list(resultado.keys())}")
+            if "analisis_discrepancias" in resultado:
+                logger.info(f"📋 Análisis discrepancias: {list(resultado['analisis_discrepancias'].keys())}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error en análisis: {e}")
+            resultado = {"error": f"Error en análisis: {str(e)}"}
         
         return {
             "archivo_encontrado": str(archivo_path),
