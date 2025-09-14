@@ -109,24 +109,9 @@ class AnalizadorLegal:
             logger.error(f"❌ Error cargando modelo: {e}")
             logger.info("Se usará análisis basado en reglas")
 
-        # Intentar cargar modelo SBERT si existe (solo TF-IDF para producción)
-        try:
-            sbert_path = Path("models/modelo_legal_sbert.pkl")
-            if sbert_path.exists():
-                with open(sbert_path, 'rb') as f:
-                    sbert_data = pickle.load(f)
-                encoder_name = sbert_data.get('encoder_name')
-                if encoder_name == 'tfidf':
-                    # TF-IDF fallback model (más ligero para producción)
-                    self.sbert_encoder = sbert_data.get('vectorizador')
-                    self.sbert_clf = sbert_data.get('clasificador')
-                    logger.info("✅ Modelo de IA (TF-IDF) cargado correctamente")
-                else:
-                    # En producción, evitar SentenceTransformer por problemas de memoria
-                    logger.info("⚠️ Saltando SentenceTransformer en producción para evitar problemas de memoria")
-                    logger.info("Usando solo modelo TF-IDF para análisis")
-        except Exception as e:
-            logger.warning(f"No se pudo cargar modelo SBERT: {e}")
+        # En producción, usar solo modelo TF-IDF para evitar problemas de memoria
+        logger.info("⚠️ Modo producción: usando solo modelo TF-IDF, evitando SentenceTransformer")
+        logger.info("Usando análisis basado en TF-IDF + reglas para máxima compatibilidad")
     
     def analizar_documento(self, ruta_archivo: str) -> Dict[str, Any]:
         """
