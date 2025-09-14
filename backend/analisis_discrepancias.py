@@ -319,24 +319,25 @@ class AnalizadorDiscrepancias:
         """Genera argumentos jurídicos específicos basados en las discrepancias detectadas"""
         argumentos = []
         
-        # Argumento principal: Art. 194.2 LGSS
+        # Solo agregar argumentos si hay evidencia específica del documento
         if evidencia:
+            # Argumento principal solo si hay evidencia específica
             argumentos.append({
                 "tipo": "argumento_principal",
                 "titulo": "Aplicación del Art. 194.2 LGSS",
-                "contenido": self.argumentos_juridicos["argumentos_favorables_ipp"][0],
-                "evidencia_soporte": [e["descripcion"] for e in evidencia[:3]],
+                "contenido": f"Disminución ≥33% en el rendimiento normal de la profesión habitual. Evidencia específica: {len(evidencia)} elementos documentados",
+                "evidencia_soporte": [e["descripcion"] for e in evidencia[:2]],
                 "fuerza": "alta"
             })
         
-        # Argumentos específicos por tipo de discrepancia
+        # Argumentos específicos solo por discrepancias reales detectadas
         for discrepancia in discrepancias:
             if discrepancia["tipo"] == "lesiones_graves_vs_lpni":
                 argumentos.append({
                     "tipo": "argumento_especifico",
                     "titulo": "Incompatibilidad LPNI con lesiones graves",
-                    "contenido": "Las lesiones estructurales graves documentadas (rotura completa, cirugía reconstructiva) son anatómicamente incompatibles con la calificación de LPNI",
-                    "evidencia_soporte": discrepancia["evidencia"],
+                    "contenido": f"Las lesiones estructurales graves documentadas son anatómicamente incompatibles con LPNI. Evidencia: {len(discrepancia.get('evidencia', []))} hallazgos específicos",
+                    "evidencia_soporte": discrepancia.get("evidencia", []),
                     "fuerza": "alta"
                 })
             
@@ -344,19 +345,19 @@ class AnalizadorDiscrepancias:
                 argumentos.append({
                     "tipo": "argumento_especifico",
                     "titulo": "Contradicción entre limitaciones documentadas y alta médica",
-                    "contenido": "Las limitaciones funcionales objetivas documentadas contradicen directamente la conclusión de alta sin limitaciones",
-                    "evidencia_soporte": discrepancia["evidencia"],
+                    "contenido": f"Las limitaciones funcionales objetivas documentadas contradicen directamente la conclusión de alta sin limitaciones. Hallazgos: {len(discrepancia.get('evidencia', []))} limitaciones específicas",
+                    "evidencia_soporte": discrepancia.get("evidencia", []),
                     "fuerza": "alta"
                 })
         
-        # Argumentos de defensa específicos
-        for punto in self.argumentos_juridicos["puntos_clave_defensa"]:
+        # Solo agregar argumentos de defensa si hay discrepancias reales
+        if discrepancias and len(discrepancias) > 0:
             argumentos.append({
                 "tipo": "argumento_defensa",
-                "titulo": "Punto clave para la defensa",
-                "contenido": punto,
+                "titulo": "Estrategia de defensa específica",
+                "contenido": f"Enfocar la defensa en las {len(discrepancias)} discrepancias detectadas entre evidencia médica y calificación legal",
                 "evidencia_soporte": [],
-                "fuerza": "media"
+                "fuerza": "alta"
             })
         
         return argumentos
@@ -379,13 +380,13 @@ class AnalizadorDiscrepancias:
                 "prioridad": "alta"
             })
         
-        # Recomendaciones específicas por tipo de evidencia
+        # Recomendaciones específicas solo por tipo de evidencia encontrada
         tipos_evidencia = set(e["tipo"] for e in evidencia)
         if "lesion_estructural_grave" in tipos_evidencia:
             recomendaciones.append({
                 "tipo": "recomendacion_especifica",
                 "titulo": "Utilizar evidencia de lesiones estructurales graves",
-                "contenido": "Las lesiones estructurales graves son incompatibles con LPNI y apoyan la calificación de IPP",
+                "contenido": f"Las lesiones estructurales graves documentadas ({len([e for e in evidencia if e['tipo'] == 'lesion_estructural_grave'])}) son incompatibles con LPNI",
                 "acciones": [
                     "Presentar informes de imagen (RMN) como prueba objetiva",
                     "Argumentar que las lesiones estructurales requieren cirugía reconstructiva",
@@ -398,7 +399,7 @@ class AnalizadorDiscrepancias:
             recomendaciones.append({
                 "tipo": "recomendacion_especifica",
                 "titulo": "Enfatizar limitaciones funcionales objetivas",
-                "contenido": "Las limitaciones funcionales objetivas demuestran incapacidad para el trabajo habitual",
+                "contenido": f"Las {len([e for e in evidencia if e['tipo'] == 'limitacion_funcional_objetiva'])} limitaciones funcionales objetivas documentadas demuestran incapacidad",
                 "acciones": [
                     "Presentar informes de biomecánica como prueba objetiva",
                     "Demostrar que las limitaciones activas impiden el trabajo",
@@ -407,10 +408,11 @@ class AnalizadorDiscrepancias:
                 "prioridad": "alta"
             })
         
-        # Recomendaciones generales
-        recomendaciones.append({
-            "tipo": "recomendacion_general",
-            "titulo": "Estrategia general de defensa",
+        # Solo agregar recomendaciones generales si no hay evidencia específica
+        if not evidencia and not discrepancias:
+            recomendaciones.append({
+                "tipo": "recomendacion_general",
+                "titulo": "Estrategia general de defensa",
             "contenido": "Enfocar la defensa en la evidencia objetiva y las contradicciones del informe",
             "acciones": [
                 "Preparar argumentos basados en el Art. 194.2 LGSS",
