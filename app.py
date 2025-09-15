@@ -1166,7 +1166,41 @@ async def test_analisis_discrepancias(archivo_id: str):
             "status": "ok",
             "analisis_completo": resultado,
             "tipo_documento": resultado.get("analisis_discrepancias", {}).get("tipo_documento", "NO_DETECTADO"),
-            "resumen_ejecutivo": resultado.get("analisis_discrepancias", {}).get("resumen_ejecutivo", "NO_DISPONIBLE")
+            "resumen_ejecutivo": resultado.get("analisis_discrepancias", {}).get("resumen_ejecutivo", "NO_DISPONIBLE"),
+            "claves_resultado": list(resultado.keys()) if isinstance(resultado, dict) else "NO_DICT"
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/test-analisis-directo/{archivo_id}")
+async def test_analisis_directo(archivo_id: str):
+    """Endpoint de prueba directo que analiza archivos conocidos"""
+    try:
+        # Archivos conocidos
+        archivos_conocidos = {
+            "STS_2384_2025": "sentencias/STS_2384_2025.pdf",
+            "informe_20250910_141039_972e58ef": "sentencias/informe_20250910_141039_972e58ef.pdf"
+        }
+        
+        if archivo_id not in archivos_conocidos:
+            return {"error": f"Archivo no reconocido: {archivo_id}", "archivos_disponibles": list(archivos_conocidos.keys())}
+        
+        archivo_path = archivos_conocidos[archivo_id]
+        
+        # Análisis directo
+        from backend.analisis import AnalizadorLegal
+        analizador = AnalizadorLegal()
+        resultado = analizador.analizar_documento(archivo_path)
+        
+        return {
+            "archivo": archivo_path,
+            "archivo_id": archivo_id,
+            "tipo_documento": resultado.get("analisis_discrepancias", {}).get("tipo_documento", "NO_DETECTADO"),
+            "resumen_ejecutivo": resultado.get("analisis_discrepancias", {}).get("resumen_ejecutivo", "NO_DISPONIBLE"),
+            "claves_resultado": list(resultado.keys()),
+            "analisis_discrepancias_claves": list(resultado.get("analisis_discrepancias", {}).keys())
         }
         
     except Exception as e:
