@@ -1343,11 +1343,22 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
                 resultado = analizador_basico.analizar_documento(str(archivo_path), archivo_path.name)
                 logger.info("✅ Análisis básico completado")
             
-            # Generar análisis de discrepancias específico
-            logger.info("🔍 Generando análisis de discrepancias...")
-            analisis_discrepancias = generar_analisis_discrepancias_basico(str(archivo_path), resultado)
+            # Generar análisis de discrepancias específico usando el módulo avanzado
+            logger.info("🔍 Generando análisis de discrepancias avanzado...")
+            try:
+                from backend.analisis_discrepancias import AnalizadorDiscrepancias
+                analizador_discrepancias = AnalizadorDiscrepancias()
+                analisis_discrepancias = analizador_discrepancias.analizar_discrepancias(
+                    resultado.get("texto_extraido", ""), 
+                    archivo_path.name
+                )
+                logger.info("✅ Análisis de discrepancias avanzado completado")
+            except Exception as e:
+                logger.warning(f"Fallback a análisis básico: {e}")
+                analisis_discrepancias = generar_analisis_discrepancias_basico(str(archivo_path), resultado)
+                logger.info("✅ Análisis de discrepancias básico completado")
+            
             resultado["analisis_discrepancias"] = analisis_discrepancias
-            logger.info("✅ Análisis de discrepancias completado")
             
         except Exception as e:
             logger.error(f"❌ Error en análisis: {e}")
