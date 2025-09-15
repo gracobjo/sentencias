@@ -1031,7 +1031,7 @@ async def mostrar_resultados(request: Request, archivo_id: str):
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-@app.get("/archivo/{archivo_id}", response_class=HTMLResponse)
+@app.get("/ver/{archivo_id}", response_class=HTMLResponse)
 async def ver_archivo(request: Request, archivo_id: str, highlight: str = None, pos: int = None, index: int = None):
     """Muestra el contenido completo de un archivo con frases clave resaltadas y opcionalmente resalta una aparición específica"""
     try:
