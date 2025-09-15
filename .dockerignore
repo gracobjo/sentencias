@@ -1,40 +1,79 @@
-# Ignorar archivos innecesarios en Docker
+# Archivos de desarrollo
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
-env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Entornos virtuales
 venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/
-.gitignore
-README.md
-.env
-.venv
 env/
-venv/
 ENV/
 env.bak/
 venv.bak/
+sentencias/
+
+# Archivos de configuración local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
 .DS_Store
+Thumbs.db
+
+# Archivos de IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
-# Archivos de desarrollo
-requirements.txt
-app.py
-Dockerfile.deploy
+# Archivos de Git
+.git/
+.gitignore
+
+# Documentación de desarrollo
+docs/
+*.md
+!README.md
+
+# Archivos de testing
+test_*.py
+*_test.py
+tests/
+
+# Archivos de scripts de desarrollo
+scripts/install.*
+scripts/start.*
+scripts/restart.*
+
+# Archivos de configuración de desarrollo
+Pipfile
+Pipfile.lock
+pyproject.toml
+
+# Archivos de despliegue duplicados
+deployment/

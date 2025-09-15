@@ -42,4 +42,4 @@ RUN python test_deploy_lite.py || echo "Script de diagnóstico falló"
 EXPOSE 8000
 
 # Comando de inicio
-CMD ["uvicorn", "src.app-deploy:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app-deploy:app", "--host", "0.0.0.0", "--port", "8000"]
