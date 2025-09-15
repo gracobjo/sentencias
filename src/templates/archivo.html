@@ -1383,37 +1383,38 @@
                 console.log(`Botón ${index + 1}:`, onclick);
             });
             
-            // Definir función global para descargar demanda base
-            window.descargarDemandaBase = async function(nombreArchivo) {
-                try {
-                    setLoading(true, 'Generando borrador de demanda…');
-                    const resp = await fetch('/api/demanda-base/txt', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ nombres_archivo: [nombreArchivo] })
-                    });
-                    if (!resp.ok) {
-                        mostrarNotificacion('Error generando demanda base', 'danger');
-                        setLoading(false);
-                        return;
-                    }
-                    const blob = await resp.blob();
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `demanda_base_${nombreArchivo.replace(/[^a-zA-Z0-9_\.\-]/g,'_')}.txt`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
-                    mostrarNotificacion('Demanda base generada', 'success');
-                    setLoading(false);
-                } catch (e) {
-                    mostrarNotificacion('Error: ' + (e.message || e), 'danger');
-                    setLoading(false);
-                }
-            };
         });
+
+        // Función global para descargar demanda base
+        async function descargarDemandaBase(nombreArchivo) {
+            try {
+                setLoading(true, 'Generando borrador de demanda…');
+                const resp = await fetch('/api/demanda-base/txt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombres_archivo: [nombreArchivo] })
+                });
+                if (!resp.ok) {
+                    mostrarNotificacion('Error generando demanda base', 'danger');
+                    setLoading(false);
+                    return;
+                }
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'demanda_base_' + nombreArchivo.replace(/[^a-zA-Z0-9_\.\-]/g, '_') + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                mostrarNotificacion('Demanda base generada', 'success');
+                setLoading(false);
+            } catch (e) {
+                mostrarNotificacion('Error: ' + (e.message || e), 'danger');
+                setLoading(false);
+            }
+        }
     </script>
 </body>
 </html>
