@@ -1123,7 +1123,7 @@
             
             try {
                 // Obtener el contenido original del servidor
-                const contenidoOriginal = `{{ archivo.contenido|safe }}`;
+                const contenidoOriginal = {{ archivo.contenido|tojson|safe }};
                 
                 // Limpiar el contenido original
                 const contenidoLimpio = limpiarHTMLMalformado(contenidoOriginal);
@@ -1284,14 +1284,12 @@
                 console.log('Dataset:', dataset);
                 
                 // Mostrar información en pantalla
-                const info = `
-                    <strong>Información del Contenido:</strong><br>
-                    • Longitud del texto: ${texto.length} caracteres<br>
-                    • Primeros 200 chars: "${texto.substring(0, 200)}..."<br>
-                    • Últimos 200 chars: "...${texto.substring(Math.max(0, texto.length - 200))}"<br>
-                    • Dataset disponible: ${Object.keys(dataset).length} elementos<br>
-                    • Elementos dataset: ${Object.keys(dataset).join(', ')}
-                `;
+                const info = '<strong>Información del Contenido:</strong><br>' +
+                    '• Longitud del texto: ' + texto.length + ' caracteres<br>' +
+                    '• Primeros 200 chars: "' + texto.substring(0, 200) + '..."<br>' +
+                    '• Últimos 200 chars: "...' + texto.substring(Math.max(0, texto.length - 200)) + '"<br>' +
+                    '• Dataset disponible: ' + Object.keys(dataset).length + ' elementos<br>' +
+                    '• Elementos dataset: ' + Object.keys(dataset).join(', ');
                 
                 mostrarNotificacion(info, 'info');
                 
