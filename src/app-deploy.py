@@ -1038,11 +1038,17 @@ async def ver_archivo(request: Request, archivo_id: str, highlight: str = None, 
         logger.info(f"🔍 Procesando solicitud para archivo: {archivo_id}")
         logger.info(f"📋 Parámetros: highlight={highlight}, pos={pos}, index={index}")
         
-        # Buscar el archivo en la carpeta de sentencias
-        archivo_path = SENTENCIAS_DIR / archivo_id
+        # Buscar el archivo en ambos directorios
+        candidatos = [SENTENCIAS_DIR / archivo_id, UPLOADS_DIR / archivo_id]
+        archivo_path = None
         
-        if not archivo_path.exists():
-            logger.error(f"❌ Archivo no encontrado: {archivo_path}")
+        for candidato in candidatos:
+            if candidato.exists():
+                archivo_path = candidato
+                break
+        
+        if not archivo_path:
+            logger.error(f"❌ Archivo no encontrado en ningún directorio: {archivo_id}")
             raise HTTPException(status_code=404, detail=f"Archivo '{archivo_id}' no encontrado")
         
         logger.info(f"✅ Archivo encontrado: {archivo_path}")
@@ -2450,10 +2456,16 @@ async def obtener_documento(nombre_archivo: str):
         # Decodificar el nombre del archivo
         nombre_decodificado = nombre_archivo
         
-        # Buscar el archivo en el directorio de sentencias
-        archivo_path = SENTENCIAS_DIR / nombre_decodificado
+        # Buscar el archivo en ambos directorios
+        candidatos = [SENTENCIAS_DIR / nombre_decodificado, UPLOADS_DIR / nombre_decodificado]
+        archivo_path = None
         
-        if not archivo_path.exists():
+        for candidato in candidatos:
+            if candidato.exists():
+                archivo_path = candidato
+                break
+        
+        if not archivo_path:
             raise HTTPException(status_code=404, detail=f"Documento '{nombre_decodificado}' no encontrado")
         
         # Obtener información del archivo
