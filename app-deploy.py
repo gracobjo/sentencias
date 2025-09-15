@@ -1505,8 +1505,12 @@ async def descargar_informe_discrepancias(request: Request):
         timestamp = datos.get("timestamp", "")
         
         # Crear documento Word
-        # doc = Document()  # Comentado para despliegue
-        return {"error": "Funcionalidad de Word deshabilitada en despliegue"}
+        try:
+            doc = Document()
+            logger.info("✅ Documento Word creado exitosamente")
+        except Exception as e:
+            logger.error(f"❌ Error creando documento Word: {e}")
+            raise HTTPException(status_code=500, detail=f"Error creando documento Word: {str(e)}")
         
         # Título principal
         titulo = doc.add_heading('ANÁLISIS DE DISCREPANCIAS MÉDICAS-LEGALES', 0)
@@ -1592,19 +1596,37 @@ async def descargar_informe_discrepancias(request: Request):
                 doc.add_paragraph(f"Texto detectado: {cont.get('texto', '')}")
                 doc.add_paragraph(f"Argumento: {cont.get('argumento', '')}")
         
-        # Guardar en memoria
+        # Guardar en memoria con validación
         from io import BytesIO
         buffer = BytesIO()
-        doc.save(buffer)
-        buffer.seek(0)
+        
+        try:
+            doc.save(buffer)
+            buffer.seek(0)
+            
+            # Validar que el documento se generó correctamente
+            if buffer.getvalue() is None or len(buffer.getvalue()) == 0:
+                raise Exception("El documento generado está vacío")
+            
+            logger.info(f"✅ Documento Word generado exitosamente: {len(buffer.getvalue())} bytes")
+            
+        except Exception as e:
+            logger.error(f"❌ Error guardando documento Word: {e}")
+            raise HTTPException(status_code=500, detail=f"Error guardando documento: {str(e)}")
         
         # Preparar respuesta
         from fastapi.responses import Response
+        filename = f"informe_discrepancias_{nombre_archivo.replace('.pdf', '').replace('.txt', '')}.docx"
+        
         return Response(
             content=buffer.getvalue(),
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={
-                "Content-Disposition": f"attachment; filename=informe_discrepancias_{nombre_archivo.replace('.pdf', '')}.docx"
+                "Content-Disposition": f"attachment; filename={filename}",
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
             }
         )
         
