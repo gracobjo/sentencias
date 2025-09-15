@@ -162,6 +162,11 @@ class AnalizadorDiscrepancias:
             tipo_documento = self._detectar_tipo_por_nombre(nombre_archivo) if nombre_archivo else "documento_generico"
             logger.info(f"🔍 Tipo de documento detectado: {tipo_documento} (archivo: {nombre_archivo}) - VERSIÓN ACTUALIZADA")
             
+            # DEBUG: Log del contenido del texto para identificar problemas
+            logger.info(f"📄 DEBUG - Longitud del texto: {len(texto)} caracteres")
+            logger.info(f"📄 DEBUG - Primeros 200 caracteres: {texto[:200]}...")
+            logger.info(f"📄 DEBUG - Hash del texto: {hash(texto)}")
+            
             resultado = {
                 "tipo_documento": tipo_documento,
                 "discrepancias_detectadas": [],
@@ -268,6 +273,10 @@ class AnalizadorDiscrepancias:
         resultado["resumen_ejecutivo"] = resumen
         
         logger.info(f"✅ Análisis de SENTENCIA completado - Resumen: {resumen[:50]}...")
+        
+        # DEBUG: Log del resultado final
+        logger.info(f"🔍 DEBUG RESULTADO SENTENCIA - Discrepancias: {len(resultado['discrepancias_detectadas'])}, Evidencia: {len(resultado['evidencia_favorable'])}, Puntuación: {resultado['puntuacion_discrepancia']}, Probabilidad: {resultado['probabilidad_ipp']:.1%}")
+        
         return resultado
     
     def _analizar_informe_medico(self, texto: str, resultado: Dict[str, Any]) -> Dict[str, Any]:
@@ -304,6 +313,9 @@ class AnalizadorDiscrepancias:
         resumen = self._generar_resumen_ejecutivo(resultado)
         resultado["resumen_ejecutivo"] = resumen
         
+        # DEBUG: Log del resultado final
+        logger.info(f"🔍 DEBUG RESULTADO INFORME MÉDICO - Discrepancias: {len(resultado['discrepancias_detectadas'])}, Evidencia: {len(resultado['evidencia_favorable'])}, Puntuación: {resultado['puntuacion_discrepancia']}, Probabilidad: {resultado['probabilidad_ipp']:.1%}")
+        
         return resultado
     
     def _analizar_documento_generico(self, texto: str, resultado: Dict[str, Any]) -> Dict[str, Any]:
@@ -332,6 +344,9 @@ class AnalizadorDiscrepancias:
         
         resumen = self._generar_resumen_ejecutivo(resultado)
         resultado["resumen_ejecutivo"] = resumen
+        
+        # DEBUG: Log del resultado final
+        logger.info(f"🔍 DEBUG RESULTADO DOCUMENTO GENÉRICO - Discrepancias: {len(resultado['discrepancias_detectadas'])}, Evidencia: {len(resultado['evidencia_favorable'])}, Puntuación: {resultado['puntuacion_discrepancia']}, Probabilidad: {resultado['probabilidad_ipp']:.1%}")
         
         return resultado
     
