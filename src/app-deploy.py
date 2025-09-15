@@ -2338,7 +2338,14 @@ async def api_demanda_base_txt(payload: Dict[str, Any]):
         nombres: List[str] = payload.get("nombres_archivo") or []
         if not isinstance(nombres, list) or not nombres:
             raise HTTPException(status_code=400, detail="Debe indicar 'nombres_archivo' (lista)")
-        paths = [SENTENCIAS_DIR / n for n in nombres if (SENTENCIAS_DIR / n).exists()]
+        # Buscar archivos en ambos directorios
+        paths = []
+        for nombre in nombres:
+            candidatos = [SENTENCIAS_DIR / nombre, UPLOADS_DIR / nombre]
+            for candidato in candidatos:
+                if candidato.exists():
+                    paths.append(candidato)
+                    break
         if not paths:
             raise HTTPException(status_code=404, detail="No se encontraron los archivos indicados")
         meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
@@ -2360,7 +2367,14 @@ async def api_demanda_base_docx(payload: Dict[str, Any]):
         nombres: List[str] = payload.get("nombres_archivo") or []
         if not isinstance(nombres, list) or not nombres:
             raise HTTPException(status_code=400, detail="Debe indicar 'nombres_archivo' (lista)")
-        paths = [SENTENCIAS_DIR / n for n in nombres if (SENTENCIAS_DIR / n).exists()]
+        # Buscar archivos en ambos directorios
+        paths = []
+        for nombre in nombres:
+            candidatos = [SENTENCIAS_DIR / nombre, UPLOADS_DIR / nombre]
+            for candidato in candidatos:
+                if candidato.exists():
+                    paths.append(candidato)
+                    break
         if not paths:
             raise HTTPException(status_code=404, detail="No se encontraron los archivos indicados")
         meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
