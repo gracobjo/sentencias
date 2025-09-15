@@ -241,6 +241,22 @@
             </div>
         </div>
 
+        <!-- Explicación del Cálculo -->
+        <div class="row mb-5" id="explicacionCalculo" style="display: none;">
+            <div class="col-12">
+                <div class="card insight-card">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="bi bi-calculator"></i> Explicación del Cálculo de Probabilidades
+                        </h4>
+                        <div id="contenidoExplicacion">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Gráficos -->
         <div class="row mb-5">
             <div class="col-lg-6 mb-4">
@@ -843,6 +859,9 @@
 
             // Mostrar factores clave
             mostrarFactoresClave(data.factores_clave);
+            
+            // Mostrar explicación del cálculo
+            mostrarExplicacionCalculo(data.analisis_predictivo.predicciones.explicacion_calculo);
         }
 
         function mostrarRecomendacionesRiesgo(recomendaciones) {
@@ -959,6 +978,137 @@
 
             html += '</div>';
             container.innerHTML = html;
+        }
+
+        function mostrarExplicacionCalculo(explicacion) {
+            const container = document.getElementById('contenidoExplicacion');
+            const seccion = document.getElementById('explicacionCalculo');
+            
+            if (!explicacion || !container) {
+                seccion.style.display = 'none';
+                return;
+            }
+            
+            let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-info-circle"></i> Metodología</h6>
+                        <p class="text-muted">${explicacion.metodologia}</p>
+                        
+                        <h6><i class="bi bi-database"></i> Datos Analizados</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Total documentos:</strong> ${explicacion.datos_analizados.total_documentos}</li>
+                            <li><strong>Documentos favorables:</strong> ${explicacion.datos_analizados.documentos_favorables}</li>
+                            <li><strong>Documentos desfavorables:</strong> ${explicacion.datos_analizados.documentos_desfavorables}</li>
+                            <li><strong>Confianza de datos:</strong> ${explicacion.datos_analizados.confianza_datos}%</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-calculator"></i> Cálculo de Probabilidad</h6>
+                        <div class="alert alert-info">
+                            <strong>Método:</strong> ${explicacion.calculo_probabilidad.metodo}<br>
+                            <strong>Probabilidad base:</strong> ${explicacion.calculo_probabilidad.probabilidad_base}<br>
+                            <strong>Probabilidad final:</strong> ${explicacion.calculo_probabilidad.probabilidad_final}<br>
+                            ${explicacion.calculo_probabilidad.formula ? `<strong>Fórmula:</strong> ${explicacion.calculo_probabilidad.formula}<br>` : ''}
+                            ${explicacion.calculo_probabilidad.justificacion ? `<strong>Justificación:</strong> ${explicacion.calculo_probabilidad.justificacion}` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Factores aplicados
+            if (explicacion.factores_aplicados && explicacion.factores_aplicados.length > 0) {
+                html += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6><i class="bi bi-gear"></i> Factores Aplicados</h6>
+                            <ul class="list-unstyled">
+                                ${explicacion.factores_aplicados.map(factor => `<li><i class="bi bi-check-circle text-success"></i> ${factor}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Instancias analizadas
+            if (explicacion.instancias_analizadas) {
+                html += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6><i class="bi bi-building"></i> Instancias Analizadas</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <span class="badge bg-primary">Tribunal Supremo: ${explicacion.instancias_analizadas.tribunal_supremo}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <span class="badge bg-warning text-dark">TSJ: ${explicacion.instancias_analizadas.tribunal_superior_justicia}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <span class="badge bg-secondary">Otras: ${explicacion.instancias_analizadas.otras_instancias}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Factores clave
+            if (explicacion.factores_clave_favorables && explicacion.factores_clave_favorables.length > 0) {
+                html += `
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-check-circle text-success"></i> Factores Clave Favorables</h6>
+                            <ul class="list-unstyled">
+                                ${explicacion.factores_clave_favorables.map(factor => `<li><span class="badge bg-success">${factor}</span></li>`).join('')}
+                            </ul>
+                        </div>
+                `;
+            }
+            
+            if (explicacion.factores_clave_desfavorables && explicacion.factores_clave_desfavorables.length > 0) {
+                html += `
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-x-circle text-danger"></i> Factores Clave Desfavorables</h6>
+                            <ul class="list-unstyled">
+                                ${explicacion.factores_clave_desfavorables.map(factor => `<li><span class="badge bg-danger">${factor}</span></li>`).join('')}
+                            </ul>
+                        </div>
+                `;
+            }
+            
+            if (explicacion.factores_clave_favorables || explicacion.factores_clave_desfavorables) {
+                html += `</div>`;
+            }
+            
+            // Limitaciones y recomendaciones
+            if (explicacion.limitaciones && explicacion.limitaciones.length > 0) {
+                html += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6><i class="bi bi-exclamation-triangle text-warning"></i> Limitaciones</h6>
+                            <ul>
+                                ${explicacion.limitaciones.map(limitacion => `<li>${limitacion}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (explicacion.recomendaciones && explicacion.recomendaciones.length > 0) {
+                html += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6><i class="bi bi-lightbulb text-info"></i> Recomendaciones</h6>
+                            <ul>
+                                ${explicacion.recomendaciones.map(recomendacion => `<li>${recomendacion}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+            seccion.style.display = 'block';
         }
 
         function crearGraficos(data) {

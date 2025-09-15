@@ -225,6 +225,11 @@ def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: 
         factores_clave_favorables = identificar_factores_clave(patrones_favorables)
         factores_clave_desfavorables = identificar_factores_clave(patrones_desfavorables)
         
+        # Generar explicación detallada del cálculo
+        explicacion_calculo = generar_explicacion_probabilidad(
+            prob_favorable, total_documentos, patrones_favorables, patrones_desfavorables, confianza_datos
+        )
+        
         return {
             "probabilidad_favorable": round(prob_favorable * 100, 1),
             "probabilidad_desfavorable": round((1 - prob_favorable) * 100, 1),
@@ -235,6 +240,7 @@ def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: 
             "confianza_prediccion": calcular_confianza_prediccion_especifica(patrones_favorables, patrones_desfavorables),
             "confianza_datos": round(confianza_datos * 100, 1),
             "advertencia_datos": "Datos insuficientes para predicción confiable" if total_documentos < 3 else None,
+            "explicacion_calculo": explicacion_calculo,
             "resumen": {
                 "total_resoluciones": len(patrones_favorables) + len(patrones_desfavorables),
                 "resoluciones_favorables": len(patrones_favorables),
@@ -758,3 +764,121 @@ def identificar_patrones_favorables(resultado_base: Dict[str, Any]) -> List[Dict
     except Exception as e:
         logger.error(f"Error identificando patrones favorables: {e}")
         return []
+
+
+def generar_explicacion_probabilidad(prob_favorable: float, total_documentos: int, 
+                                   patrones_favorables: List[Dict[str, Any]], 
+                                   patrones_desfavorables: List[Dict[str, Any]], 
+                                   confianza_datos: float) -> Dict[str, Any]:
+    """Genera una explicación detallada del cálculo de probabilidades"""
+    try:
+        explicacion = {
+            "metodologia": "Análisis predictivo basado en patrones históricos de resoluciones legales",
+            "datos_analizados": {
+                "total_documentos": total_documentos,
+                "documentos_favorables": len(patrones_favorables),
+                "documentos_desfavorables": len(patrones_desfavorables),
+                "confianza_datos": round(confianza_datos * 100, 1)
+            },
+            "calculo_probabilidad": {},
+            "factores_aplicados": [],
+            "limitaciones": [],
+            "recomendaciones": []
+        }
+        
+        # Explicar el cálculo según el escenario
+        if total_documentos == 0:
+            explicacion["calculo_probabilidad"] = {
+                "metodo": "Sin datos disponibles",
+                "probabilidad_base": "50% (neutral)",
+                "justificacion": "No hay documentos analizados para realizar predicción"
+            }
+            explicacion["limitaciones"].append("Sin datos históricos para análisis")
+            explicacion["recomendaciones"].append("Subir más documentos para mejorar la predicción")
+            
+        elif total_documentos < 3:
+            # Calcular probabilidad base sin factores
+            peso_fav = sum(p.get('peso', 1.0) for p in patrones_favorables)
+            peso_des = sum(p.get('peso', 1.0) for p in patrones_desfavorables)
+            total_peso = peso_fav + peso_des
+            prob_base = (peso_fav / total_peso) if total_peso > 0 else 0.5
+            
+            explicacion["calculo_probabilidad"] = {
+                "metodo": "Factor de incertidumbre aplicado",
+                "probabilidad_base": f"{round(prob_base * 100, 1)}%",
+                "factor_incertidumbre": "30%",
+                "probabilidad_final": f"{round(prob_favorable * 100, 1)}%",
+                "formula": f"50% + ({prob_base:.3f} - 0.5) × 0.3 = {prob_favorable:.3f}"
+            }
+            explicacion["factores_aplicados"].extend([
+                "Factor de incertidumbre: 30% (datos limitados)",
+                "Ponderación por instancia: TS (x1.5), TSJ (x1.2)"
+            ])
+            explicacion["limitaciones"].append("Datos insuficientes para predicción confiable")
+            explicacion["recomendaciones"].append("Subir al menos 3 documentos para análisis más preciso")
+            
+        else:
+            # Calcular probabilidad base sin factores de realismo
+            peso_fav = sum(p.get('peso', 1.0) for p in patrones_favorables)
+            peso_des = sum(p.get('peso', 1.0) for p in patrones_desfavorables)
+            total_peso = peso_fav + peso_des
+            prob_base = (peso_fav / total_peso) if total_peso > 0 else 0.5
+            
+            explicacion["calculo_probabilidad"] = {
+                "metodo": "Factor de realismo jurídico aplicado",
+                "probabilidad_base": f"{round(prob_base * 100, 1)}%",
+                "probabilidad_final": f"{round(prob_favorable * 100, 1)}%",
+                "ajuste_realismo": "Aplicado límite máximo del 85%"
+            }
+            
+            if prob_base > 0.9:
+                explicacion["calculo_probabilidad"]["justificacion"] = "Probabilidad base >90% ajustada a 85% por realismo jurídico"
+            elif prob_base < 0.1:
+                explicacion["calculo_probabilidad"]["justificacion"] = "Probabilidad base <10% ajustada a 15% por realismo jurídico"
+            else:
+                explicacion["calculo_probabilidad"]["justificacion"] = "Probabilidad base dentro del rango realista"
+            
+            explicacion["factores_aplicados"].extend([
+                "Factor de realismo jurídico: límites 15%-85%",
+                "Ponderación por instancia: TS (x1.5), TSJ (x1.2)",
+                f"Confianza de datos: {round(confianza_datos * 100, 1)}%"
+            ])
+            explicacion["recomendaciones"].append("Análisis basado en datos suficientes")
+        
+        # Agregar detalles de instancias
+        instancias_ts = sum(1 for p in patrones_favorables + patrones_desfavorables if p.get('instancia') == 'ts')
+        instancias_tsj = sum(1 for p in patrones_favorables + patrones_desfavorables if p.get('instancia') == 'tsj')
+        
+        if instancias_ts > 0 or instancias_tsj > 0:
+            explicacion["instancias_analizadas"] = {
+                "tribunal_supremo": instancias_ts,
+                "tribunal_superior_justicia": instancias_tsj,
+                "otras_instancias": total_documentos - instancias_ts - instancias_tsj
+            }
+        
+        # Agregar resumen de factores clave
+        if patrones_favorables:
+            frases_favorables = []
+            for patron in patrones_favorables:
+                frases_favorables.extend(patron.get('frases_clave', []))
+            
+            if frases_favorables:
+                explicacion["factores_clave_favorables"] = list(set(frases_favorables))[:5]
+        
+        if patrones_desfavorables:
+            frases_desfavorables = []
+            for patron in patrones_desfavorables:
+                frases_desfavorables.extend(patron.get('frases_clave', []))
+            
+            if frases_desfavorables:
+                explicacion["factores_clave_desfavorables"] = list(set(frases_desfavorables))[:5]
+        
+        return explicacion
+        
+    except Exception as e:
+        logger.error(f"Error generando explicación de probabilidad: {e}")
+        return {
+            "error": f"Error generando explicación: {str(e)}",
+            "metodologia": "Análisis predictivo basado en patrones históricos",
+            "datos_analizados": {"total_documentos": total_documentos}
+        }
