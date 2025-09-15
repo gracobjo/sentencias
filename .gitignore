@@ -63,5 +63,7 @@ logs/
 # *.joblib
 # models/
 
-# Sentencias directory (PDFs)
-sentencias/
+# Sentencias directory (PDFs) - Allow specific PDF files
+sentencias/*
+!sentencias/*.pdf
+!sentencias/.gitkeep
