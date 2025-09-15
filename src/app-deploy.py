@@ -60,7 +60,7 @@ app.add_middleware(
 )
 
 # Configurar templates y archivos estáticos
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="src/templates")
 
 # Configurar archivos estáticos con tipos MIME correctos
 from fastapi.staticfiles import StaticFiles
@@ -71,7 +71,7 @@ import mimetypes
 mimetypes.add_type('application/pdf', '.pdf')
 
 # Montar archivos estáticos con configuración personalizada
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 # Montar directorio de sentencias con configuración específica para PDFs
 class PDFStaticFiles(StaticFiles):
@@ -91,7 +91,7 @@ class PDFStaticFiles(StaticFiles):
 app.mount("/sentencias", PDFStaticFiles(directory="sentencias"), name="sentencias")
 
 # Configuración de directorios
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.parent
 SENTENCIAS_DIR = BASE_DIR / "sentencias"
 UPLOADS_DIR = BASE_DIR / "uploads"
 MODELS_DIR = BASE_DIR / "models"
@@ -176,7 +176,7 @@ try:
     logger.info(f"✅ Archivos del modelo encontrados: {list(models_dir.iterdir())}")
     
     # Intentar importar el módulo
-    from backend.analisis import AnalizadorLegal
+    from src.backend.analisis import AnalizadorLegal
     logger.info("✅ Módulo backend.analisis importado")
     
     # Intentar crear una instancia para verificar que funciona
@@ -1194,7 +1194,7 @@ async def api_analisis_predictivo():
     try:
         # Importar funciones del módulo de análisis predictivo
         try:
-            from backend.analisis_predictivo import (
+            from src.backend.analisis_predictivo import (
                 realizar_analisis_predictivo,
                 generar_insights_juridicos,
                 identificar_patrones_favorables,
@@ -1346,7 +1346,7 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
         try:
             if ANALIZADOR_IA_DISPONIBLE:
                 try:
-                    from backend.analisis import AnalizadorLegal
+                    from src.backend.analisis import AnalizadorLegal
                 except ImportError as e:
                     logger.error(f"Error importando AnalizadorLegal: {e}")
                     raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
@@ -1360,7 +1360,7 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
             # Generar análisis de discrepancias específico usando el módulo avanzado
             logger.info("🔍 Generando análisis de discrepancias avanzado...")
             try:
-                from backend.analisis_discrepancias import AnalizadorDiscrepancias
+                from src.backend.analisis_discrepancias import AnalizadorDiscrepancias
                 analizador_discrepancias = AnalizadorDiscrepancias()
                 analisis_discrepancias = analizador_discrepancias.analizar_discrepancias(
                     resultado.get("texto_extraido", ""), 
@@ -1735,7 +1735,7 @@ def _leer_texto_archivo_simple(path: Path) -> str:
             # Delegar a analizador para extraer texto
             if ANALIZADOR_IA_DISPONIBLE:
                 try:
-                    from backend.analisis import AnalizadorLegal
+                    from src.backend.analisis import AnalizadorLegal
                 except ImportError as e:
                     logger.error(f"Error importando AnalizadorLegal: {e}")
                     raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
@@ -2155,7 +2155,7 @@ async def api_diagnostico_modelo():
         
         # 2. Probar importación del módulo backend
         try:
-            from backend.analisis import AnalizadorLegal
+            from src.backend.analisis import AnalizadorLegal
             diagnostico["estado_importacion"]["backend_analisis"] = "✅ OK"
         except Exception as e:
             diagnostico["estado_importacion"]["backend_analisis"] = f"❌ Error: {e}"
@@ -2263,7 +2263,7 @@ async def api_diagnostico_ia():
         
         # Verificar analizador
         try:
-            from backend.analisis import AnalizadorLegal
+            from src.backend.analisis import AnalizadorLegal
             analizador = AnalizadorLegal()
             
             estado_analizador = {
@@ -2465,7 +2465,7 @@ async def obtener_documento(nombre_archivo: str):
         try:
             if ANALIZADOR_IA_DISPONIBLE:
                 try:
-                    from backend.analisis import AnalizadorLegal
+                    from src.backend.analisis import AnalizadorLegal
                 except ImportError as e:
                     logger.error(f"Error importando AnalizadorLegal: {e}")
                     raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
@@ -2589,7 +2589,7 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
                 if ANALIZADOR_IA_DISPONIBLE:
                     logger.info(f"🤖 Usando analizador de IA para: {archivo.name}")
                     try:
-                        from backend.analisis import AnalizadorLegal
+                        from src.backend.analisis import AnalizadorLegal
                     except ImportError as e:
                         logger.error(f"Error importando AnalizadorLegal: {e}")
                         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")

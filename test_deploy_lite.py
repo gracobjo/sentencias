@@ -98,9 +98,9 @@ def test_app_structure():
     app_files = [
         'src/app-deploy.py',
         'src/config.py',
-        'backend/analisis.py',
-        'backend/analisis_discrepancias.py',
-        'backend/analisis_predictivo.py'
+        'src/backend/analisis.py',
+        'src/backend/analisis_discrepancias.py',
+        'src/backend/analisis_predictivo.py'
     ]
     
     for file_path in app_files:

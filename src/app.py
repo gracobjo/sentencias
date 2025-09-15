@@ -59,7 +59,7 @@ app.add_middleware(
 )
 
 # Configurar templates y archivos estáticos
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="src/templates")
 
 # Configurar archivos estáticos con tipos MIME correctos
 from fastapi.staticfiles import StaticFiles
@@ -70,7 +70,7 @@ import mimetypes
 mimetypes.add_type('application/pdf', '.pdf')
 
 # Montar archivos estáticos con configuración personalizada
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 # Montar directorio de sentencias con configuración específica para PDFs
 class PDFStaticFiles(StaticFiles):
@@ -90,7 +90,7 @@ class PDFStaticFiles(StaticFiles):
 app.mount("/sentencias", PDFStaticFiles(directory="sentencias"), name="sentencias")
 
 # Configuración de directorios
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.parent
 SENTENCIAS_DIR = BASE_DIR / "sentencias"
 UPLOADS_DIR = BASE_DIR / "uploads"
 MODELS_DIR = BASE_DIR / "models"
@@ -161,7 +161,7 @@ def save_frases_clave(data: Dict[str, List[str]]) -> None:
 
 # Importar el analizador de IA (asumiendo que ya está entrenado)
 try:
-    from backend.analisis import AnalizadorLegal
+    from src.backend.analisis import AnalizadorLegal
     ANALIZADOR_IA_DISPONIBLE = True
     logger.info("✅ Módulo de IA cargado correctamente")
 except ImportError as e:
@@ -932,7 +932,7 @@ async def api_analisis_predictivo():
     """Endpoint API para análisis predictivo e inteligente de resoluciones"""
     try:
         # Importar funciones del módulo de análisis predictivo
-        from backend.analisis_predictivo import (
+        from src.backend.analisis_predictivo import (
             realizar_analisis_predictivo,
             generar_insights_juridicos,
             identificar_patrones_favorables,
@@ -1080,7 +1080,7 @@ async def pagina_analisis_discrepancias(request: Request, archivo_id: str):
         logger.info(f"🔬 Iniciando análisis de discrepancias para: {archivo_path}")
         try:
             if ANALIZADOR_IA_DISPONIBLE:
-                from backend.analisis import AnalizadorLegal
+                from src.backend.analisis import AnalizadorLegal
                 analizador = AnalizadorLegal()
                 resultado = analizador.analizar_documento(str(archivo_path))
                 logger.info("✅ Análisis con IA completado")
@@ -1140,7 +1140,7 @@ async def test_analisis_discrepancias(archivo_id: str):
         logger.info(f"🔬 Iniciando análisis para archivo: {archivo_path}")
         try:
             if ANALIZADOR_IA_DISPONIBLE:
-                from backend.analisis import AnalizadorLegal
+                from src.backend.analisis import AnalizadorLegal
                 analizador = AnalizadorLegal()
                 resultado = analizador.analizar_documento(str(archivo_path))
                 logger.info("✅ Análisis con IA completado")
@@ -1186,7 +1186,7 @@ async def test_analisis_directo(archivo_id: str):
         archivo_path = archivos_conocidos[archivo_id]
         
         # Análisis directo
-        from backend.analisis import AnalizadorLegal
+        from src.backend.analisis import AnalizadorLegal
         analizador = AnalizadorLegal()
         resultado = analizador.analizar_documento(archivo_path)
         
@@ -1216,7 +1216,7 @@ async def debug_analisis(archivo_id: str):
             return {"error": f"Archivo no reconocido: {archivo_id}"}
         
         # Análisis directo
-        from backend.analisis import AnalizadorLegal
+        from src.backend.analisis import AnalizadorLegal
         analizador = AnalizadorLegal()
         resultado = analizador.analizar_documento(archivo_path)
         
@@ -1637,7 +1637,7 @@ def _leer_texto_archivo_simple(path: Path) -> str:
         else:
             # Delegar a analizador para extraer texto
             if ANALIZADOR_IA_DISPONIBLE:
-                from backend.analisis import AnalizadorLegal
+                from src.backend.analisis import AnalizadorLegal
                 analizador = AnalizadorLegal()
                 res = analizador.analizar_documento(str(path))
             else:
@@ -2075,7 +2075,7 @@ async def api_diagnostico_ia():
         
         # Verificar analizador
         try:
-            from backend.analisis import AnalizadorLegal
+            from src.backend.analisis import AnalizadorLegal
             analizador = AnalizadorLegal()
             
             estado_analizador = {
@@ -2276,7 +2276,7 @@ async def obtener_documento(nombre_archivo: str):
         # Intentar analizar el documento si no ha sido analizado
         try:
             if ANALIZADOR_IA_DISPONIBLE:
-                from backend.analisis import AnalizadorLegal
+                from src.backend.analisis import AnalizadorLegal
                 analizador = AnalizadorLegal()
                 resultado = analizador.analizar_documento(str(archivo_path))
             else:
@@ -2396,7 +2396,7 @@ def analizar_sentencias_existentes() -> Dict[str, Any]:
                 # Usar el analizador de IA si está disponible, sino el básico
                 if ANALIZADOR_IA_DISPONIBLE:
                     logger.info(f"🤖 Usando analizador de IA para: {archivo.name}")
-                    from backend.analisis import AnalizadorLegal
+                    from src.backend.analisis import AnalizadorLegal
                     analizador = AnalizadorLegal()
                     analizador._tiempo_inicio = tiempo_inicio
                     resultado = analizador.analizar_documento(str(archivo))
