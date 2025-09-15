@@ -952,10 +952,24 @@ async def subir_documento(
         })
         
         # Mover a carpeta de sentencias si es apropiado
+        logger.info(f"📁 Tipo de documento: {document_type}")
+        logger.info(f"📁 Archivo guardado en: {ruta_archivo}")
+        
         if document_type == "sentencia":
             destino = SENTENCIAS_DIR / nuevo_nombre
+            logger.info(f"📁 Moviendo archivo a: {destino}")
             shutil.move(str(ruta_archivo), str(destino))
             resultado["ruta_archivo"] = str(destino)
+            logger.info(f"✅ Archivo movido exitosamente a sentencias/")
+        else:
+            logger.info(f"📁 Archivo permanece en uploads/ (tipo: {document_type})")
+        
+        # Log del resultado final
+        logger.info(f"📋 RESULTADO FINAL:")
+        logger.info(f"  - Archivo ID: {resultado.get('archivo_id')}")
+        logger.info(f"  - Nombre original: {resultado.get('nombre_archivo')}")
+        logger.info(f"  - Tipo documento: {resultado.get('tipo_documento')}")
+        logger.info(f"  - Ruta final: {resultado.get('ruta_archivo')}")
         
         return JSONResponse(content=resultado)
         
@@ -1411,6 +1425,10 @@ async def listar_archivos_disponibles():
         archivos_sentencias = [f.name for f in Path("sentencias").glob("*") if f.is_file()]
         archivos_uploads = [f.name for f in Path("uploads").glob("*") if f.is_file()]
         
+        # DEBUG: Log detallado de archivos
+        logger.info(f"📁 ARCHIVOS EN SENTENCIAS/ ({len(archivos_sentencias)}): {archivos_sentencias}")
+        logger.info(f"📁 ARCHIVOS EN UPLOADS/ ({len(archivos_uploads)}): {archivos_uploads}")
+        
         return {
             "archivos_sentencias": archivos_sentencias,
             "archivos_uploads": archivos_uploads,
@@ -1424,6 +1442,7 @@ async def listar_archivos_disponibles():
         }
         
     except Exception as e:
+        logger.error(f"Error listando archivos: {e}")
         return {"error": str(e)}
 
 
