@@ -183,12 +183,43 @@ def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: 
                             "peso": peso
                         })
         
-        # Calcular probabilidades
-        # Probabilidad ponderada por instancia
-        peso_fav = sum(p.get('peso', 1.0) for p in patrones_favorables)
-        peso_des = sum(p.get('peso', 1.0) for p in patrones_desfavorables)
-        total_peso = peso_fav + peso_des
-        prob_favorable = (peso_fav / total_peso) if total_peso > 0 else 0.5
+        # Calcular probabilidades con lógica más realista
+        total_documentos = len(patrones_favorables) + len(patrones_desfavorables)
+        
+        if total_documentos == 0:
+            # Sin datos suficientes
+            prob_favorable = 0.5
+            confianza_datos = 0.1
+        elif total_documentos < 3:
+            # Datos insuficientes - aplicar factor de incertidumbre
+            peso_fav = sum(p.get('peso', 1.0) for p in patrones_favorables)
+            peso_des = sum(p.get('peso', 1.0) for p in patrones_desfavorables)
+            total_peso = peso_fav + peso_des
+            
+            if total_peso > 0:
+                prob_base = peso_fav / total_peso
+                # Aplicar factor de incertidumbre para datos limitados
+                factor_incertidumbre = 0.3  # Reducir confianza en datos limitados
+                prob_favorable = 0.5 + (prob_base - 0.5) * factor_incertidumbre
+            else:
+                prob_favorable = 0.5
+            confianza_datos = 0.3
+        else:
+            # Datos suficientes - cálculo normal con ponderación por instancia
+            peso_fav = sum(p.get('peso', 1.0) for p in patrones_favorables)
+            peso_des = sum(p.get('peso', 1.0) for p in patrones_desfavorables)
+            total_peso = peso_fav + peso_des
+            
+            if total_peso > 0:
+                prob_favorable = peso_fav / total_peso
+                # Aplicar factor de realismo jurídico
+                if prob_favorable > 0.9:
+                    prob_favorable = 0.85  # Máximo 85% para ser realista
+                elif prob_favorable < 0.1:
+                    prob_favorable = 0.15  # Mínimo 15% para ser realista
+            else:
+                prob_favorable = 0.5
+            confianza_datos = min(0.8, total_documentos / 10)  # Máximo 80% de confianza
         
         # Identificar factores clave para predicción
         factores_clave_favorables = identificar_factores_clave(patrones_favorables)
@@ -202,11 +233,14 @@ def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: 
             "factores_clave_favorables": factores_clave_favorables,
             "factores_clave_desfavorables": factores_clave_desfavorables,
             "confianza_prediccion": calcular_confianza_prediccion_especifica(patrones_favorables, patrones_desfavorables),
+            "confianza_datos": round(confianza_datos * 100, 1),
+            "advertencia_datos": "Datos insuficientes para predicción confiable" if total_documentos < 3 else None,
             "resumen": {
                 "total_resoluciones": len(patrones_favorables) + len(patrones_desfavorables),
                 "resoluciones_favorables": len(patrones_favorables),
                 "resoluciones_desfavorables": len(patrones_desfavorables),
-                "tendencia_general": "favorable" if prob_favorable > 0.6 else "desfavorable" if prob_favorable < 0.4 else "equilibrada"
+                "tendencia_general": "favorable" if prob_favorable > 0.6 else "desfavorable" if prob_favorable < 0.4 else "equilibrada",
+                "realismo_juridico": "Aplicado factor de realismo jurídico" if total_documentos >= 3 else "Factor de incertidumbre aplicado"
             }
         }
         
@@ -303,14 +337,22 @@ def analizar_riesgo_legal(ranking_global: Dict[str, Any], resultados_por_archivo
                     "nivel_riesgo": nivel
                 }
         
-        # Calcular riesgo general
+        # Calcular riesgo general con lógica más coherente
         riesgo_general = (
             analisis_riesgo.get("alto", {}).get("total_apariciones", 0) * 3 +
             analisis_riesgo.get("medio", {}).get("total_apariciones", 0) * 2 +
             analisis_riesgo.get("bajo", {}).get("total_apariciones", 0)
         ) * factor_instancia
         
-        nivel_riesgo_general = "alto" if riesgo_general > 100 else "medio" if riesgo_general > 50 else "bajo"
+        # Ajustar nivel de riesgo según la cantidad de datos disponibles
+        total_documentos = len([r for r in resultados_por_archivo.values() if isinstance(r, dict)]) if resultados_por_archivo else 0
+        
+        if total_documentos < 3:
+            # Con pocos datos, el riesgo es más conservador
+            nivel_riesgo_general = "medio" if riesgo_general > 30 else "bajo"
+        else:
+            # Con datos suficientes, usar lógica normal
+            nivel_riesgo_general = "alto" if riesgo_general > 100 else "medio" if riesgo_general > 50 else "bajo"
         
         return {
             "riesgo_por_nivel": analisis_riesgo,
