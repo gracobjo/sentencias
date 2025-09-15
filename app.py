@@ -1207,6 +1207,40 @@ async def test_analisis_directo(archivo_id: str):
         return {"error": str(e)}
 
 
+@app.get("/debug-analisis/{archivo_id}")
+async def debug_analisis(archivo_id: str):
+    """Endpoint simple para debug del análisis"""
+    try:
+        # Mapeo directo de archivos
+        if archivo_id == "STS_2384_2025":
+            archivo_path = "sentencias/STS_2384_2025.pdf"
+        elif archivo_id == "informe_20250910_141039_972e58ef":
+            archivo_path = "sentencias/informe_20250910_141039_972e58ef.pdf"
+        else:
+            return {"error": f"Archivo no reconocido: {archivo_id}"}
+        
+        # Análisis directo
+        from backend.analisis import AnalizadorLegal
+        analizador = AnalizadorLegal()
+        resultado = analizador.analizar_documento(archivo_path)
+        
+        # Extraer solo los datos relevantes
+        analisis_disc = resultado.get("analisis_discrepancias", {})
+        
+        return {
+            "archivo_id": archivo_id,
+            "tipo_documento": analisis_disc.get("tipo_documento", "NO_DETECTADO"),
+            "resumen_ejecutivo": analisis_disc.get("resumen_ejecutivo", "NO_DISPONIBLE"),
+            "discrepancias": len(analisis_disc.get("discrepancias_detectadas", [])),
+            "evidencia": len(analisis_disc.get("evidencia_favorable", [])),
+            "puntuacion": analisis_disc.get("puntuacion_discrepancia", 0),
+            "probabilidad": analisis_disc.get("probabilidad_ipp", 0.0)
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.get("/listar-archivos")
 async def listar_archivos_disponibles():
     """Endpoint para listar todos los archivos disponibles para análisis"""
