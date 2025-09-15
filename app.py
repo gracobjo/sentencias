@@ -735,34 +735,30 @@ async def mostrar_resultados(request: Request, archivo_id: str):
         if not ruta_archivo.exists():
             raise HTTPException(status_code=404, detail="Archivo no encontrado")
         
-        # Analizar si es necesario
-        if archivo_id.startswith(("sentencia_", "demanda_", "informe_")):
-            if ANALIZADOR_IA_DISPONIBLE:
-                try:
-                    analizador = AnalizadorLegal()
-                    resultado = analizador.analizar_documento(str(ruta_archivo))
-                    resultado["modelo_ia"] = True
-                except Exception as e:
-                    logger.warning(f"Fallback a análisis básico: {e}")
-                    resultado = analizador_basico.analizar_documento(str(ruta_archivo), archivo_id)
-                    resultado["modelo_ia"] = False
-            else:
+        # Analizar documento - SIEMPRE analizar, sin importar el nombre del archivo
+        logger.info(f"🔍 Analizando documento: {archivo_id}")
+        
+        if ANALIZADOR_IA_DISPONIBLE:
+            try:
+                analizador = AnalizadorLegal()
+                resultado = analizador.analizar_documento(str(ruta_archivo))
+                resultado["modelo_ia"] = True
+                logger.info(f"✅ Análisis con IA completado para {archivo_id}")
+            except Exception as e:
+                logger.warning(f"Fallback a análisis básico para {archivo_id}: {e}")
                 resultado = analizador_basico.analizar_documento(str(ruta_archivo), archivo_id)
                 resultado["modelo_ia"] = False
         else:
-            # Usar análisis existente
-            resultado = {
-                "nombre_archivo": archivo_id,
-                "procesado": True,
-                "prediccion": {"es_favorable": True, "confianza": 0.8},
-                "resumen_inteligente": "Análisis del documento existente.",
-                "argumentos": [],
-                "frases_clave": {},
-                "insights_juridicos": ["Documento analizado previamente."],
-                "longitud_texto": 0,
-                "total_frases_clave": 0,
-                "modelo_ia": False
-            }
+            logger.info(f"📋 Usando análisis básico para {archivo_id}")
+            resultado = analizador_basico.analizar_documento(str(ruta_archivo), archivo_id)
+            resultado["modelo_ia"] = False
+        
+        # Agregar metadatos específicos del archivo
+        resultado.update({
+            "archivo_id": archivo_id,
+            "ruta_archivo": str(ruta_archivo),
+            "timestamp": datetime.now().isoformat()
+        })
         
         return templates.TemplateResponse("resultado.html", {
             "request": request,
