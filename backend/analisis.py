@@ -14,6 +14,13 @@ import json
 import pickle
 from .analisis_discrepancias import AnalizadorDiscrepancias
 
+# Optional imports with type checking support
+try:
+    import PyPDF2  # type: ignore
+    PYPDF2_AVAILABLE = True
+except ImportError:
+    PYPDF2_AVAILABLE = False
+
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -137,8 +144,11 @@ class AnalizadorLegal:
             # Detectar fallo usando método avanzado
             fallo = self._detectar_fallo(contenido)
             
-            # Análisis de frases clave
-            frases_encontradas = self._analizar_frases_clave(contenido, nombre_archivo)
+            # Detectar tipo de documento para análisis específico
+            tipo_documento = self._detectar_tipo_documento_por_nombre(nombre_archivo)
+            
+            # Análisis de frases clave específico por tipo de documento
+            frases_encontradas = self._analizar_frases_clave_por_tipo(contenido, nombre_archivo, tipo_documento)
             
             # Calcular puntuación basada en patrones
             puntuacion = self._calcular_puntuacion_hibrida(contenido, frases_encontradas)
@@ -371,11 +381,10 @@ class AnalizadorLegal:
     def _leer_pdf(self, ruta: str) -> Optional[str]:
         """Lee archivos PDF y extrae el texto"""
         try:
-            # Intentar importar PyPDF2
-            try:
-                import PyPDF2
-            except ImportError:
-                logger.warning("PyPDF2 no está instalado. Instala: pip install PyPDF2")
+            # Verificar disponibilidad de PyPDF2
+            if not PYPDF2_AVAILABLE:
+                logger.warning("PyPDF2 no está instalado")
+                logger.info("Para instalar PyPDF2 ejecuta: pip install PyPDF2")
                 return "Error: PyPDF2 no está instalado. Ejecuta: pip install PyPDF2"
             
             texto = ""
@@ -468,60 +477,12 @@ class AnalizadorLegal:
         }
     
     def _analizar_frases_clave(self, texto: str, nombre_archivo: str = None) -> Dict[str, Any]:
-        """Analiza las frases clave en el texto"""
-        if not texto:
-            return {}
+        """Analiza las frases clave en el texto (método genérico que delega al específico por tipo)"""
+        # Detectar tipo de documento
+        tipo_documento = self._detectar_tipo_documento_por_nombre(nombre_archivo)
         
-        # Usar el nombre del archivo real o un valor por defecto
-        archivo_nombre = nombre_archivo or "archivo_desconocido"
-        
-        resultados = {}
-        for categoria, variantes in self.frases_clave.items():
-            total = 0
-            ocurrencias = []
-            
-            for variante in variantes:
-                # Coincidencia flexible: espacios/guiones/underscores equivalentes
-                flexible = re.escape(variante)
-                flexible = flexible.replace("\\ ", "\\s+")
-                flexible = flexible.replace("\\_", "[\\s_\-]+")
-                flexible = flexible.replace("\\-", "[\\s_\-]+")
-                patron = re.compile(flexible, re.IGNORECASE)
-                matches = patron.finditer(texto)
-                
-                for match in matches:
-                    total += 1
-                    start_pos = match.start()
-                    end_pos = match.end()
-                    
-                    # Obtener contexto (300 caracteres antes y después para mayor claridad)
-                    context_start = max(0, start_pos - 300)
-                    context_end = min(len(texto), end_pos + 300)
-                    contexto = texto[context_start:context_end]
-                    
-                    # Marcar la frase encontrada
-                    frase_encontrada = texto[start_pos:end_pos]
-                    contexto_marcado = contexto.replace(frase_encontrada, f"**{frase_encontrada}**")
-                    
-                    ocurrencias.append({
-                        "frase": variante,
-                        "posicion": start_pos,
-                        "contexto": contexto_marcado,
-                        "linea": texto[:start_pos].count('\n') + 1,
-                        "archivo": archivo_nombre
-                    })
-            
-            if total > 0:
-                # Obtener frases únicas encontradas
-                frases_encontradas = list(set([oc["frase"] for oc in ocurrencias]))
-                
-                resultados[categoria] = {
-                    "total": total,
-                    "ocurrencias": ocurrencias,
-                    "frases": frases_encontradas
-                }
-        
-        return resultados
+        # Usar el método específico por tipo
+        return self._analizar_frases_clave_por_tipo(texto, nombre_archivo, tipo_documento)
     
     def _prediccion_basada_reglas(self, texto: str) -> Dict[str, Any]:
         """Predicción basada en reglas y patrones con sistema de confianza avanzado y detección automática de factores"""
@@ -1052,6 +1013,160 @@ class AnalizadorLegal:
             "longitud_texto": 0,
             "total_frases_clave": 0,
             "modelo_ia": False
+        }
+
+    def _detectar_tipo_documento_por_nombre(self, nombre_archivo: str) -> str:
+        """Detecta el tipo de documento basado en el nombre del archivo"""
+        if not nombre_archivo:
+            return "documento_generico"
+        
+        nombre_lower = nombre_archivo.lower()
+        
+        # Detectar STS (Sentencias del Tribunal Supremo)
+        if "sts" in nombre_lower:
+            return "sentencia"
+        
+        # Detectar informes médicos
+        if any(palabra in nombre_lower for palabra in ["informe", "médico", "medico", "diagnostico", "diagnóstico"]):
+            return "informe_medico"
+        
+        return "documento_generico"
+    
+    def _analizar_frases_clave_por_tipo(self, texto: str, nombre_archivo: str = None, tipo_documento: str = "documento_generico") -> Dict[str, Any]:
+        """Analiza las frases clave específicas según el tipo de documento"""
+        if not texto:
+            return {}
+        
+        # Usar el nombre del archivo real o un valor por defecto
+        archivo_nombre = nombre_archivo or "archivo_desconocido"
+        
+        # Seleccionar frases clave según el tipo de documento
+        if tipo_documento == "sentencia":
+            frases_clave_tipo = self._get_frases_clave_sentencia()
+        elif tipo_documento == "informe_medico":
+            frases_clave_tipo = self._get_frases_clave_informe_medico()
+        else:
+            frases_clave_tipo = self.frases_clave  # Usar frases clave genéricas
+        
+        resultados = {}
+        for categoria, variantes in frases_clave_tipo.items():
+            total = 0
+            ocurrencias = []
+            
+            for variante in variantes:
+                # Coincidencia flexible: espacios/guiones/underscores equivalentes
+                flexible = re.escape(variante)
+                flexible = flexible.replace("\\ ", "\\s+")
+                flexible = flexible.replace("\\_", "[\\s_\-]+")
+                flexible = flexible.replace("\\-", "[\\s_\-]+")
+                patron = re.compile(flexible, re.IGNORECASE)
+                matches = patron.finditer(texto)
+                
+                for match in matches:
+                    total += 1
+                    start_pos = match.start()
+                    end_pos = match.end()
+                    
+                    # Obtener contexto (300 caracteres antes y después para mayor claridad)
+                    context_start = max(0, start_pos - 300)
+                    context_end = min(len(texto), end_pos + 300)
+                    contexto = texto[context_start:context_end]
+                    
+                    # Marcar la frase encontrada
+                    frase_encontrada = texto[start_pos:end_pos]
+                    contexto_marcado = contexto.replace(frase_encontrada, f"**{frase_encontrada}**")
+                    
+                    ocurrencias.append({
+                        "frase": variante,
+                        "posicion": start_pos,
+                        "contexto": contexto_marcado,
+                        "linea": texto[:start_pos].count('\n') + 1,
+                        "archivo": archivo_nombre,
+                        "tipo_documento": tipo_documento
+                    })
+            
+            if total > 0:
+                # Obtener frases únicas encontradas
+                frases_encontradas = list(set([oc["frase"] for oc in ocurrencias]))
+                
+                resultados[categoria] = {
+                    "total": total,
+                    "ocurrencias": ocurrencias,
+                    "frases": frases_encontradas,
+                    "tipo_documento": tipo_documento
+                }
+        
+        return resultados
+    
+    def _get_frases_clave_sentencia(self) -> Dict[str, List[str]]:
+        """Frases clave específicas para sentencias"""
+        return {
+            "fundamentos_juridicos": [
+                "fundamentos de derecho", "fundamentos jurídicos", "fundamento", "fundamentos",
+                "considerando", "considerandos", "vistos", "resultando", "por lo que"
+            ],
+            "conclusiones_judiciales": [
+                "estimamos", "desestimamos", "procedente", "improcedente", "accedemos",
+                "concedemos", "reconocemos", "denegamos", "rechazamos", "fallamos"
+            ],
+            "incapacidad_permanente_parcial": [
+                "incapacidad permanente parcial", "IPP", "permanente parcial",
+                "incapacidad parcial permanente", "secuela permanente",
+                "incapacidad permanente", "secuelas permanentes"
+            ],
+            "procedimiento_legal": [
+                "procedente", "desestimamos", "estimamos", "fundada",
+                "infundada", "accedemos", "concedemos", "reconocemos",
+                "recurso", "instancia", "tribunal supremo", "STS"
+            ],
+            "lesiones_hombro": [
+                "rotura del manguito rotador", "supraespinoso", "hombro derecho",
+                "lesión de hombro", "manguito rotador", "tendón supraespinoso",
+                "hombro", "manguito", "lesiones del hombro"
+            ],
+            "inss": [
+                "INSS", "Instituto Nacional de la Seguridad Social", "Seguridad Social",
+                "Instituto Nacional", "Seguridad Social"
+            ]
+        }
+    
+    def _get_frases_clave_informe_medico(self) -> Dict[str, List[str]]:
+        """Frases clave específicas para informes médicos"""
+        return {
+            "diagnostico_medico": [
+                "diagnóstico", "diagnóstico médico", "diagnóstico clínico",
+                "exploración física", "examen físico", "evaluación médica"
+            ],
+            "lesiones_anatomicas": [
+                "rotura del manguito rotador", "supraespinoso", "hombro derecho",
+                "lesión de hombro", "manguito rotador", "tendón supraespinoso",
+                "hombro", "manguito", "lesiones del hombro", "tenopatía",
+                "artropatía acromioclavicular", "retracción fibrilar"
+            ],
+            "limitaciones_funcionales": [
+                "limitación funcional", "limitaciones funcionales", "flexión activa",
+                "abducción activa", "fuerza insuficiente", "balance muscular",
+                "fuerza de garra", "limitación activa", "discinesia escapular",
+                "atrofia periescapular", "desarrollo de fuerza"
+            ],
+            "evidencia_objetiva": [
+                "RMN", "resonancia magnética", "TAC", "tomografía", "radiografía",
+                "informe de biomecánica", "pruebas complementarias", "anclajes",
+                "tornillos", "cirugía reconstructiva"
+            ],
+            "incapacidad_permanente_parcial": [
+                "incapacidad permanente parcial", "IPP", "permanente parcial",
+                "incapacidad parcial permanente", "secuela permanente",
+                "incapacidad permanente", "secuelas permanentes"
+            ],
+            "personal_limpieza": [
+                "limpiadora", "personal de limpieza", "servicios de limpieza",
+                "trabajador de limpieza", "empleada de limpieza", "limpieza"
+            ],
+            "accidente_laboral": [
+                "accidente laboral", "accidente de trabajo", "accidente durante",
+                "jornada laboral", "lugar de trabajo", "accidente en el trabajo"
+            ]
         }
 
     def _detectar_fallo(self, texto: str) -> Optional[bool]:
