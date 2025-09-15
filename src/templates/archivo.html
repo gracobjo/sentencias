@@ -1382,9 +1382,9 @@
                 const onclick = boton.getAttribute('onclick');
                 console.log(`Botón ${index + 1}:`, onclick);
             });
-        });
-
-        async function descargarDemandaBase(nombreArchivo) {
+            
+            // Definir función global para descargar demanda base
+            window.descargarDemandaBase = async function(nombreArchivo) {
             try {
                 setLoading(true, 'Generando borrador de demanda…');
                 const resp = await fetch('/api/demanda-base/txt', {
@@ -1412,7 +1412,8 @@
                 mostrarNotificacion('Error: ' + (e.message || e), 'danger');
                 setLoading(false);
             }
-        }
+            };
+        });
     </script>
 </body>
 </html>
