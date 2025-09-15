@@ -1387,7 +1387,7 @@
                 mostrarNotificacion(`Navegando a "${frase}" en ${documento}...`, 'info');
                 
                 // Construir URL de forma segura
-                const url = `/api/documento/${encodeURIComponent(documento)}?highlight=${encodeURIComponent(frase)}&pos=${posicion}&index=${index}`;
+                const url = `/ver/${encodeURIComponent(documento)}?highlight=${encodeURIComponent(frase)}&pos=${posicion}&index=${index}`;
                 console.log(`URL generada: ${url}`);
                 
                 // Crear un enlace temporal y hacer clic en él
@@ -2103,7 +2103,7 @@
         // Función para ver el documento (descargar o abrir)
         function verDocumento(nombreArchivo) {
             // Usar la ruta directa de vista de archivo
-            const url = `/api/documento/${encodeURIComponent(nombreArchivo)}`;
+            const url = `/ver/${encodeURIComponent(nombreArchivo)}`;
             window.open(url, '_blank');
         }
 
