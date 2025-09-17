@@ -148,6 +148,30 @@ def _inferir_instancia(texto: str) -> str:
         return 'tsj'
     return 'otra'
 
+def _inferir_instancia_por_nombre(nombre_archivo: str) -> str:
+    """Infiere la instancia basándose en el nombre del archivo"""
+    if not nombre_archivo:
+        return 'otra'
+    
+    nombre_lower = nombre_archivo.lower()
+    
+    # Detectar STS (Sentencias del Tribunal Supremo)
+    if 'sts_' in nombre_lower or 'sts-' in nombre_lower or 'sts ' in nombre_lower:
+        return 'ts'
+    
+    # Detectar TSJ (Tribunal Superior de Justicia)
+    if 'tsj_' in nombre_lower or 'tsj-' in nombre_lower or 'tsj ' in nombre_lower:
+        return 'tsj'
+    
+    # Detectar por patrones más específicos
+    if 'tribunal_supremo' in nombre_lower or 'tribunal-supremo' in nombre_lower:
+        return 'ts'
+    
+    if 'tribunal_superior' in nombre_lower or 'tribunal-superior' in nombre_lower:
+        return 'tsj'
+    
+    return 'otra'
+
 
 def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: Dict[str, Any]) -> Dict[str, Any]:
     """Predice resultados basándose en patrones históricos"""
@@ -161,7 +185,7 @@ def predecir_resultados(ranking_global: Dict[str, Any], resultados_por_archivo: 
                 if resultado and isinstance(resultado, dict) and resultado.get("procesado") and resultado.get("prediccion"):
                     prediccion = resultado["prediccion"]
                     frases_clave = resultado.get("frases_clave", {})
-                    instancia = _inferir_instancia(resultado.get('texto_extraido', ''))
+                    instancia = _inferir_instancia_por_nombre(archivo)
                     peso = 1.5 if instancia == 'ts' else 1.2 if instancia == 'tsj' else 1.0
                     
                     if prediccion.get("es_favorable"):
@@ -311,9 +335,9 @@ def analizar_riesgo_legal(ranking_global: Dict[str, Any], resultados_por_archivo
                 total = len([r for r in resultados_por_archivo.values() if isinstance(r, dict)])
                 ts = 0
                 tsj = 0
-                for r in resultados_por_archivo.values():
+                for archivo, r in resultados_por_archivo.items():
                     if isinstance(r, dict):
-                        inst = _inferir_instancia(r.get('texto_extraido', ''))
+                        inst = _inferir_instancia_por_nombre(archivo)
                         ts += 1 if inst == 'ts' else 0
                         tsj += 1 if inst == 'tsj' else 0
                 if total > 0:
