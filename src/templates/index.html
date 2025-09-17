@@ -253,6 +253,50 @@
         .text-truncate {
             max-width: 200px;
         }
+        
+        /* Estilos para el menú de herramientas */
+        .navbar-nav .dropdown-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .navbar-nav .dropdown-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-nav .dropdown-menu {
+            border: none;
+            border-radius: 12px;
+            padding: 8px 0;
+            min-width: 280px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+        
+        .navbar-nav .dropdown-item {
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .navbar-nav .dropdown-item:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transform: translateX(4px);
+        }
+        
+        .navbar-nav .dropdown-item i {
+            width: 24px;
+            text-align: center;
+        }
+        
+        .navbar-nav .dropdown-divider {
+            margin: 8px 16px;
+            opacity: 0.3;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -264,15 +308,43 @@
                 Analizador de Resoluciones IPP/INSS
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/subir">
-                    <i class="bi bi-upload me-1"></i>Subir Documento
-                </a>
-                <a class="nav-link" href="#" onclick="abrirGestorFrases()">
-                    <i class="bi bi-sliders me-1"></i>Frases Clave
-                </a>
-                <a class="nav-link" href="/diagnostico">
-                    <i class="bi bi-activity me-1"></i>Diagnóstico
-                </a>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-gear-fill me-2"></i>
+                        <span class="fw-semibold">Herramientas</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center py-2" href="/subir">
+                                <i class="bi bi-upload text-success me-3 fs-5"></i>
+                                <div>
+                                    <div class="fw-semibold">Subir Documento</div>
+                                    <small class="text-muted">Cargar nueva resolución</small>
+                                </div>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center py-2" href="#" onclick="abrirGestorFrases()">
+                                <i class="bi bi-sliders text-primary me-3 fs-5"></i>
+                                <div>
+                                    <div class="fw-semibold">Frases Clave</div>
+                                    <small class="text-muted">Gestionar palabras clave</small>
+                                </div>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center py-2" href="/diagnostico">
+                                <i class="bi bi-activity text-warning me-3 fs-5"></i>
+                                <div>
+                                    <div class="fw-semibold">Diagnóstico</div>
+                                    <small class="text-muted">Estado del sistema</small>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
