@@ -389,9 +389,9 @@ def analizar_riesgo_legal(ranking_global: Dict[str, Any], resultados_por_archivo
             "riesgo_general": {
                 "valor": riesgo_general,
                 "nivel": nivel_riesgo_general,
-                "interpretacion": interpretar_nivel_riesgo(nivel_riesgo_general)
+                "interpretacion": interpretar_nivel_riesgo(nivel_riesgo_general, riesgo_general, analisis_riesgo)
             },
-            "recomendaciones_riesgo": generar_recomendaciones_riesgo(nivel_riesgo_general)
+            "recomendaciones_riesgo": generar_recomendaciones_riesgo(nivel_riesgo_general, analisis_riesgo)
         }
         
     except Exception as e:
@@ -399,39 +399,126 @@ def analizar_riesgo_legal(ranking_global: Dict[str, Any], resultados_por_archivo
         return {"error": f"Error analizando riesgo legal: {str(e)}"}
 
 
-def interpretar_nivel_riesgo(nivel: str) -> str:
-    """Interpreta el nivel de riesgo legal"""
+def interpretar_nivel_riesgo(nivel: str, valor_riesgo: float, riesgo_por_nivel: Dict[str, Any]) -> str:
+    """Interpreta el nivel de riesgo legal con contexto específico"""
+    
+    # Obtener detalles de cada nivel
+    alto_count = riesgo_por_nivel.get("alto", {}).get("total_apariciones", 0)
+    medio_count = riesgo_por_nivel.get("medio", {}).get("total_apariciones", 0)
+    bajo_count = riesgo_por_nivel.get("bajo", {}).get("total_apariciones", 0)
+    
     interpretaciones = {
-        "alto": "Alto riesgo legal. Se recomienda revisión exhaustiva y posible consulta con especialista.",
-        "medio": "Riesgo legal moderado. Requiere atención especial en áreas críticas.",
-        "bajo": "Riesgo legal bajo. Procedimiento estándar recomendado."
+        "alto": f"""
+        <strong>🔴 ALTO RIESGO LEGAL</strong><br>
+        <strong>Puntuación:</strong> {valor_riesgo:.1f} puntos<br>
+        <strong>Análisis:</strong> Se detectaron {alto_count} indicadores de alto riesgo relacionados con reclamaciones administrativas, procedimientos legales complejos y fundamentos jurídicos críticos.<br>
+        <strong>Impacto:</strong> Este caso presenta múltiples factores que aumentan significativamente la probabilidad de resolución desfavorable.<br>
+        <strong>Recomendación:</strong> Requiere revisión exhaustiva por especialista y preparación de estrategia de defensa robusta.
+        """,
+        "medio": f"""
+        <strong>🟡 RIESGO LEGAL MODERADO</strong><br>
+        <strong>Puntuación:</strong> {valor_riesgo:.1f} puntos<br>
+        <strong>Análisis:</strong> Se identificaron {medio_count} elementos de riesgo medio relacionados con lesiones permanentes, accidentes laborales y prestaciones.<br>
+        <strong>Impacto:</strong> El caso presenta algunos factores de complejidad que requieren atención especializada.<br>
+        <strong>Recomendación:</strong> Revisión cuidadosa de áreas críticas y preparación de argumentos sólidos.
+        """,
+        "bajo": f"""
+        <strong>🟢 RIESGO LEGAL BAJO</strong><br>
+        <strong>Puntuación:</strong> {valor_riesgo:.1f} puntos<br>
+        <strong>Análisis:</strong> Se detectaron {bajo_count} indicadores de bajo riesgo relacionados con procedimientos estándar del INSS y casos rutinarios.<br>
+        <strong>Impacto:</strong> Este caso presenta características típicas de resolución favorable.<br>
+        <strong>Recomendación:</strong> Procedimiento estándar con seguimiento regular.
+        """
     }
+    
     return interpretaciones.get(nivel, "Nivel de riesgo no determinado.")
 
 
-def generar_recomendaciones_riesgo(nivel_riesgo: str) -> List[str]:
-    """Genera recomendaciones específicas según el nivel de riesgo"""
+def generar_recomendaciones_riesgo(nivel_riesgo: str, riesgo_por_nivel: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Genera recomendaciones específicas según el nivel de riesgo con contexto detallado"""
+    
     recomendaciones = {
         "alto": [
-            "Revisar exhaustivamente todos los fundamentos jurídicos",
-            "Consultar con especialista en derecho administrativo",
-            "Verificar cumplimiento de plazos y procedimientos",
-            "Preparar argumentos de defensa sólidos",
-            "Considerar alternativas de resolución extrajudicial"
+            {
+                "titulo": "🔍 Revisión Exhaustiva de Fundamentos Jurídicos",
+                "descripcion": "Analizar cada fundamento jurídico mencionado en la documentación, verificando su aplicabilidad y solidez.",
+                "prioridad": "Crítica",
+                "tiempo_estimado": "2-3 días"
+            },
+            {
+                "titulo": "⚖️ Consulta con Especialista en Derecho Administrativo",
+                "descripcion": "Obtener asesoramiento especializado para casos complejos de derecho administrativo y procedimientos legales.",
+                "prioridad": "Alta",
+                "tiempo_estimado": "1-2 días"
+            },
+            {
+                "titulo": "📋 Verificación de Cumplimiento de Plazos",
+                "descripcion": "Revisar exhaustivamente todos los plazos procesales y administrativos para evitar caducidades.",
+                "prioridad": "Crítica",
+                "tiempo_estimado": "1 día"
+            },
+            {
+                "titulo": "🛡️ Preparación de Estrategia de Defensa",
+                "descripcion": "Desarrollar argumentos sólidos y contraargumentos para cada punto crítico identificado.",
+                "prioridad": "Alta",
+                "tiempo_estimado": "3-5 días"
+            },
+            {
+                "titulo": "🤝 Evaluación de Alternativas Extrajudiciales",
+                "descripcion": "Considerar negociación, mediación o conciliación antes de procedimientos contenciosos.",
+                "prioridad": "Media",
+                "tiempo_estimado": "2-3 días"
+            }
         ],
         "medio": [
-            "Revisar áreas críticas identificadas",
-            "Verificar documentación de respaldo",
-            "Preparar argumentos para puntos débiles",
-            "Mantener comunicación regular con el cliente"
+            {
+                "titulo": "🎯 Revisión de Áreas Críticas Identificadas",
+                "descripcion": "Enfocar la atención en los puntos específicos que presentan mayor complejidad.",
+                "prioridad": "Alta",
+                "tiempo_estimado": "1-2 días"
+            },
+            {
+                "titulo": "📄 Verificación de Documentación de Respaldo",
+                "descripcion": "Asegurar que toda la documentación médica y administrativa esté completa y actualizada.",
+                "prioridad": "Media",
+                "tiempo_estimado": "1 día"
+            },
+            {
+                "titulo": "💪 Fortalecimiento de Argumentos Débiles",
+                "descripcion": "Desarrollar argumentos adicionales para los puntos que puedan ser cuestionados.",
+                "prioridad": "Media",
+                "tiempo_estimado": "2-3 días"
+            },
+            {
+                "titulo": "📞 Comunicación Regular con el Cliente",
+                "descripcion": "Mantener informado al cliente sobre el progreso y cualquier desarrollo importante.",
+                "prioridad": "Baja",
+                "tiempo_estimado": "Ongoing"
+            }
         ],
         "bajo": [
-            "Seguir procedimiento estándar",
-            "Mantener documentación actualizada",
-            "Monitorear cambios en la normativa"
+            {
+                "titulo": "📋 Seguimiento de Procedimiento Estándar",
+                "descripcion": "Continuar con el proceso habitual, manteniendo la documentación actualizada.",
+                "prioridad": "Baja",
+                "tiempo_estimado": "Ongoing"
+            },
+            {
+                "titulo": "📁 Organización de Documentación",
+                "descripcion": "Mantener todos los documentos organizados y accesibles para futuras referencias.",
+                "prioridad": "Baja",
+                "tiempo_estimado": "1 día"
+            },
+            {
+                "titulo": "📅 Seguimiento Regular del Caso",
+                "descripcion": "Realizar seguimiento periódico para asegurar que no se produzcan retrasos.",
+                "prioridad": "Baja",
+                "tiempo_estimado": "Ongoing"
+            }
         ]
     }
-    return recomendaciones.get(nivel_riesgo, ["Recomendaciones no disponibles para este nivel de riesgo."])
+    
+    return recomendaciones.get(nivel_riesgo, [])
 
 
 def generar_insights_juridicos(resultado_base: Dict[str, Any], analisis_predictivo: Dict[str, Any]) -> Dict[str, Any]:

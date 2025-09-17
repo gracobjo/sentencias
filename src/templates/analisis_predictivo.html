@@ -226,12 +226,15 @@
                             <span class="badge badge-custom" id="nivelRiesgo">-</span>
                         </div>
                         <div class="mb-3">
-                            <strong>Valor de Riesgo:</strong>
-                            <span id="valorRiesgo">-</span>
+                            <strong>Puntuación de Riesgo:</strong>
+                            <span class="fw-bold text-primary" id="valorRiesgo">-</span>
+                            <small class="text-muted d-block">Basada en análisis de patrones jurídicos y complejidad del caso</small>
                         </div>
                         <div class="mb-3">
-                            <strong>Interpretación:</strong>
-                            <p class="mt-2" id="interpretacionRiesgo">-</p>
+                            <strong>Análisis Detallado:</strong>
+                            <div class="mt-2 p-3 bg-light rounded" id="interpretacionRiesgo">
+                                <p class="mb-0 text-muted">Cargando análisis...</p>
+                            </div>
                         </div>
                         <div id="recomendacionesRiesgo">
                             <!-- Se llenará dinámicamente -->
@@ -845,8 +848,8 @@
             // Análisis de riesgo
             const riesgo = data.analisis_predictivo.analisis_riesgo.riesgo_general;
             document.getElementById('nivelRiesgo').textContent = riesgo.nivel;
-            document.getElementById('valorRiesgo').textContent = riesgo.valor;
-            document.getElementById('interpretacionRiesgo').textContent = riesgo.interpretacion;
+            document.getElementById('valorRiesgo').textContent = riesgo.valor.toFixed(1);
+            document.getElementById('interpretacionRiesgo').innerHTML = riesgo.interpretacion;
 
             // Mostrar recomendaciones de riesgo
             mostrarRecomendacionesRiesgo(data.analisis_predictivo.analisis_riesgo.recomendaciones_riesgo);
@@ -866,13 +869,56 @@
 
         function mostrarRecomendacionesRiesgo(recomendaciones) {
             const container = document.getElementById('recomendacionesRiesgo');
-            container.innerHTML = '<strong>Acciones Recomendadas:</strong><ul class="mt-2">';
             
-            recomendaciones.forEach(rec => {
-                container.innerHTML += `<li>${rec}</li>`;
+            if (!recomendaciones || recomendaciones.length === 0) {
+                container.innerHTML = '<p class="text-muted">No hay recomendaciones disponibles.</p>';
+                return;
+            }
+            
+            let html = '<strong>Acciones Recomendadas:</strong><div class="mt-3">';
+            
+            recomendaciones.forEach((rec, index) => {
+                // Determinar color de prioridad
+                let priorityClass = 'secondary';
+                let priorityIcon = '📋';
+                
+                if (rec.prioridad === 'Crítica') {
+                    priorityClass = 'danger';
+                    priorityIcon = '🚨';
+                } else if (rec.prioridad === 'Alta') {
+                    priorityClass = 'warning';
+                    priorityIcon = '⚠️';
+                } else if (rec.prioridad === 'Media') {
+                    priorityClass = 'info';
+                    priorityIcon = 'ℹ️';
+                } else if (rec.prioridad === 'Baja') {
+                    priorityClass = 'success';
+                    priorityIcon = '✅';
+                }
+                
+                html += `
+                    <div class="card mb-3 border-${priorityClass}">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="card-title mb-2">
+                                        ${priorityIcon} ${rec.titulo}
+                                    </h6>
+                                    <p class="card-text text-muted mb-2">${rec.descripcion}</p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-${priorityClass} mb-1">${rec.prioridad}</span>
+                                    <br>
+                                    <small class="text-muted">${rec.tiempo_estimado}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             });
             
-            container.innerHTML += '</ul>';
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         function mostrarInsights(insights) {
