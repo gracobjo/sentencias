@@ -180,7 +180,7 @@ try:
     logger.info("✅ Módulo backend.analisis importado")
     
     # Intentar crear una instancia para verificar que funciona
-    analizador_test = AnalizadorLegal()
+    analizador_global = AnalizadorLegal()
     logger.info("✅ AnalizadorLegal creado exitosamente")
     
     ANALIZADOR_IA_DISPONIBLE = True
@@ -188,6 +188,7 @@ try:
     
 except Exception as e:
     ANALIZADOR_IA_DISPONIBLE = False
+    analizador_global = None
     logger.error(f"❌ Error cargando módulo de IA: {e}")
     logger.error(f"❌ Tipo de error: {type(e).__name__}")
     import traceback
@@ -2250,6 +2251,8 @@ async def api_diagnostico_modelo():
 async def api_diagnostico_ia():
     """Endpoint para diagnóstico detallado del modelo IA"""
     try:
+        logger.info(f"🔍 Iniciando diagnóstico IA - ANALIZADOR_IA_DISPONIBLE: {ANALIZADOR_IA_DISPONIBLE}")
+        logger.info(f"🔍 analizador_global existe: {analizador_global is not None}")
         # Verificar modelos disponibles
         modelos = {}
         
@@ -2294,29 +2297,55 @@ async def api_diagnostico_ia():
         else:
             modelos["sbert"] = {"existe": False}
         
-        # Verificar analizador
+        # Verificar analizador usando la instancia global
         try:
-            from src.backend.analisis import AnalizadorLegal
-            analizador = AnalizadorLegal()
-            
-            estado_analizador = {
-                "sbert_encoder": analizador.sbert_encoder is not None,
-                "sbert_clf": analizador.sbert_clf is not None,
-                "vectorizador": analizador.vectorizador is not None,
-                "clasificador": analizador.clasificador is not None,
-                "modelo": analizador.modelo is not None
-            }
-            
-            # Determinar qué modelo se está usando
-            if analizador.sbert_encoder is not None and analizador.sbert_clf is not None:
-                if hasattr(analizador.sbert_encoder, 'encode'):
-                    modelo_activo = "SBERT Real"
+            if ANALIZADOR_IA_DISPONIBLE and analizador_global is not None:
+                logger.info("🔍 Usando instancia global del analizador")
+                # Usar la instancia global del analizador
+                estado_analizador = {
+                    "sbert_encoder": analizador_global.sbert_encoder is not None,
+                    "sbert_clf": analizador_global.sbert_clf is not None,
+                    "vectorizador": analizador_global.vectorizador is not None,
+                    "clasificador": analizador_global.clasificador is not None,
+                    "modelo": analizador_global.modelo is not None
+                }
+                logger.info(f"🔍 Estado analizador global: {estado_analizador}")
+                
+                # Determinar qué modelo se está usando
+                if analizador_global.sbert_encoder is not None and analizador_global.sbert_clf is not None:
+                    if hasattr(analizador_global.sbert_encoder, 'encode'):
+                        modelo_activo = "SBERT Real"
+                    else:
+                        modelo_activo = "TF-IDF Fallback"
+                elif analizador_global.vectorizador is not None and analizador_global.clasificador is not None:
+                    modelo_activo = "TF-IDF"
                 else:
-                    modelo_activo = "TF-IDF Fallback"
-            elif analizador.vectorizador is not None and analizador.clasificador is not None:
-                modelo_activo = "TF-IDF"
+                    modelo_activo = "Análisis por Reglas"
             else:
-                modelo_activo = "Análisis por Reglas"
+                logger.info("🔍 Creando nueva instancia para diagnóstico")
+                # Crear nueva instancia para diagnóstico
+                from src.backend.analisis import AnalizadorLegal
+                analizador_temp = AnalizadorLegal()
+                logger.info("🔍 Nueva instancia creada exitosamente")
+                
+                estado_analizador = {
+                    "sbert_encoder": analizador_temp.sbert_encoder is not None,
+                    "sbert_clf": analizador_temp.sbert_clf is not None,
+                    "vectorizador": analizador_temp.vectorizador is not None,
+                    "clasificador": analizador_temp.clasificador is not None,
+                    "modelo": analizador_temp.modelo is not None
+                }
+                
+                # Determinar qué modelo se está usando
+                if analizador_temp.sbert_encoder is not None and analizador_temp.sbert_clf is not None:
+                    if hasattr(analizador_temp.sbert_encoder, 'encode'):
+                        modelo_activo = "SBERT Real"
+                    else:
+                        modelo_activo = "TF-IDF Fallback"
+                elif analizador_temp.vectorizador is not None and analizador_temp.clasificador is not None:
+                    modelo_activo = "TF-IDF"
+                else:
+                    modelo_activo = "Análisis por Reglas"
                 
         except ImportError as e:
             estado_analizador = {"error": f"Error de importación: {str(e)}"}
