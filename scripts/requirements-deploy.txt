@@ -32,7 +32,7 @@ safetensors==0.4.2
 
 # Otros
 requests==2.31.0
-Pillow==10.1.0
+Pillow==11.3.0
 tqdm==4.66.1
 packaging==23.2
 filelock==3.13.1
