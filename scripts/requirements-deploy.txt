@@ -19,7 +19,7 @@ scipy==1.11.4
 
 # NLP
 spacy==3.7.2
-nltk==3.8.1
+nltk==3.9.1
 regex==2024.11.6
 
 # Sentence Transformers y dependencias compatibles
