@@ -15,7 +15,7 @@ lxml==6.0.1
 
 # Machine Learning - Solo lo esencial
 numpy==1.24.4
-scikit-learn==1.3.2
+scikit-learn==1.7.2
 
 # NLP básico
 nltk==3.8.1
