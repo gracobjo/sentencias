@@ -1179,10 +1179,21 @@ async def ver_archivo(request: Request, archivo_id: str, highlight: str = None, 
 async def api_analizar():
     """Endpoint API para análisis"""
     try:
-        return analizar_sentencias_existentes()
+        resultado = analizar_sentencias_existentes()
+        # Asegurar que siempre devuelve los campos esperados
+        if "error" not in resultado:
+            resultado["archivos_analizados"] = resultado.get("archivos_analizados", 0)
+            resultado["total_apariciones"] = resultado.get("total_apariciones", 0)
+            resultado["resultados_por_archivo"] = resultado.get("resultados_por_archivo", {})
+        return resultado
     except Exception as e:
         logger.error(f"Error en API: {e}")
-        return {"error": f"Error al analizar: {str(e)}"}
+        return {
+            "error": f"Error al analizar: {str(e)}",
+            "archivos_analizados": 0,
+            "total_apariciones": 0,
+            "resultados_por_archivo": {}
+        }
 
 @app.post("/api/limpiar-cache")
 async def limpiar_cache():
@@ -2291,9 +2302,12 @@ async def api_diagnostico_ia():
             else:
                 modelo_activo = "Análisis por Reglas"
                 
+        except ImportError as e:
+            estado_analizador = {"error": f"Error de importación: {str(e)}"}
+            modelo_activo = "Análisis por Reglas"
         except Exception as e:
-            estado_analizador = {"error": str(e)}
-            modelo_activo = "Error"
+            estado_analizador = {"error": f"Error general: {str(e)}"}
+            modelo_activo = "Análisis por Reglas"
         
         return {
             "modelos": modelos,

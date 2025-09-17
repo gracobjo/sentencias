@@ -497,16 +497,57 @@
             const features = document.getElementById('demandFeatures');
             
             try {
+                // Primero obtener lista de documentos disponibles
+                const docsResponse = await fetch('/api/documentos');
+                const docsData = await docsResponse.json();
+                
+                if (!docsData.documentos || docsData.documentos.length === 0) {
+                    card.className = 'card status-card warning';
+                    status.className = 'status-indicator warning';
+                    statusText.textContent = 'Sin Documentos';
+                    
+                    features.innerHTML = `
+                        <li><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>No hay documentos para probar</li>
+                        <li><i class="bi bi-info-circle-fill text-info me-2"></i>Sube un documento para probar</li>
+                    `;
+                    return;
+                }
+                
+                // Usar el primer documento disponible
+                const primerDoc = docsData.documentos[0].nombre;
+                
                 // Test demand extraction
                 const extractResponse = await fetch('/api/extract/demanda', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        nombres_archivo: ['sentencia_20250904_124518_2121c8a1.pdf']
+                        nombres_archivo: [primerDoc]
                     })
                 });
                 
                 if (extractResponse.ok) {
+                    const extractData = await extractResponse.json();
+                    
+                    // Test TXT generation
+                    const txtResponse = await fetch('/api/demanda-base/txt', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            nombres_archivo: [primerDoc],
+                            meta: {}
+                        })
+                    });
+                    
+                    // Test DOCX generation
+                    const docxResponse = await fetch('/api/demanda-base/docx', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            nombres_archivo: [primerDoc],
+                            meta: {}
+                        })
+                    });
+                    
                     card.className = 'card status-card success';
                     status.className = 'status-indicator success';
                     statusText.textContent = 'Generación Funcionando';
@@ -514,8 +555,8 @@
                     features.innerHTML = `
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i>Extracción de fallos: OK</li>
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i>Extracción de fundamentos: OK</li>
-                        <li><i class="bi bi-check-circle-fill text-success me-2"></i>Generación TXT: OK</li>
-                        <li><i class="bi bi-check-circle-fill text-success me-2"></i>Generación DOCX: OK</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i>Generación TXT: ${txtResponse.ok ? 'OK' : 'Error'}</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i>Generación DOCX: ${docxResponse.ok ? 'OK' : 'Error'}</li>
                     `;
                 } else {
                     throw new Error('Error en extracción');
@@ -526,7 +567,7 @@
                 statusText.textContent = 'Error en Generación';
                 
                 features.innerHTML = `
-                    <li><i class="bi bi-x-circle-fill text-danger me-2"></i>Error en extracción</li>
+                    <li><i class="bi bi-x-circle-fill text-danger me-2"></i>Error en extracción: ${error.message}</li>
                     <li><i class="bi bi-x-circle-fill text-danger me-2"></i>Error en generación</li>
                 `;
             }
@@ -537,6 +578,32 @@
             document.getElementById('totalFrases').textContent = analysisData.total_apariciones || 0;
             document.getElementById('modelStatus').textContent = iaData.modelo_activo || 'Desconocido';
             document.getElementById('systemHealth').textContent = healthData.status === 'ok' ? 'OK' : 'Error';
+            
+            // Actualizar lista de frases clave si está disponible
+            const phrasesList = document.getElementById('phrasesList');
+            if (analysisData.resultados_por_archivo) {
+                const todasLasFrases = new Set();
+                Object.values(analysisData.resultados_por_archivo).forEach(archivo => {
+                    if (archivo.frases_clave) {
+                        Object.keys(archivo.frases_clave).forEach(frase => {
+                            todasLasFrases.add(frase);
+                        });
+                    }
+                });
+                
+                if (todasLasFrases.size > 0) {
+                    phrasesList.innerHTML = Array.from(todasLasFrases).slice(0, 10).map(frase => 
+                        `<div class="mb-1"><i class="bi bi-tag me-2"></i>${frase}</div>`
+                    ).join('');
+                    if (todasLasFrases.size > 10) {
+                        phrasesList.innerHTML += `<div class="text-muted">... y ${todasLasFrases.size - 10} más</div>`;
+                    }
+                } else {
+                    phrasesList.innerHTML = '<div class="text-muted">No hay frases clave encontradas</div>';
+                }
+            } else {
+                phrasesList.innerHTML = '<div class="text-muted">No hay datos de análisis</div>';
+            }
         }
         
         function testAnalysis() {
