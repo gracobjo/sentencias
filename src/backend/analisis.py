@@ -114,11 +114,20 @@ class AnalizadorLegal:
                 logger.info("Se usará análisis basado en reglas")
         except Exception as e:
             logger.error(f"❌ Error cargando modelo: {e}")
+            
+            # Verificar si es un error específico de NumPy
+            if "numpy._core" in str(e) or "No module named 'numpy._core'" in str(e):
+                logger.error("❌ Error crítico de NumPy detectado")
+                logger.info("⚠️ NumPy no está funcionando correctamente en este entorno")
+                logger.info("Usando análisis basado en reglas mejoradas")
+                self._crear_modelo_basico()
+                return
+            
             logger.info("⚠️ Incompatibilidad de versiones detectada")
             logger.info("Creando modelo TF-IDF básico para análisis")
             self._crear_modelo_basico()
             
-            # Intentar cargar con supresión de warnings
+            # Intentar cargar con supresión de warnings solo si no es error de NumPy
             try:
                 import warnings
                 with warnings.catch_warnings():
@@ -155,6 +164,7 @@ class AnalizadorLegal:
             
             logger.info("✅ Modelo básico de reglas mejoradas creado exitosamente")
             logger.info("⚠️ Usando análisis híbrido: reglas + patrones avanzados")
+            logger.info("ℹ️ Este modelo funciona sin dependencias de NumPy/scikit-learn")
             
         except Exception as e:
             logger.error(f"❌ Error creando modelo básico: {e}")
