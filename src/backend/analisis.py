@@ -117,6 +117,21 @@ class AnalizadorLegal:
             logger.info("⚠️ Incompatibilidad de versiones detectada")
             logger.info("Creando modelo TF-IDF básico para análisis")
             self._crear_modelo_basico()
+            
+            # Intentar cargar con supresión de warnings
+            try:
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    with open(self.modelo_path, 'rb') as f:
+                        modelo_data = pickle.load(f)
+                        self.modelo = modelo_data.get('modelo')
+                        self.vectorizador = modelo_data.get('vectorizador')
+                        self.clasificador = modelo_data.get('clasificador')
+                        logger.info("✅ Modelo cargado con supresión de warnings")
+            except Exception as e2:
+                logger.warning(f"⚠️ No se pudo cargar modelo incluso con warnings suprimidos: {e2}")
+                logger.info("Continuando con modelo básico")
 
         # Intentar cargar modelo SBERT si está disponible
         self._cargar_modelo_sbert()
@@ -150,6 +165,15 @@ class AnalizadorLegal:
         try:
             sbert_path = Path("models/modelo_legal_sbert.pkl")
             if sbert_path.exists():
+                # Verificar tamaño del archivo
+                file_size = sbert_path.stat().st_size
+                if file_size < 10000:  # Menos de 10KB probablemente está incompleto
+                    logger.warning(f"⚠️ Modelo SBERT muy pequeño ({file_size} bytes), probablemente incompleto")
+                    logger.info("Saltando carga de SBERT, usando TF-IDF")
+                    self.sbert_encoder = None
+                    self.sbert_clf = None
+                    return
+                
                 with open(sbert_path, 'rb') as f:
                     sbert_data = pickle.load(f)
                     self.sbert_encoder = sbert_data.get('encoder')
