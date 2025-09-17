@@ -1219,6 +1219,8 @@ async def limpiar_cache():
 async def api_analisis_predictivo():
     """Endpoint API para análisis predictivo e inteligente de resoluciones"""
     try:
+        logger.info("🔍 Iniciando análisis predictivo")
+        
         # Importar funciones del módulo de análisis predictivo
         try:
             from src.backend.analisis_predictivo import (
@@ -1229,17 +1231,21 @@ async def api_analisis_predictivo():
                 generar_recomendaciones,
                 calcular_confianza_analisis
             )
+            logger.info("✅ Funciones de análisis predictivo importadas correctamente")
         except ImportError as e:
-            logger.error(f"Error importando funciones de análisis predictivo: {e}")
+            logger.error(f"❌ Error importando funciones de análisis predictivo: {e}")
             raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
         
         # Obtener datos base
+        logger.info("📊 Obteniendo datos base para análisis")
         resultado_base = analizar_sentencias_existentes()
         
         # Realizar análisis predictivo avanzado
+        logger.info("🤖 Realizando análisis predictivo")
         analisis_predictivo = realizar_analisis_predictivo(resultado_base)
         
         # Generar insights y recomendaciones
+        logger.info("💡 Generando insights jurídicos")
         insights = generar_insights_juridicos(resultado_base, analisis_predictivo)
         
         # Crear respuesta estructurada para UX mejorada
@@ -1277,7 +1283,15 @@ async def api_analisis_predictivo():
 @app.get("/analisis-predictivo")
 async def pagina_analisis_predictivo(request: Request):
     """Página web para el análisis predictivo"""
-    return templates.TemplateResponse("analisis_predictivo.html", {"request": request})
+    try:
+        logger.info("🔍 Accediendo a página de análisis predictivo")
+        return templates.TemplateResponse("analisis_predictivo.html", {
+            "request": request,
+            "ia_disponible": ANALIZADOR_IA_DISPONIBLE
+        })
+    except Exception as e:
+        logger.error(f"❌ Error en página análisis predictivo: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
 
 @app.get("/analisis-discrepancias/{archivo_id}")
@@ -2520,6 +2534,35 @@ async def health_check():
             "models": str(MODELS_DIR)
         }
     }
+
+@app.get("/health/analisis-predictivo")
+async def health_analisis_predictivo():
+    """Endpoint de salud específico para análisis predictivo"""
+    try:
+        # Verificar que las funciones se pueden importar
+        from src.backend.analisis_predictivo import (
+            realizar_analisis_predictivo,
+            generar_insights_juridicos,
+            identificar_patrones_favorables,
+            extraer_factores_clave,
+            generar_recomendaciones,
+            calcular_confianza_analisis
+        )
+        
+        return {
+            "status": "ok",
+            "analisis_predictivo": "disponible",
+            "funciones_importadas": True,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Error en health check análisis predictivo: {e}")
+        return {
+            "status": "error",
+            "analisis_predictivo": "no disponible",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 
 @app.get("/api/documento/{nombre_archivo}")
