@@ -118,9 +118,16 @@ class AnalizadorLegal:
             logger.info("Creando modelo TF-IDF básico para análisis")
             self._crear_modelo_basico()
 
-        # En producción, usar solo modelo TF-IDF para evitar problemas de memoria
-        logger.info("⚠️ Modo producción: usando solo modelo TF-IDF, evitando SentenceTransformer")
-        logger.info("Usando análisis basado en TF-IDF + reglas para máxima compatibilidad")
+        # Intentar cargar modelo SBERT si está disponible
+        self._cargar_modelo_sbert()
+        
+        # Log del estado final
+        if self.sbert_encoder is not None and self.sbert_clf is not None:
+            logger.info("✅ Modelo SBERT cargado correctamente")
+        elif self.modelo is not None and self.vectorizador is not None and self.clasificador is not None:
+            logger.info("✅ Modelo TF-IDF cargado correctamente")
+        else:
+            logger.info("⚠️ Usando análisis basado en reglas mejoradas")
     
     def _crear_modelo_basico(self):
         """Crea un modelo básico que funciona sin entrenamiento previo"""
@@ -137,6 +144,30 @@ class AnalizadorLegal:
         except Exception as e:
             logger.error(f"❌ Error creando modelo básico: {e}")
             logger.info("Se usará análisis basado en reglas")
+    
+    def _cargar_modelo_sbert(self):
+        """Carga el modelo SBERT si está disponible"""
+        try:
+            sbert_path = Path("models/modelo_legal_sbert.pkl")
+            if sbert_path.exists():
+                with open(sbert_path, 'rb') as f:
+                    sbert_data = pickle.load(f)
+                    self.sbert_encoder = sbert_data.get('encoder')
+                    self.sbert_clf = sbert_data.get('clasificador')
+                    
+                    if self.sbert_encoder is not None and self.sbert_clf is not None:
+                        logger.info("✅ Modelo SBERT cargado desde archivo")
+                    else:
+                        logger.warning("⚠️ Modelo SBERT incompleto en archivo")
+                        self.sbert_encoder = None
+                        self.sbert_clf = None
+            else:
+                logger.info("ℹ️ Modelo SBERT no encontrado, usando TF-IDF")
+        except Exception as e:
+            logger.warning(f"⚠️ Error cargando modelo SBERT: {e}")
+            logger.info("Continuando con modelo TF-IDF o reglas")
+            self.sbert_encoder = None
+            self.sbert_clf = None
     
     def _analisis_hibrido_avanzado(self, contenido: str, nombre_archivo: str = None) -> Dict[str, Any]:
         """Análisis híbrido avanzado que simula IA usando reglas inteligentes"""

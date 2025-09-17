@@ -193,6 +193,15 @@ except Exception as e:
     import traceback
     logger.error(f"❌ Traceback completo: {traceback.format_exc()}")
     logger.info("Se usará análisis básico como fallback")
+    
+    # Intentar cargar al menos el analizador básico
+    try:
+        from src.backend.analisis_basico import AnalizadorBasico
+        analizador_basico = AnalizadorBasico()
+        logger.info("✅ Analizador básico cargado como fallback")
+    except Exception as e2:
+        logger.error(f"❌ Error cargando analizador básico: {e2}")
+        analizador_basico = None
 
 
 def extraer_texto_pdf(ruta: str) -> str:
@@ -2043,7 +2052,14 @@ async def api_extract_demanda(payload: Dict[str, Any]):
         nombres: List[str] = payload.get("nombres_archivo") or []
         if not isinstance(nombres, list) or not nombres:
             raise HTTPException(status_code=400, detail="Debe indicar 'nombres_archivo' (lista)")
-        paths = [SENTENCIAS_DIR / n for n in nombres if (SENTENCIAS_DIR / n).exists()]
+        # Buscar archivos en ambos directorios
+        paths = []
+        for nombre in nombres:
+            candidatos = [SENTENCIAS_DIR / nombre, UPLOADS_DIR / nombre]
+            for candidato in candidatos:
+                if candidato.exists():
+                    paths.append(candidato)
+                    break
         if not paths:
             raise HTTPException(status_code=404, detail="No se encontraron los archivos indicados")
 
