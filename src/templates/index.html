@@ -382,30 +382,13 @@
             </div>
         </div>
 
-        <!-- Botones de debug (desktop) -->
-        <div class="row mb-4 desktop-buttons">
+        <!-- Sección de análisis principal -->
+        <div class="row mb-4">
             <div class="col-12 text-center">
-                <button class="btn btn-warning" onclick="testShowFraseDetails()">
-                    <i class="bi bi-bug me-2"></i>Test: Ver Detalles
-                </button>
-                <button class="btn btn-info" onclick="debugFraseData()">
-                    <i class="bi bi-info-circle me-2"></i>Debug: Datos Frases
-                </button>
-                <button class="btn btn-success" onclick="testBusquedaArgumentos()">
-                    <i class="bi bi-search me-2"></i>Test: Búsqueda Argumentos
-                </button>
-                <button class="btn btn-dark" onclick="verificarDatosBackend()">
-                    <i class="bi bi-server me-2"></i>Verificar Backend
-                </button>
-                <button class="btn btn-primary" onclick="mostrarAnalisisInteligente()">
-                    <i class="bi bi-brain me-2"></i>Análisis Inteligente
-                </button>
-                <button class="btn btn-danger" onclick="debugAvanzado()">
-                    <i class="bi bi-exclamation-triangle me-2"></i>Debug Avanzado
-                </button>
-                <button class="btn btn-warning" onclick="limpiarCache()">
-                    <i class="bi bi-arrow-clockwise me-2"></i>Limpiar Caché
-                </button>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Análisis Legal Inteligente</strong> - Utiliza IA para analizar resoluciones jurídicas y generar insights predictivos
+                </div>
             </div>
         </div>
 
@@ -2427,60 +2410,6 @@
             }
         }
 
-        // Función para debug de datos de frases
-        function debugFraseData() {
-            console.log('=== DEBUG: Datos de frases ===');
-            
-            if (!rankingGlobalData) {
-                console.error('No hay datos del ranking disponibles');
-                return;
-            }
-            
-            console.log('Datos del ranking:', rankingGlobalData);
-            console.log(`Total de categorías: ${Object.keys(rankingGlobalData).length}`);
-            
-            const elementos = document.querySelectorAll('[data-frase]');
-            console.log(`Elementos encontrados: ${elementos.length}`);
-            
-            elementos.forEach((elemento, index) => {
-                const frase = elemento.getAttribute('data-frase');
-                const fraseIndex = elemento.getAttribute('data-frase-index');
-                
-                console.log(`Elemento ${index + 1}:`);
-                console.log(`  Frase: ${frase}`);
-                console.log(`  Índice: ${fraseIndex}`);
-                
-                if (rankingGlobalData && rankingGlobalData[frase]) {
-                    const datos = rankingGlobalData[frase];
-                    console.log(`  Datos disponibles:`, datos);
-                    console.log(`  Total: ${datos.total}`);
-                    console.log(`  Ocurrencias: ${datos.ocurrencias ? datos.ocurrencias.length : 0}`);
-                } else {
-                    console.error(`  No hay datos para la frase: ${frase}`);
-                }
-                console.log('---');
-            });
-        }
-
-        // Función para probar búsqueda de argumentos
-        function testBusquedaArgumentos() {
-            console.log('=== TEST: Búsqueda de Argumentos ===');
-            mostrarNotificacion('Test de búsqueda ejecutado', 'info');
-        }
-
-        // Función para verificar backend
-        async function verificarDatosBackend() {
-            try {
-                const response = await fetch('/api/analizar');
-                const data = await response.json();
-                console.log('Backend responde:', data);
-                mostrarNotificacion('Backend verificado correctamente', 'success');
-            } catch (error) {
-                console.error('Error backend:', error);
-                mostrarNotificacion('Error verificando backend', 'danger');
-            }
-        }
-
         // Función para análisis inteligente
         async function mostrarAnalisisInteligente() {
             try {
@@ -2491,36 +2420,6 @@
             } catch (error) {
                 console.error('Error análisis:', error);
                 mostrarNotificacion('Error en análisis inteligente', 'danger');
-            }
-        }
-
-        // Función para debug avanzado
-        async function debugAvanzado() {
-            console.log('=== DEBUG AVANZADO ===');
-            mostrarNotificacion('Debug avanzado ejecutado', 'info');
-        }
-
-        // Función de prueba
-        function testShowFraseDetails() {
-            console.log('=== TEST: showFraseDetails ===');
-            mostrarNotificacion('Test ejecutado correctamente', 'success');
-        }
-
-        // Función para limpiar caché
-        async function limpiarCache() {
-            try {
-                const response = await fetch('/api/limpiar-cache', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                mostrarNotificacion('Caché limpiado correctamente', 'success');
-                // Recargar la página para obtener datos frescos
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } catch (error) {
-                console.error('Error limpiando caché:', error);
-                mostrarNotificacion('Error limpiando caché', 'danger');
             }
         }
 
@@ -2699,25 +2598,13 @@
             </div>
             
             <div class="mobile-menu-section">
-                <h6>Herramientas de Debug</h6>
-                <button class="btn btn-warning" onclick="testShowFraseDetails(); closeMobileMenu();">
-                    <i class="bi bi-bug me-2"></i>Test: Ver Detalles
-                </button>
-                <button class="btn btn-info" onclick="debugFraseData(); closeMobileMenu();">
-                    <i class="bi bi-info-circle me-2"></i>Debug: Datos Frases
-                </button>
-                <button class="btn btn-success" onclick="testBusquedaArgumentos(); closeMobileMenu();">
-                    <i class="bi bi-search me-2"></i>Test: Búsqueda Argumentos
-                </button>
-                <button class="btn btn-dark" onclick="verificarDatosBackend(); closeMobileMenu();">
-                    <i class="bi bi-server me-2"></i>Verificar Backend
-                </button>
-                <button class="btn btn-danger" onclick="debugAvanzado(); closeMobileMenu();">
-                    <i class="bi bi-exclamation-triangle me-2"></i>Debug Avanzado
-                </button>
-                <button class="btn btn-warning" onclick="limpiarCache(); closeMobileMenu();">
-                    <i class="bi bi-arrow-clockwise me-2"></i>Limpiar Caché
-                </button>
+                <h6>Herramientas del Sistema</h6>
+                <div class="alert alert-light mb-3">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Sistema de análisis legal con IA para profesionales del derecho
+                    </small>
+                </div>
             </div>
         </div>
     </div>
