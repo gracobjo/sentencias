@@ -113,7 +113,7 @@ def verificar_modelos_sbert():
     logger.info("🤖 Verificando modelos SBERT...")
     
     try:
-        from sentence_transformers import SentenceTransformer
+        from sentence_transformers import SentenceTransformer  # type: ignore
         
         # Verificar modelo principal
         try:
@@ -192,7 +192,7 @@ def verificar_memoria_sistema():
     logger.info("💾 Verificando recursos del sistema...")
     
     try:
-        import psutil
+        import psutil  # type: ignore
         
         # Memoria RAM
         memoria = psutil.virtual_memory()
@@ -260,7 +260,7 @@ def main():
     logger.info("🚀 Iniciando verificación de dependencias")
     
     # Verificar dependencias core
-    if not args.mlp and not args.nlp:
+    if not args.ml and not args.nlp:
         resultados_core = verificar_dependencias_core()
         core_ok = all(resultados_core.values())
     else:
@@ -294,7 +294,7 @@ def main():
     # Resumen final
     logger.info("\n📊 Resumen de verificación:")
     
-    if not args.mlp and not args.nlp:
+    if not args.ml and not args.nlp:
         logger.info(f"🔧 Dependencias Core: {'✅ OK' if core_ok else '❌ ERROR'}")
     
     if args.ml or (not args.produccion and not args.nlp):
