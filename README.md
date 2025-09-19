@@ -12,6 +12,21 @@ Una aplicación web avanzada que utiliza inteligencia artificial para analizar s
 - **Análisis Predictivo**: Predicción de resultados basada en patrones históricos
 - **Extracción de Frases Clave**: Identificación automática de términos jurídicos relevantes
 
+### 📓 **Google Colab Notebook**
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gracobjo/sentencias/blob/main/docs/Analizador_Sentencias_Colab.ipynb)
+
+**¡Nuevo!** Notebook completo para Google Colab con todas las funcionalidades:
+- 🔧 **Instalación automática** de dependencias
+- 🔍 **Análisis inteligente** de documentos legales
+- 🔮 **Predicción de resultados** con machine learning
+- 📊 **Visualizaciones** interactivas y estáticas
+- 📄 **Procesamiento de PDFs** en tiempo real
+- 📤 **Exportación** en múltiples formatos
+- 🔗 **Integración con Google Drive**
+- 🔧 **Diagnóstico y solución** de problemas
+
+**[📖 Ver documentación completa del notebook](docs/README_COLAB.md)**
+
 ### 📊 **Funcionalidades Avanzadas**
 - **Análisis Híbrido**: Combina IA con reglas jurídicas especializadas
 - **Ponderación por Instancia**: TS (x1.5), TSJ (x1.2), otras (x1.0)
