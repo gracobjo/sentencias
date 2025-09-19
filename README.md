@@ -92,6 +92,7 @@ python app.py
 - [⚖️ Configuración de Ponderación](docs/CONFIGURACION_PONDERACION.md)
 - [🔮 Análisis Predictivo](docs/ANALISIS_PREDICTIVO.md)
 - [📝 Generación de Demandas](docs/GENERACION_DEMANDAS.md)
+- [🧠 Entrenamiento de Modelos](docs/ENTRENAMIENTO_MODELOS.md)
 
 ### **API Documentation**
 - [🌐 API Endpoints](docs/API_ENDPOINTS.md)

@@ -1,0 +1,26 @@
+{
+  "_comentario": "Archivo de ejemplo para etiquetas manuales de entrenamiento",
+  "_instrucciones": "1 = Favorable (procedente), 0 = Desfavorable (desestimado)",
+  "_ejemplo": {
+    "documento_favorable.pdf": 1,
+    "documento_desfavorable.pdf": 0
+  },
+  "_palabras_clave_favorables": [
+    "procedente",
+    "estimamos",
+    "estimamos procedente", 
+    "accedemos",
+    "concedemos",
+    "reconocemos",
+    "favorable",
+    "fundada"
+  ],
+  "_palabras_clave_desfavorables": [
+    "desestimamos",
+    "infundada", 
+    "rechazamos",
+    "denegamos",
+    "desfavorable",
+    "no procedente"
+  ]
+}
