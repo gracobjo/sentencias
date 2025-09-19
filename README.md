@@ -93,6 +93,7 @@ python app.py
 - [🔮 Análisis Predictivo](docs/ANALISIS_PREDICTIVO.md)
 - [📝 Generación de Demandas](docs/GENERACION_DEMANDAS.md)
 - [🧠 Entrenamiento de Modelos](docs/ENTRENAMIENTO_MODELOS.md)
+- [📚 Librerías de Modelos](docs/LIBRERIAS_MODELOS.md)
 
 ### **API Documentation**
 - [🌐 API Endpoints](docs/API_ENDPOINTS.md)
